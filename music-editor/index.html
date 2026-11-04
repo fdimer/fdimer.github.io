@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SimpleMusic</title>
+  <meta name="description" content="SimpleMusic: write a melody first, then let the editor divide it into bars. Runs in your browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; All projects</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LOAD "MUSIC"</p>
+      <h1>SimpleMusic</h1>
+      <p class="lead">Write your notes first, count the bars later. A simple music editor that runs right in your browser, with nothing to install.</p>
+    </header>
+
+    <a class="button" href="app/">Open the editor</a>
+
+    <h2>How it works</h2>
+    <ol class="features">
+      <li><b>Write your melody.</b> Pick a note length and click on the staff to place notes, without worrying about bars.</li>
+      <li><b>Divide into bars.</b> Choose the beats per bar and which note counts as one beat. Notes that cross a bar line are split and tied for you.</li>
+    </ol>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li>Whole, half, quarter, eighth and sixteenth notes, plus dotted notes and rests</li>
+      <li>Sharps and flats, and drag a note up or down to change its pitch</li>
+      <li>Playback with an adjustable tempo from 40 to 200 bpm</li>
+      <li>Any time signature, with the option to fill the last bar with rests</li>
+      <li>Undo and redo, plus keyboard shortcuts for fast entry</li>
+      <li>Export your sheet as a PDF</li>
+      <li>Your work is remembered in your browser between visits</li>
+    </ul>
+
+    <h2>Source</h2>
+    <p>Plain HTML, CSS and JavaScript, with no libraries or build step. Built with Claude Code.</p>
+    <a class="button secondary" href="https://github.com/fdimer/fdimer.github.io/tree/main/music-editor/app">View the code</a>
+
+    <footer><a href="../">&larr; Back to all projects</a></footer>
+  </main>
+</body>
+</html>

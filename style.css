@@ -1,0 +1,146 @@
+:root {
+  --bg: #f6f4ee;
+  --surface: #ffffff;
+  --text: #1d1f21;
+  --muted: #5b6168;
+  --line: #dcd8cc;
+  --accent: #0f6e56;
+  --accent-soft: #e1f0ea;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a;
+    --surface: #1d2024;
+    --text: #e8e6e1;
+    --muted: #9aa0a6;
+    --line: #30343a;
+    --accent: #4fc49b;
+    --accent-soft: #1c2f29;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 16px 64px;
+}
+
+a { color: var(--accent); }
+
+header.site {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 24px;
+  margin-bottom: 32px;
+}
+
+.prompt {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+h1 {
+  font-size: 34px;
+  line-height: 1.2;
+  margin: 0 0 12px;
+}
+
+h2 {
+  font-size: 22px;
+  margin: 36px 0 12px;
+}
+
+.lead {
+  color: var(--muted);
+  margin: 0;
+}
+
+.projects {
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px 22px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .15s, transform .15s;
+}
+
+.card:hover,
+.card:focus-visible {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.card h3 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+.card p { margin: 0; color: var(--muted); }
+
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-top: 12px;
+}
+
+.back {
+  font-family: var(--mono);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+ul.features { padding-left: 20px; }
+ul.features li { margin-bottom: 6px; }
+
+.button {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--bg);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 8px;
+  margin: 8px 8px 0 0;
+}
+
+.button.secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+footer {
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--muted);
+}
