@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TextBrowser</title>
+  <meta name="description" content="TextBrowser: a text-only web browser with the look of a 1980s computer terminal. A small Python desktop app.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; All projects</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LOAD "TEXTBROWSER"</p>
+      <h1>TextBrowser</h1>
+      <p class="lead">A web browser that shows only the text of a page, with the look of a 1980s computer terminal. No pictures, no video, no adverts, just words and links.</p>
+    </header>
+
+    <a class="button" href="https://github.com/fdimer/TextBrowser/archive/refs/heads/main.zip">Download (ZIP)</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>Text only:</b> images, video, audio, scripts and page styling are never loaded or shown</li>
+      <li><b>Terminal look:</b> phosphor text on a black screen, inverse-video status bars and a blinking block cursor. Press F2 to switch between green, amber and white</li>
+      <li><b>Links:</b> numbered like <code>Teleprinter[69]</code>. Click one, Tab to it, or type its number at the <code>URL&gt;</code> prompt</li>
+      <li><b>Search:</b> type words instead of an address to search DuckDuckGo Lite</li>
+      <li><b>Keyboard friendly:</b> back, forward, reload and scrolling all have keys. Press F1 for the list</li>
+    </ul>
+
+    <h2>Running it</h2>
+    <p>TextBrowser is a desktop app, so it runs on your computer rather than in this page. It needs <a href="https://www.python.org/downloads/">Python 3</a> and nothing else. Unzip the download, then run this in that folder:</p>
+    <p><code>python textbrowser.py</code></p>
+    <p>If some secure (HTTPS) sites show a certificate error, also run <code>pip install truststore</code>.</p>
+
+    <h2>Source</h2>
+    <p>One Python file using only the standard library and tkinter. Built with Claude Code.</p>
+    <a class="button secondary" href="https://github.com/fdimer/TextBrowser">View on GitHub</a>
+
+    <footer><a href="../">&larr; Back to all projects</a></footer>
+  </main>
+</body>
+</html>

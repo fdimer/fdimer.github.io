@@ -41,6 +41,14 @@ body {
 
 a { color: var(--accent); }
 
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  background: var(--accent-soft);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
 header.site {
   border-bottom: 1px solid var(--line);
   padding-bottom: 24px;
