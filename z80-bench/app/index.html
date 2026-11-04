@@ -1,0 +1,1871 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Z80 Bench</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a bench — chip pinout on the left like a datasheet page, CPU state in the middle, program and memory on the right. */
+:root {
+  --bg: #e7eaee;
+  --panel: #f8f9fb;
+  --panel2: #eef1f4;
+  --ink: #17202a;
+  --muted: #5b6876;
+  --line: #ccd3db;
+  --chip: #262a31;
+  --chip-ink: #d6dbe1;
+  --chip-num: #8b939d;
+  --hi: #e08f00;
+  --hi-ink: #3a2500;
+  --lo: #37475a;
+  --lo-ink: #e6ebf0;
+  --z: #a3acb6;
+  --sel: #2471a8;
+  --sel-soft: #d7e7f3;
+  --warn: #b5440f;
+  --warn-soft: #f6e1d6;
+  --ok: #2c7a4b;
+  --btn: #17202a;
+  --btn-ink: #f8f9fb;
+  --font-ui: "IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121519; --panel: #1a1e24; --panel2: #20252c; --ink: #e3e7ec; --muted: #949fab; --line: #313840;
+    --chip: #0b0d10; --chip-ink: #d6dbe1; --chip-num: #6f7883;
+    --hi: #f2a516; --hi-ink: #2a1a00; --lo: #4d5f74; --lo-ink: #eef2f6; --z: #59636e;
+    --sel: #5aa6dd; --sel-soft: #1d3446; --warn: #f08a5d; --warn-soft: #3a2219; --ok: #5cc28a;
+    --btn: #e3e7ec; --btn-ink: #121519; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121519; --panel: #1a1e24; --panel2: #20252c; --ink: #e3e7ec; --muted: #949fab; --line: #313840;
+  --chip: #0b0d10; --chip-ink: #d6dbe1; --chip-num: #6f7883;
+  --hi: #f2a516; --hi-ink: #2a1a00; --lo: #4d5f74; --lo-ink: #eef2f6; --z: #59636e;
+  --sel: #5aa6dd; --sel-soft: #1d3446; --warn: #f08a5d; --warn-soft: #3a2219; --ok: #5cc28a;
+  --btn: #e3e7ec; --btn-ink: #121519; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.4; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 28px; max-width: 1560px; margin: 0 auto; }
+.mono, input.mono, textarea { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-bottom: 12px; }
+header.top h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.02em; margin: 0; }
+header.top h1 span { color: var(--muted); font-weight: 500; }
+.status { font-family: var(--font-mono); font-size: 12.5px; padding: 4px 10px; border-radius: 3px; background: var(--panel2); border: 1px solid var(--line); }
+.status.warn { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+.status.run { border-color: var(--ok); color: var(--ok); }
+.counters { margin-left: auto; display: flex; gap: 16px; font-size: 12.5px; color: var(--muted); }
+.counters b { color: var(--ink); font-family: var(--font-mono); font-weight: 500; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+button { font-family: var(--font-ui); font-size: 14px; font-weight: 600; letter-spacing: 0.02em; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 4px; padding: 7px 13px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .pin:focus-visible, .dis-row:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
+button kbd { font-family: var(--font-mono); font-size: 11px; opacity: 0.6; margin-left: 6px; font-weight: 400; }
+select, input[type=text] { font-family: var(--font-ui); font-size: 14px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; }
+input.mono { font-size: 13px; }
+label.inline { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
+
+.grid { display: grid; grid-template-columns: minmax(340px, 400px) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 1180px) { .grid { grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); } .col3 { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; } }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } .col3 { display: flex; align-items: stretch; } }
+.col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px 14px; min-width: 0; }
+.panel h2 { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+.panel h2 .aside { margin-left: auto; letter-spacing: 0.02em; text-transform: none; font-weight: 500; font-size: 12px; }
+.hint { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
+
+/* chip */
+.chipwrap { overflow-x: auto; }
+svg.chip { display: block; width: 100%; max-width: 380px; margin: 0 auto; height: auto; }
+svg.chip text { font-family: var(--font-mono); }
+.body-rect { fill: var(--chip); }
+.pin .stub { stroke: none; }
+.pin.v1 .stub { fill: var(--hi); }
+.pin.v0 .stub { fill: var(--lo); }
+.pin.vz .stub { fill: transparent; stroke: var(--z); stroke-dasharray: 2 2; stroke-width: 1.2; }
+.pin.vp .stub { fill: #c23b2b; } .pin.vg .stub { fill: var(--muted); }
+.pin .sv { font-size: 9px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+.pin.v1 .sv { fill: var(--hi-ink); } .pin.v0 .sv { fill: var(--lo-ink); } .pin.vz .sv { fill: var(--muted); } .pin.vp .sv, .pin.vg .sv { fill: #fff; }
+.pin .nm { font-size: 11.5px; fill: var(--ink); dominant-baseline: central; }
+.pin .num { font-size: 9px; fill: var(--chip-num); dominant-baseline: central; }
+.pin .ov { text-decoration: overline; }
+.pin.input { cursor: pointer; }
+.pin.input .ring { fill: none; stroke: var(--sel); stroke-width: 1.4; rx: 3; }
+.pin.input:hover .ring { stroke-width: 2.4; }
+.pin.input .nm { fill: var(--sel); font-weight: 600; }
+.pin.changed .stub { filter: drop-shadow(0 0 3px var(--hi)); }
+.chiptitle { fill: var(--chip-ink); font-family: var(--font-ui) !important; font-weight: 700; letter-spacing: 0.1em; }
+.chipsub { fill: var(--chip-num); font-size: 9.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); margin-top: 8px; justify-content: center; }
+.legend i { display: inline-block; width: 16px; height: 9px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+.legend .lh { background: var(--hi); } .legend .ll { background: var(--lo); } .legend .lz { border: 1.2px dashed var(--z); }
+.legend .li { border: 1.6px solid var(--sel); }
+.busread { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin-top: 12px; font-size: 13px; padding: 10px 12px; background: var(--panel2); border-radius: 4px; }
+.busread dt { color: var(--muted); }
+.busread dd { margin: 0; font-family: var(--font-mono); }
+
+/* registers */
+.regs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.reg { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.reg label { font-size: 11.5px; color: var(--muted); letter-spacing: 0.04em; }
+.reg input { width: 100%; font-family: var(--font-mono); font-size: 15px; padding: 4px 6px; background: var(--panel2); border: 1px solid transparent; border-radius: 3px; color: var(--ink); }
+.reg input:hover { border-color: var(--line); }
+.reg input.chg { color: var(--warn); font-weight: 600; }
+.reg.wide input { font-size: 15px; }
+.regs-sep { grid-column: 1 / -1; height: 1px; background: var(--line); margin: 2px 0; }
+.flags { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.flags span.lbl { font-size: 11.5px; color: var(--muted); margin-right: 4px; }
+.flag { width: 30px; padding: 4px 0; text-align: center; font-family: var(--font-mono); font-size: 12px; border-radius: 3px; border: 1px solid var(--line); background: var(--panel2); color: var(--muted); cursor: pointer; }
+.flag.on { background: var(--hi); border-color: var(--hi); color: var(--hi-ink); font-weight: 600; }
+.cpuinfo { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+.cpuinfo b { color: var(--ink); font-family: var(--font-mono); font-weight: 500; }
+.cpuinfo select { padding: 2px 4px; font-size: 12.5px; }
+
+/* timing */
+.timing-wrap { overflow-x: auto; }
+table.timing { border-collapse: collapse; font-size: 11.5px; }
+table.timing th, table.timing td { padding: 0; text-align: center; }
+table.timing th.rl { text-align: right; padding-right: 8px; color: var(--muted); font-weight: 500; white-space: nowrap; position: sticky; left: 0; background: var(--panel); }
+table.timing .cyc th { font-size: 10.5px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; border-left: 1px solid var(--line); padding: 0 4px 2px; white-space: nowrap; }
+table.timing .tlab th { font-family: var(--font-mono); font-weight: 400; color: var(--muted); padding-bottom: 3px; min-width: 30px; }
+table.timing td.w { height: 18px; position: relative; }
+table.timing td.w::after { content: ""; position: absolute; left: 0; right: 0; height: 2px; background: var(--ink); }
+table.timing td.w.hi::after { top: 3px; } table.timing td.w.lo::after { bottom: 3px; background: var(--lo); }
+table.timing td.w.zz::after { top: 8px; background: var(--z); }
+table.timing td.w.edge { box-shadow: inset 2px 0 0 -0px var(--ink); }
+table.timing td.w.edge.lo, table.timing td.w.edge.hi { background-image: linear-gradient(var(--ink), var(--ink)); background-size: 2px 12px; background-position: left 3px; background-repeat: no-repeat; box-shadow: none; }
+table.timing td.hx { font-family: var(--font-mono); font-size: 10.5px; height: 18px; color: var(--ink); border-left: 1px solid var(--line); padding: 0 2px; }
+table.timing td.hx.zz { color: var(--z); }
+table.timing .cur { background-color: var(--sel-soft); }
+table.timing th.cur { color: var(--sel); font-weight: 600; }
+.tnow { font-size: 13px; margin-bottom: 8px; }
+.tnow b { font-family: var(--font-mono); font-weight: 600; }
+
+/* disassembly */
+.dis { font-family: var(--font-mono); font-size: 13px; }
+.dis-row { display: grid; grid-template-columns: 18px 46px 92px minmax(0, 1fr); align-items: center; gap: 4px; padding: 2px 6px; border-radius: 3px; cursor: pointer; }
+.dis-row:hover { background: var(--panel2); }
+.dis-row .bp { width: 10px; height: 10px; border-radius: 50%; border: 1px solid transparent; }
+.dis-row:hover .bp { border-color: var(--warn); }
+.dis-row.isbp .bp { background: var(--warn); border-color: var(--warn); }
+.dis-row .ad { color: var(--muted); }
+.dis-row .by { color: var(--muted); font-size: 11.5px; white-space: nowrap; overflow: hidden; }
+.dis-row .mn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dis-row.pc { background: var(--sel-soft); }
+.dis-row.pc .ad { color: var(--sel); font-weight: 600; }
+.dis-row.exec { background: var(--warn-soft); }
+.dis-row .unm { color: var(--z); }
+
+/* memory */
+.memhead { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+.memhead input { width: 70px; }
+.memhead button { padding: 5px 9px; }
+.memgrid-wrap { overflow-x: auto; }
+table.mem { border-collapse: collapse; font-family: var(--font-mono); font-size: 12px; }
+table.mem td { padding: 1px 3px; text-align: center; white-space: nowrap; }
+table.mem td.ma { color: var(--muted); padding-right: 8px; text-align: left; }
+table.mem td.b { cursor: pointer; border-radius: 2px; min-width: 22px; }
+table.mem td.b:hover { outline: 1px solid var(--line); }
+table.mem td.b.pc { background: var(--sel-soft); color: var(--sel); font-weight: 600; }
+table.mem td.b.sp { box-shadow: inset 0 -2px 0 var(--hi); }
+table.mem td.b.wr { background: var(--hi); color: var(--hi-ink); }
+table.mem td.b.un { color: var(--z); cursor: default; }
+table.mem td.b.gap { padding-left: 8px; }
+table.mem td.asc { color: var(--muted); padding-left: 10px; letter-spacing: 0.04em; }
+table.mem input { width: 24px; font-family: var(--font-mono); font-size: 12px; padding: 0; text-align: center; border: 1px solid var(--sel); background: var(--panel); color: var(--ink); }
+
+/* loader */
+textarea { width: 100%; min-height: 210px; resize: vertical; font-size: 12.5px; line-height: 1.5; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 10px; }
+.msg { font-size: 12.5px; margin-top: 8px; font-family: var(--font-mono); min-height: 1.4em; }
+.msg.err { color: var(--warn); } .msg.ok { color: var(--ok); }
+.fieldgrid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: center; }
+.fieldgrid label { color: var(--muted); font-size: 13px; }
+.fieldgrid select, .fieldgrid input { min-width: 0; width: 100%; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 4px 12px; font-size: 12.5px; background: var(--panel); color: var(--muted); }
+.seg button[aria-selected="true"] { background: var(--btn); color: var(--btn-ink); }
+.seg button + button { border-left: 1px solid var(--line); }
+textarea { tab-size: 8; }
+textarea.drop { border-color: var(--sel); box-shadow: 0 0 0 2px var(--sel-soft); }
+/* io */
+.latches { display: flex; flex-direction: column; gap: 6px; }
+.latch { display: grid; grid-template-columns: 70px auto 1fr; gap: 10px; align-items: center; font-family: var(--font-mono); font-size: 12.5px; }
+.leds { display: flex; gap: 3px; }
+.led { width: 11px; height: 11px; border-radius: 50%; background: var(--panel2); border: 1px solid var(--line); }
+.led.on { background: var(--hi); border-color: var(--hi); box-shadow: 0 0 5px var(--hi); }
+.iolog { font-family: var(--font-mono); font-size: 12px; color: var(--muted); max-height: 140px; overflow-y: auto; margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+.iolog div b { color: var(--ink); font-weight: 500; }
+.empty { color: var(--muted); font-size: 12.5px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Z80 Bench <span>· CPU and bus debugger</span></h1>
+    <div id="status" class="status">Ready</div>
+    <div class="counters">
+      <span>T-states <b id="cntT">0</b></span>
+      <span>Instructions <b id="cntI">0</b></span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <button id="btnReset">Reset CPU</button>
+    <button id="btnClock" class="primary" title="Pulse CLK once: advances one T-state">Clock 1 T-state<kbd>C</kbd></button>
+    <button id="btnStep" class="primary" title="Run until the current instruction finishes">Step instruction<kbd>S</kbd></button>
+    <button id="btnRun">Run<kbd>R</kbd></button>
+    <label class="inline" for="speed">Speed
+      <select id="speed">
+        <option value="5">Clock 5 Hz</option>
+        <option value="50">Clock 50 Hz</option>
+        <option value="1000">Clock 1 kHz</option>
+        <option value="max" selected>Full speed</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="grid">
+    <div class="col">
+      <section class="panel">
+        <h2>Pinout <span class="aside">40-pin DIP · top view</span></h2>
+        <div class="chipwrap"><svg class="chip" id="chip" viewBox="0 0 380 540" role="group" aria-label="Z80 pinout"></svg></div>
+        <div class="legend">
+          <span><i class="lh"></i>High (1)</span><span><i class="ll"></i>Low (0)</span><span><i class="lz"></i>Floating (Z)</span><span><i class="li"></i>Input: click to toggle</span>
+        </div>
+        <dl class="busread">
+          <dt>Machine cycle</dt><dd id="brCycle">–</dd>
+          <dt>Address bus</dt><dd id="brAddr">–</dd>
+          <dt>Data bus</dt><dd id="brData">–</dd>
+        </dl>
+        <p class="hint">Clicking CLK pulses one clock. /INT is level-sensitive, /NMI triggers on a falling edge. Holding /WAIT low inserts wait states; /BUSREQ low floats the buses at the end of the current machine cycle; /RESET low holds the CPU in reset.</p>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel">
+        <h2>Memory
+          <span class="aside" id="memInfo"></span></h2>
+        <div class="memhead">
+          <label class="inline" for="memFrom">From <input id="memFrom" type="text" class="mono" value="0000" maxlength="4"></label>
+          <button id="memPrev" aria-label="Previous 256 bytes">◂</button>
+          <button id="memNext" aria-label="Next 256 bytes">▸</button>
+          <button id="memPC">Show PC</button>
+          <button id="memSP">Show SP</button>
+        </div>
+        <div class="memgrid-wrap"><table class="mem" id="mem"></table></div>
+        <p class="hint">Click a byte to edit it. Blue marks the next instruction, amber marks bytes written by the last instruction, underline marks the top of the stack.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Bus timing <span class="aside">current instruction</span></h2>
+        <div class="tnow" id="tnow">–</div>
+        <div class="timing-wrap"><table class="timing" id="timing"></table></div>
+      </section>
+
+      <section class="panel">
+        <h2>Disassembly <span class="aside">click a line to set a breakpoint</span></h2>
+        <div class="dis" id="dis"></div>
+      </section>
+    </div>
+
+    <div class="col col3">
+      <section class="panel">
+        <h2>Program
+          <span class="aside seg" role="tablist" aria-label="Input format">
+            <button id="modeAsm" role="tab" aria-selected="true">Assembly</button><button id="modeHex" role="tab" aria-selected="false">Hex</button>
+          </span></h2>
+        <textarea id="asmIn" spellcheck="false" aria-label="Z80 assembly source"></textarea>
+        <textarea id="hexIn" spellcheck="false" aria-label="Hexadecimal machine code" hidden></textarea>
+        <div class="row">
+          <label class="inline" for="loadAddr" id="loadAddrWrap" title="Where the code goes in memory. Set this to the start of ROM in your system's memory map.">Load at <input id="loadAddr" type="text" class="mono" value="0000" size="5" maxlength="4">h</label>
+          <label class="inline"><input type="checkbox" id="clearFirst" checked> Clear memory first</label>
+          <label class="inline"><input type="checkbox" id="resetAfter" checked> Reset CPU after loading</label>
+        </div>
+        <div class="row"><button id="btnLoad" class="primary">Assemble and load</button><button id="btnImport">Import file…</button><button id="btnToHex">Copy bytes to Hex tab</button>
+          <input type="file" id="fileIn" accept=".asm,.z80,.s,.a80,.mac,.inc,.txt,.hex,.ihx,.ihex,.bin,.rom,.com" hidden></div>
+        <div class="msg" id="loadMsg"></div>
+        <p class="hint" id="hintAsm">Standard Zilog syntax, one instruction per line. Labels end with <span class="mono">:</span>; comments start with <span class="mono">;</span>. Directives: <span class="mono">ORG</span>, <span class="mono">EQU</span>, <span class="mono">DB</span>, <span class="mono">DW</span>, <span class="mono">DS</span>, <span class="mono">END</span>. Numbers: <span class="mono">1Fh</span>, <span class="mono">0x1F</span>, <span class="mono">$1F</span>, <span class="mono">%1010</span>, <span class="mono">'A'</span>, and <span class="mono">$</span> for the current address. Undocumented instructions (<span class="mono">IXH</span>, <span class="mono">SLL</span>, <span class="mono">OUT (C),0</span>) are accepted. Code starts at the <b>Load at</b> address; an <span class="mono">ORG</span> in the source overrides it. Import a file with the button or by dropping it on the editor.</p>
+        <p class="hint" id="hintHex" hidden>Hex bytes separated by spaces or newlines. Text after <span class="mono">;</span> is ignored. Write <span class="mono">0100:</span> to continue loading at another address. Intel HEX files (lines starting with <span class="mono">:</span>) are also accepted and keep their own addresses. Raw binary ROM images (<span class="mono">.bin</span>, <span class="mono">.rom</span>) import here as hex. Import a file with the button or by dropping it on the editor.</p>
+      </section>
+
+      <section class="panel">
+        <h2>System</h2>
+        <div class="fieldgrid">
+          <label for="memSize">Installed memory</label>
+          <select id="memSize">
+            <option value="1024">1 KB (0000–03FF)</option>
+            <option value="2048">2 KB (0000–07FF)</option>
+            <option value="4096" selected>4 KB (0000–0FFF)</option>
+            <option value="8192">8 KB (0000–1FFF)</option>
+            <option value="16384">16 KB (0000–3FFF)</option>
+            <option value="32768">32 KB (0000–7FFF)</option>
+            <option value="49152">48 KB (0000–BFFF)</option>
+            <option value="65536">64 KB (0000–FFFF)</option>
+          </select>
+          <label for="unmapped">Above top of memory</label>
+          <select id="unmapped">
+            <option value="ff">Reads return FFh, writes ignored</option>
+            <option value="mirror">Mirrors installed memory</option>
+          </select>
+          <label for="intVec">Data bus during INT ack</label>
+          <input id="intVec" type="text" class="mono" value="FF" size="3" maxlength="2" title="Byte the interrupting device places on the bus. IM 0: an RST opcode. IM 2: low byte of the vector table address.">
+          <label for="inDefault">IN reads return</label>
+          <input id="inDefault" type="text" class="mono" value="FF" size="3" maxlength="2" title="Byte returned by IN for ports with no value set below">
+        </div>
+        <div class="row">
+          <label class="inline" for="portNo">Port <input id="portNo" type="text" class="mono" value="02" size="3" maxlength="2"></label>
+          <label class="inline" for="portVal">returns <input id="portVal" type="text" class="mono" value="5A" size="3" maxlength="2"></label>
+          <button id="btnPort">Set input port</button>
+        </div>
+        <div class="msg" id="portList"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Registers <span class="aside" id="regNote"></span></h2>
+        <div class="regs" id="regs"></div>
+        <div class="flags" id="flags"><span class="lbl">F</span></div>
+        <div class="cpuinfo">
+          <span>IFF1 <b id="iff1">0</b></span>
+          <span>IFF2 <b id="iff2">0</b></span>
+          <label class="inline" for="imSel">IM <select id="imSel"><option>0</option><option>1</option><option>2</option></select></label>
+          <span>State <b id="cpuState">running</b></span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>I/O ports <span class="aside">last value written by OUT</span></h2>
+        <div class="latches" id="latches"></div>
+        <div class="iolog" id="iolog"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- Z80 CPU core with machine-cycle bus logging ----
+const FS = 0x80, FZ = 0x40, F5 = 0x20, FH = 0x10, F3 = 0x08, FPV = 0x04, FN = 0x02, FC = 0x01;
+const SZ53 = new Uint8Array(256), SZ53P = new Uint8Array(256);
+for (let i = 0; i < 256; i++) {
+  SZ53[i] = (i & 0xA8) | (i ? 0 : FZ);
+  let p = i; p ^= p >> 4; p ^= p >> 2; p ^= p >> 1;
+  SZ53P[i] = SZ53[i] | ((p & 1) ? 0 : FPV);
+}
+const sgn = v => (v & 0x80) ? v - 256 : v;
+
+class Z80 {
+  constructor(bus) {
+    this.bus = bus;
+    this.log = true;
+    this.cyc = [];
+    this.nmiPending = false;
+    this.intLine = false;
+    this.intVector = 0xFF;
+    this.reset();
+  }
+  reset() {
+    this.a = 0xFF; this.f = 0xFF; this.b = this.c = this.d = this.e = this.h = this.l = 0;
+    this.a_ = this.f_ = this.b_ = this.c_ = this.d_ = this.e_ = this.h_ = this.l_ = 0;
+    this.ix = this.iy = 0xFFFF; this.sp = 0xFFFF; this.pc = 0; this.i = 0; this.r = 0;
+    this.iff1 = this.iff2 = 0; this.im = 0; this.halted = false; this.eiDelay = false;
+    this.nmiPending = false;
+  }
+  snapshot() {
+    const s = {};
+    for (const k of ['a','f','b','c','d','e','h','l','a_','f_','b_','c_','d_','e_','h_','l_','ix','iy','sp','pc','i','r','iff1','iff2','im','halted']) s[k] = this[k];
+    return s;
+  }
+  // pairs
+  get bc() { return (this.b << 8) | this.c; } set bc(v) { this.b = (v >> 8) & 0xFF; this.c = v & 0xFF; }
+  get de() { return (this.d << 8) | this.e; } set de(v) { this.d = (v >> 8) & 0xFF; this.e = v & 0xFF; }
+  get hl() { return (this.h << 8) | this.l; } set hl(v) { this.h = (v >> 8) & 0xFF; this.l = v & 0xFF; }
+  get af() { return (this.a << 8) | this.f; } set af(v) { this.a = (v >> 8) & 0xFF; this.f = v & 0xFF; }
+
+  // ---- bus cycles ----
+  fetch() {
+    const a = this.pc, v = this.bus.read(a);
+    if (this.log) this.cyc.push({ k: 'M1', a, d: v, rf: (this.i << 8) | this.r });
+    this.pc = (a + 1) & 0xFFFF;
+    this.r = (this.r & 0x80) | ((this.r + 1) & 0x7F);
+    return v;
+  }
+  mr(a) { a &= 0xFFFF; const v = this.bus.read(a); if (this.log) this.cyc.push({ k: 'MR', a, d: v }); return v; }
+  mw(a, v) { a &= 0xFFFF; v &= 0xFF; this.bus.write(a, v); if (this.log) this.cyc.push({ k: 'MW', a, d: v }); }
+  imm() { const v = this.mr(this.pc); this.pc = (this.pc + 1) & 0xFFFF; return v; }
+  imm16() { const lo = this.imm(); return (this.imm() << 8) | lo; }
+  idle(n) { if (this.log) this.cyc.push({ k: 'ID', n }); }
+  ioIn(p) { p &= 0xFFFF; const v = this.bus.input(p) & 0xFF; if (this.log) this.cyc.push({ k: 'IR', a: p, d: v }); return v; }
+  ioOut(p, v) { p &= 0xFFFF; v &= 0xFF; this.bus.output(p, v); if (this.log) this.cyc.push({ k: 'IW', a: p, d: v }); }
+  push(v) { this.sp = (this.sp - 1) & 0xFFFF; this.mw(this.sp, v >> 8); this.sp = (this.sp - 1) & 0xFFFF; this.mw(this.sp, v); }
+  pop() { const lo = this.mr(this.sp); this.sp = (this.sp + 1) & 0xFFFF; const hi = this.mr(this.sp); this.sp = (this.sp + 1) & 0xFFFF; return (hi << 8) | lo; }
+
+  // ---- register access with IX/IY substitution ----
+  getR(i, xy) {
+    switch (i) {
+      case 0: return this.b; case 1: return this.c; case 2: return this.d; case 3: return this.e;
+      case 4: return xy === 1 ? this.ix >> 8 : xy === 2 ? this.iy >> 8 : this.h;
+      case 5: return xy === 1 ? this.ix & 0xFF : xy === 2 ? this.iy & 0xFF : this.l;
+      case 7: return this.a;
+    }
+  }
+  setR(i, v, xy) {
+    v &= 0xFF;
+    switch (i) {
+      case 0: this.b = v; break; case 1: this.c = v; break; case 2: this.d = v; break; case 3: this.e = v; break;
+      case 4: if (xy === 1) this.ix = (this.ix & 0xFF) | (v << 8); else if (xy === 2) this.iy = (this.iy & 0xFF) | (v << 8); else this.h = v; break;
+      case 5: if (xy === 1) this.ix = (this.ix & 0xFF00) | v; else if (xy === 2) this.iy = (this.iy & 0xFF00) | v; else this.l = v; break;
+      case 7: this.a = v; break;
+    }
+  }
+  getHL(xy) { return xy === 1 ? this.ix : xy === 2 ? this.iy : this.hl; }
+  setHL(v, xy) { v &= 0xFFFF; if (xy === 1) this.ix = v; else if (xy === 2) this.iy = v; else this.hl = v; }
+  getRP(p, xy) { return p === 0 ? this.bc : p === 1 ? this.de : p === 2 ? this.getHL(xy) : this.sp; }
+  setRP(p, v, xy) { v &= 0xFFFF; if (p === 0) this.bc = v; else if (p === 1) this.de = v; else if (p === 2) this.setHL(v, xy); else this.sp = v; }
+  getRP2(p, xy) { return p === 3 ? this.af : this.getRP(p, xy); }
+  setRP2(p, v, xy) { if (p === 3) this.af = v & 0xFFFF; else this.setRP(p, v, xy); }
+  idxAddr(xy) {
+    if (!xy) return this.hl;
+    const d = sgn(this.imm()); this.idle(5);
+    return ((xy === 1 ? this.ix : this.iy) + d) & 0xFFFF;
+  }
+  cond(y) {
+    const f = this.f;
+    switch (y) {
+      case 0: return !(f & FZ); case 1: return !!(f & FZ); case 2: return !(f & FC); case 3: return !!(f & FC);
+      case 4: return !(f & FPV); case 5: return !!(f & FPV); case 6: return !(f & FS); case 7: return !!(f & FS);
+    }
+  }
+
+  // ---- ALU ----
+  add8(v, cy) {
+    const a = this.a, r = a + v + cy, r8 = r & 0xFF;
+    this.f = SZ53[r8] | ((a ^ v ^ r) & FH) | ((~(a ^ v) & (a ^ r) & 0x80) ? FPV : 0) | ((r >> 8) & FC);
+    this.a = r8;
+  }
+  sub8(v, cy, store) {
+    const a = this.a, r = a - v - cy, r8 = r & 0xFF;
+    const f = (r8 & 0x80) | (r8 ? 0 : FZ) | FN | ((a ^ v ^ r) & FH) | (((a ^ v) & (a ^ r) & 0x80) ? FPV : 0) | ((r & 0x100) ? FC : 0);
+    if (store) { this.f = f | (r8 & 0x28); this.a = r8; } else this.f = f | (v & 0x28);
+  }
+  alu(op, v) {
+    switch (op) {
+      case 0: this.add8(v, 0); break;
+      case 1: this.add8(v, this.f & FC); break;
+      case 2: this.sub8(v, 0, true); break;
+      case 3: this.sub8(v, this.f & FC, true); break;
+      case 4: this.a &= v; this.f = SZ53P[this.a] | FH; break;
+      case 5: this.a ^= v; this.f = SZ53P[this.a]; break;
+      case 6: this.a |= v; this.f = SZ53P[this.a]; break;
+      case 7: this.sub8(v, 0, false); break;
+    }
+  }
+  inc8(v) { const r = (v + 1) & 0xFF; this.f = (this.f & FC) | SZ53[r] | ((r & 0x0F) ? 0 : FH) | (r === 0x80 ? FPV : 0); return r; }
+  dec8(v) { const r = (v - 1) & 0xFF; this.f = (this.f & FC) | FN | SZ53[r] | ((v & 0x0F) ? 0 : FH) | (v === 0x80 ? FPV : 0); return r; }
+  rot(op, v) {
+    let r, c;
+    switch (op) {
+      case 0: c = v >> 7; r = ((v << 1) | c) & 0xFF; break;
+      case 1: c = v & 1; r = (v >> 1) | (c << 7); break;
+      case 2: c = v >> 7; r = ((v << 1) | (this.f & FC)) & 0xFF; break;
+      case 3: c = v & 1; r = (v >> 1) | ((this.f & FC) << 7); break;
+      case 4: c = v >> 7; r = (v << 1) & 0xFF; break;
+      case 5: c = v & 1; r = (v >> 1) | (v & 0x80); break;
+      case 6: c = v >> 7; r = ((v << 1) | 1) & 0xFF; break;
+      case 7: c = v & 1; r = v >> 1; break;
+    }
+    this.f = SZ53P[r] | c;
+    return r;
+  }
+  bit(y, v, src35) {
+    const t = v & (1 << y);
+    this.f = (this.f & FC) | FH | (t ? 0 : (FZ | FPV)) | (t & 0x80) | (src35 & 0x28);
+  }
+  add16(a, v) {
+    const r = a + v;
+    this.f = (this.f & (FS | FZ | FPV)) | (((a ^ v ^ r) >> 8) & FH) | ((r >> 8) & 0x28) | ((r >> 16) & FC);
+    return r & 0xFFFF;
+  }
+  adc16(v) {
+    const a = this.hl, r = a + v + (this.f & FC), r16 = r & 0xFFFF;
+    this.f = ((r16 >> 8) & 0xA8) | (r16 ? 0 : FZ) | (((a ^ v ^ r) >> 8) & FH) | ((~(a ^ v) & (a ^ r) & 0x8000) ? FPV : 0) | ((r >> 16) & FC);
+    this.hl = r16;
+  }
+  sbc16(v) {
+    const a = this.hl, r = a - v - (this.f & FC), r16 = r & 0xFFFF;
+    this.f = ((r16 >> 8) & 0xA8) | (r16 ? 0 : FZ) | (((a ^ v ^ r) >> 8) & FH) | (((a ^ v) & (a ^ r) & 0x8000) ? FPV : 0) | FN | ((r & 0x10000) ? FC : 0);
+    this.hl = r16;
+  }
+  daa() {
+    const a = this.a, f = this.f;
+    let corr = 0, c = f & FC;
+    if ((f & FH) || (a & 0x0F) > 9) corr |= 0x06;
+    if (c || a > 0x99) { corr |= 0x60; c = FC; }
+    let r, h;
+    if (f & FN) { h = ((f & FH) && (a & 0x0F) < 6) ? FH : 0; r = (a - corr) & 0xFF; }
+    else { h = ((a & 0x0F) > 9) ? FH : 0; r = (a + corr) & 0xFF; }
+    this.a = r; this.f = SZ53P[r] | h | (f & FN) | c;
+  }
+
+  // ---- one instruction (or interrupt response); returns machine-cycle log ----
+  step() {
+    this.cyc = [];
+    const blockInt = this.eiDelay; this.eiDelay = false;
+    if (this.nmiPending) {
+      this.nmiPending = false; this.halted = false;
+      this.iff1 = 0;
+      const a = this.pc, v = this.bus.read(a);
+      if (this.log) this.cyc.push({ k: 'M1', a, d: v, rf: (this.i << 8) | this.r });
+      this.r = (this.r & 0x80) | ((this.r + 1) & 0x7F);
+      this.idle(1); this.push(this.pc); this.pc = 0x0066;
+      this.lastEvent = 'NMI';
+      return this.cyc;
+    }
+    if (this.intLine && this.iff1 && !blockInt) {
+      this.halted = false; this.iff1 = this.iff2 = 0;
+      const vec = this.intVector & 0xFF;
+      if (this.log) this.cyc.push({ k: 'IA', a: this.pc, d: vec, rf: (this.i << 8) | this.r });
+      this.r = (this.r & 0x80) | ((this.r + 1) & 0x7F);
+      this.idle(1);
+      if (this.im === 2) {
+        this.push(this.pc);
+        const t = (this.i << 8) | vec;
+        const lo = this.mr(t), hi = this.mr(t + 1);
+        this.pc = (hi << 8) | lo;
+      } else if (this.im === 1) {
+        this.push(this.pc); this.pc = 0x0038;
+      } else {
+        // IM 0: supports an RST opcode placed on the data bus
+        this.push(this.pc); this.pc = ((vec & 0xC7) === 0xC7) ? (vec & 0x38) : 0x0038;
+      }
+      this.lastEvent = 'INT';
+      return this.cyc;
+    }
+    this.lastEvent = null;
+    if (this.halted) {
+      const a = this.pc, v = this.bus.read(a);
+      if (this.log) this.cyc.push({ k: 'M1', a, d: v, rf: (this.i << 8) | this.r, halt: true });
+      this.r = (this.r & 0x80) | ((this.r + 1) & 0x7F);
+      return this.cyc;
+    }
+    let op = this.fetch(), xy = 0;
+    while (op === 0xDD || op === 0xFD) { xy = op === 0xDD ? 1 : 2; op = this.fetch(); }
+    if (op === 0xCB) {
+      if (xy) {
+        const base = xy === 1 ? this.ix : this.iy;
+        const addr = (base + sgn(this.imm())) & 0xFFFF;
+        const o = this.mr(this.pc); this.pc = (this.pc + 1) & 0xFFFF; this.idle(2);
+        this.execCBIdx(o, addr);
+      } else this.execCB(this.fetch());
+    } else if (op === 0xED) this.execED(this.fetch());
+    else this.execMain(op, xy);
+    return this.cyc;
+  }
+
+  execMain(op, xy) {
+    const x = op >> 6, y = (op >> 3) & 7, z = op & 7, p = y >> 1, q = y & 1;
+    if (x === 0) {
+      switch (z) {
+        case 0:
+          if (y === 0) {}
+          else if (y === 1) { let t = this.a; this.a = this.a_; this.a_ = t; t = this.f; this.f = this.f_; this.f_ = t; }
+          else if (y === 2) { this.idle(1); const d = sgn(this.imm()); this.b = (this.b - 1) & 0xFF; if (this.b) { this.idle(5); this.pc = (this.pc + d) & 0xFFFF; } }
+          else if (y === 3) { const d = sgn(this.imm()); this.idle(5); this.pc = (this.pc + d) & 0xFFFF; }
+          else { const d = sgn(this.imm()); if (this.cond(y - 4)) { this.idle(5); this.pc = (this.pc + d) & 0xFFFF; } }
+          break;
+        case 1:
+          if (!q) this.setRP(p, this.imm16(), xy);
+          else { this.idle(7); this.setHL(this.add16(this.getHL(xy), this.getRP(p, xy)), xy); }
+          break;
+        case 2: {
+          if (!q) {
+            if (p === 0) this.mw(this.bc, this.a);
+            else if (p === 1) this.mw(this.de, this.a);
+            else if (p === 2) { const n = this.imm16(), v = this.getHL(xy); this.mw(n, v & 0xFF); this.mw(n + 1, v >> 8); }
+            else this.mw(this.imm16(), this.a);
+          } else {
+            if (p === 0) this.a = this.mr(this.bc);
+            else if (p === 1) this.a = this.mr(this.de);
+            else if (p === 2) { const n = this.imm16(); const lo = this.mr(n), hi = this.mr(n + 1); this.setHL((hi << 8) | lo, xy); }
+            else this.a = this.mr(this.imm16());
+          }
+          break;
+        }
+        case 3: this.idle(2); this.setRP(p, this.getRP(p, xy) + (q ? -1 : 1), xy); break;
+        case 4: case 5: {
+          if (y === 6) { const ad = this.idxAddr(xy); const v = this.mr(ad); this.idle(1); this.mw(ad, z === 4 ? this.inc8(v) : this.dec8(v)); }
+          else { const v = this.getR(y, xy); this.setR(y, z === 4 ? this.inc8(v) : this.dec8(v), xy); }
+          break;
+        }
+        case 6:
+          if (y === 6) {
+            if (xy) { const d = sgn(this.imm()); const n = this.imm(); this.idle(2); this.mw(((xy === 1 ? this.ix : this.iy) + d) & 0xFFFF, n); }
+            else this.mw(this.hl, this.imm());
+          } else this.setR(y, this.imm(), xy);
+          break;
+        case 7: {
+          const a = this.a, f = this.f;
+          switch (y) {
+            case 0: this.a = ((a << 1) | (a >> 7)) & 0xFF; this.f = (f & (FS | FZ | FPV)) | (this.a & 0x28) | (a >> 7); break;
+            case 1: this.a = ((a >> 1) | (a << 7)) & 0xFF; this.f = (f & (FS | FZ | FPV)) | (this.a & 0x28) | (a & 1); break;
+            case 2: this.a = ((a << 1) | (f & FC)) & 0xFF; this.f = (f & (FS | FZ | FPV)) | (this.a & 0x28) | (a >> 7); break;
+            case 3: this.a = ((a >> 1) | ((f & FC) << 7)) & 0xFF; this.f = (f & (FS | FZ | FPV)) | (this.a & 0x28) | (a & 1); break;
+            case 4: this.daa(); break;
+            case 5: this.a = a ^ 0xFF; this.f = (f & (FS | FZ | FPV | FC)) | FH | FN | (this.a & 0x28); break;
+            case 6: this.f = (f & (FS | FZ | FPV)) | FC | (a & 0x28); break;
+            case 7: this.f = (f & (FS | FZ | FPV)) | ((f & FC) ? FH : FC) | (a & 0x28); break;
+          }
+          break;
+        }
+      }
+    } else if (x === 1) {
+      if (y === 6 && z === 6) { this.halted = true; }
+      else if (y === 6) { const ad = this.idxAddr(xy); this.mw(ad, this.getR(z, 0)); }
+      else if (z === 6) { const ad = this.idxAddr(xy); this.setR(y, this.mr(ad), 0); }
+      else this.setR(y, this.getR(z, xy), xy);
+    } else if (x === 2) {
+      this.alu(y, z === 6 ? this.mr(this.idxAddr(xy)) : this.getR(z, xy));
+    } else {
+      switch (z) {
+        case 0: this.idle(1); if (this.cond(y)) this.pc = this.pop(); break;
+        case 1:
+          if (!q) this.setRP2(p, this.pop(), xy);
+          else if (p === 0) this.pc = this.pop();
+          else if (p === 1) {
+            let t;
+            t = this.b; this.b = this.b_; this.b_ = t; t = this.c; this.c = this.c_; this.c_ = t;
+            t = this.d; this.d = this.d_; this.d_ = t; t = this.e; this.e = this.e_; this.e_ = t;
+            t = this.h; this.h = this.h_; this.h_ = t; t = this.l; this.l = this.l_; this.l_ = t;
+          }
+          else if (p === 2) this.pc = this.getHL(xy);
+          else { this.idle(2); this.sp = this.getHL(xy); }
+          break;
+        case 2: { const n = this.imm16(); if (this.cond(y)) this.pc = n; break; }
+        case 3:
+          switch (y) {
+            case 0: this.pc = this.imm16(); break;
+            case 2: { const n = this.imm(); this.ioOut((this.a << 8) | n, this.a); break; }
+            case 3: { const n = this.imm(); this.a = this.ioIn((this.a << 8) | n); break; }
+            case 4: {
+              const lo = this.mr(this.sp), hi = this.mr(this.sp + 1); this.idle(1);
+              const v = this.getHL(xy); this.mw(this.sp + 1, v >> 8); this.mw(this.sp, v & 0xFF); this.idle(2);
+              this.setHL((hi << 8) | lo, xy); break;
+            }
+            case 5: { const t = this.de; this.de = this.hl; this.hl = t; break; }
+            case 6: this.iff1 = this.iff2 = 0; break;
+            case 7: this.iff1 = this.iff2 = 1; this.eiDelay = true; break;
+          }
+          break;
+        case 4: { const n = this.imm16(); if (this.cond(y)) { this.idle(1); this.push(this.pc); this.pc = n; } break; }
+        case 5:
+          if (!q) { this.idle(1); this.push(this.getRP2(p, xy)); }
+          else if (p === 0) { const n = this.imm16(); this.idle(1); this.push(this.pc); this.pc = n; }
+          break;
+        case 6: this.alu(y, this.imm()); break;
+        case 7: this.idle(1); this.push(this.pc); this.pc = y << 3; break;
+      }
+    }
+  }
+
+  execCB(op) {
+    const x = op >> 6, y = (op >> 3) & 7, z = op & 7;
+    if (z === 6) {
+      const ad = this.hl, v = this.mr(ad); this.idle(1);
+      if (x === 1) { this.bit(y, v, v); return; }
+      this.mw(ad, x === 0 ? this.rot(y, v) : x === 2 ? v & ~(1 << y) : v | (1 << y));
+      return;
+    }
+    const v = this.getR(z, 0);
+    if (x === 0) this.setR(z, this.rot(y, v), 0);
+    else if (x === 1) this.bit(y, v, v);
+    else if (x === 2) this.setR(z, v & ~(1 << y), 0);
+    else this.setR(z, v | (1 << y), 0);
+  }
+  execCBIdx(op, ad) {
+    const x = op >> 6, y = (op >> 3) & 7, z = op & 7;
+    const v = this.mr(ad); this.idle(1);
+    if (x === 1) { this.bit(y, v, ad >> 8); return; }
+    const r = x === 0 ? this.rot(y, v) : x === 2 ? v & ~(1 << y) : v | (1 << y);
+    this.mw(ad, r);
+    if (z !== 6) this.setR(z, r, 0);
+  }
+
+  execED(op) {
+    const x = op >> 6, y = (op >> 3) & 7, z = op & 7, p = y >> 1, q = y & 1;
+    if (x === 1) {
+      switch (z) {
+        case 0: { const v = this.ioIn(this.bc); this.f = (this.f & FC) | SZ53P[v]; if (y !== 6) this.setR(y, v, 0); break; }
+        case 1: this.ioOut(this.bc, y === 6 ? 0 : this.getR(y, 0)); break;
+        case 2: this.idle(7); if (!q) this.sbc16(this.getRP(p, 0)); else this.adc16(this.getRP(p, 0)); break;
+        case 3: {
+          const n = this.imm16();
+          if (!q) { const v = this.getRP(p, 0); this.mw(n, v & 0xFF); this.mw(n + 1, v >> 8); }
+          else { const lo = this.mr(n), hi = this.mr(n + 1); this.setRP(p, (hi << 8) | lo, 0); }
+          break;
+        }
+        case 4: { const v = this.a; this.a = 0; this.sub8(v, 0, true); break; }
+        case 5: this.pc = this.pop(); this.iff1 = this.iff2; break;
+        case 6: this.im = [0, 0, 1, 2, 0, 0, 1, 2][y]; break;
+        case 7:
+          switch (y) {
+            case 0: this.idle(1); this.i = this.a; break;
+            case 1: this.idle(1); this.r = this.a; break;
+            case 2: this.idle(1); this.a = this.i; this.f = (this.f & FC) | SZ53[this.a] | (this.iff2 ? FPV : 0); break;
+            case 3: this.idle(1); this.a = this.r; this.f = (this.f & FC) | SZ53[this.a] | (this.iff2 ? FPV : 0); break;
+            case 4: { const v = this.mr(this.hl); this.idle(4); this.mw(this.hl, ((this.a << 4) | (v >> 4)) & 0xFF); this.a = (this.a & 0xF0) | (v & 0x0F); this.f = (this.f & FC) | SZ53P[this.a]; break; }
+            case 5: { const v = this.mr(this.hl); this.idle(4); this.mw(this.hl, ((v << 4) | (this.a & 0x0F)) & 0xFF); this.a = (this.a & 0xF0) | (v >> 4); this.f = (this.f & FC) | SZ53P[this.a]; break; }
+          }
+          break;
+      }
+    } else if (x === 2 && z <= 3 && y >= 4) {
+      const inc = (y & 1) ? -1 : 1, rep = y >= 6;
+      if (z === 0) { // LDI/LDD/LDIR/LDDR
+        const v = this.mr(this.hl); this.mw(this.de, v); this.idle(2);
+        this.hl = this.hl + inc; this.de = this.de + inc; this.bc = this.bc - 1;
+        const n = (v + this.a) & 0xFF;
+        this.f = (this.f & (FS | FZ | FC)) | (this.bc ? FPV : 0) | (n & F3) | ((n & 0x02) ? F5 : 0);
+        if (rep && this.bc) { this.idle(5); this.pc = (this.pc - 2) & 0xFFFF; }
+      } else if (z === 1) { // CPI/CPD/CPIR/CPDR
+        const v = this.mr(this.hl); this.idle(5);
+        const r = (this.a - v) & 0xFF, h = (this.a ^ v ^ r) & FH;
+        this.hl = this.hl + inc; this.bc = this.bc - 1;
+        const n = (r - (h ? 1 : 0)) & 0xFF;
+        this.f = (this.f & FC) | FN | (r & 0x80) | (r ? 0 : FZ) | h | (this.bc ? FPV : 0) | (n & F3) | ((n & 0x02) ? F5 : 0);
+        if (rep && this.bc && r) { this.idle(5); this.pc = (this.pc - 2) & 0xFFFF; }
+      } else if (z === 2) { // INI/IND/INIR/INDR
+        this.idle(1); const v = this.ioIn(this.bc); this.mw(this.hl, v);
+        this.b = (this.b - 1) & 0xFF; this.hl = this.hl + inc;
+        this.f = (SZ53[this.b] & ~FPV) | FN | (this.f & FC);
+        if (rep && this.b) { this.idle(5); this.pc = (this.pc - 2) & 0xFFFF; }
+      } else { // OUTI/OUTD/OTIR/OTDR
+        this.idle(1); const v = this.mr(this.hl); this.b = (this.b - 1) & 0xFF;
+        this.ioOut(this.bc, v); this.hl = this.hl + inc;
+        this.f = (SZ53[this.b] & ~FPV) | FN | (this.f & FC);
+        if (rep && this.b) { this.idle(5); this.pc = (this.pc - 2) & 0xFFFF; }
+      }
+    }
+    // all other ED opcodes behave as an 8-T NOP
+  }
+}
+
+// ---- Disassembler ----
+const DR = ['B', 'C', 'D', 'E', 'H', 'L', '(HL)', 'A'];
+const DRP = ['BC', 'DE', 'HL', 'SP'], DRP2 = ['BC', 'DE', 'HL', 'AF'];
+const DCC = ['NZ', 'Z', 'NC', 'C', 'PO', 'PE', 'P', 'M'];
+const DALU = ['ADD A,', 'ADC A,', 'SUB ', 'SBC A,', 'AND ', 'XOR ', 'OR ', 'CP '];
+const DROT = ['RLC', 'RRC', 'RL', 'RR', 'SLA', 'SRA', 'SLL', 'SRL'];
+const DBLK = [['LDI', 'CPI', 'INI', 'OUTI'], ['LDD', 'CPD', 'IND', 'OUTD'], ['LDIR', 'CPIR', 'INIR', 'OTIR'], ['LDDR', 'CPDR', 'INDR', 'OTDR']];
+const h2 = v => v.toString(16).toUpperCase().padStart(2, '0');
+const h4 = v => v.toString(16).toUpperCase().padStart(4, '0');
+
+// rec: optional array; when given, operands become placeholders ({n} {nn} {d} {e})
+// and every byte read is recorded with its role (used to build the assembler's table).
+function disasm(read, addr, rec) {
+  let pc = addr, kind = 'fix';
+  const rd = () => { const v = read(pc & 0xFFFF); if (rec) rec.push(kind === 'fix' ? v : kind); pc++; return v; };
+  const as = (k, f) => { kind = k; const v = f(); kind = 'fix'; return v; };
+  const n8 = () => rec ? (as('n', rd), '{n}') : h2(rd()) + 'h';
+  const n16 = () => { if (rec) { as('nl', rd); as('nh', rd); return '{nn}'; } const lo = rd(); return h4((rd() << 8) | lo) + 'h'; };
+  let op = rd(), xy = 0, text;
+  while ((op === 0xDD || op === 0xFD) && pc - addr < 4) { xy = op === 0xDD ? 1 : 2; op = rd(); }
+  const IX = ['HL', 'IX', 'IY'][xy];
+  const disp = () => { if (rec) { as('d', rd); return '(' + IX + '+{d})'; } const d = sgn(rd()); return '(' + IX + (d < 0 ? '-' : '+') + h2(Math.abs(d)) + 'h)'; };
+  const reg = (i, allowIdx) => {
+    if (i === 6) return xy ? disp() : '(HL)';
+    if (allowIdx && xy && i === 4) return IX + 'H';
+    if (allowIdx && xy && i === 5) return IX + 'L';
+    return DR[i];
+  };
+  const rp = p => p === 2 ? IX : DRP[p];
+  const x = op >> 6, y = (op >> 3) & 7, z = op & 7, p = y >> 1, q = y & 1;
+  if (op === 0xCB) {
+    let dstr = '', o;
+    if (xy) { dstr = disp(); o = rd(); } else o = rd();
+    const cx = o >> 6, cy = (o >> 3) & 7, cz = o & 7;
+    const target = xy ? dstr : DR[cz];
+    const tail = (xy && cz !== 6 && cx !== 1) ? ',' + DR[cz] : '';
+    if (cx === 0) text = DROT[cy] + ' ' + target + tail;
+    else text = ['', 'BIT', 'RES', 'SET'][cx] + ' ' + cy + ',' + target + tail;
+  } else if (op === 0xED) {
+    const o = rd(), ex = o >> 6, ey = (o >> 3) & 7, ez = o & 7, ep = ey >> 1, eq = ey & 1;
+    if (ex === 1) {
+      switch (ez) {
+        case 0: text = ey === 6 ? 'IN (C)' : 'IN ' + DR[ey] + ',(C)'; break;
+        case 1: text = ey === 6 ? 'OUT (C),0' : 'OUT (C),' + DR[ey]; break;
+        case 2: text = (eq ? 'ADC' : 'SBC') + ' HL,' + DRP[ep]; break;
+        case 3: text = eq ? 'LD ' + DRP[ep] + ',(' + n16() + ')' : 'LD (' + n16() + '),' + DRP[ep]; break;
+        case 4: text = 'NEG'; break;
+        case 5: text = ey === 1 ? 'RETI' : 'RETN'; break;
+        case 6: text = 'IM ' + [0, 0, 1, 2, 0, 0, 1, 2][ey]; break;
+        case 7: text = ['LD I,A', 'LD R,A', 'LD A,I', 'LD A,R', 'RRD', 'RLD', 'NOP', 'NOP'][ey]; break;
+      }
+    } else if (ex === 2 && ez <= 3 && ey >= 4) text = DBLK[ey - 4][ez];
+    else text = 'NOP*';
+  } else if (x === 0) {
+    switch (z) {
+      case 0: {
+        if (y === 0) text = 'NOP';
+        else if (y === 1) text = "EX AF,AF'";
+        else { const d = sgn(rec ? as('e', rd) : rd()); const t = rec ? '{e}' : h4((pc + d) & 0xFFFF) + 'h';
+          text = y === 2 ? 'DJNZ ' + t : y === 3 ? 'JR ' + t : 'JR ' + DCC[y - 4] + ',' + t; }
+        break;
+      }
+      case 1: text = q ? 'ADD ' + IX + ',' + rp(p) : 'LD ' + rp(p) + ',' + n16(); break;
+      case 2: text = [['LD (BC),A', 'LD (DE),A', null, null], ['LD A,(BC)', 'LD A,(DE)', null, null]][q][p];
+        if (!text) text = p === 2 ? (q ? 'LD ' + IX + ',(' + n16() + ')' : 'LD (' + n16() + '),' + IX) : (q ? 'LD A,(' + n16() + ')' : 'LD (' + n16() + '),A');
+        break;
+      case 3: text = (q ? 'DEC ' : 'INC ') + rp(p); break;
+      case 4: text = 'INC ' + reg(y, true); break;
+      case 5: text = 'DEC ' + reg(y, true); break;
+      case 6: { const t = reg(y, true); text = 'LD ' + t + ',' + n8(); break; }
+      case 7: text = ['RLCA', 'RRCA', 'RLA', 'RRA', 'DAA', 'CPL', 'SCF', 'CCF'][y]; break;
+    }
+  } else if (x === 1) {
+    if (y === 6 && z === 6) text = 'HALT';
+    else { const mem = y === 6 || z === 6; text = 'LD ' + reg(y, !mem) + ',' + reg(z, !mem); }
+  } else if (x === 2) text = DALU[y] + reg(z, true);
+  else {
+    switch (z) {
+      case 0: text = 'RET ' + DCC[y]; break;
+      case 1: text = !q ? 'POP ' + (p === 2 ? IX : DRP2[p]) : ['RET', 'EXX', 'JP (' + IX + ')', 'LD SP,' + IX][p]; break;
+      case 2: text = 'JP ' + DCC[y] + ',' + n16(); break;
+      case 3: text = [() => 'JP ' + n16(), null, () => 'OUT (' + n8() + '),A', () => 'IN A,(' + n8() + ')', () => 'EX (SP),' + IX, () => 'EX DE,HL', () => 'DI', () => 'EI'][y](); break;
+      case 4: text = 'CALL ' + DCC[y] + ',' + n16(); break;
+      case 5: text = !q ? 'PUSH ' + (p === 2 ? IX : DRP2[p]) : 'CALL ' + n16(); break;
+      case 6: text = DALU[y] + n8(); break;
+      case 7: text = 'RST ' + h2(y << 3) + 'h'; break;
+    }
+  }
+  return { len: pc - addr, text };
+}
+
+if (typeof module !== 'undefined') module.exports = { Z80, disasm, h2, h4 };
+</script>
+<script>
+// ---- Z80 assembler (two-pass). Opcode table is generated from the disassembler. ----
+const ASM_TABLE = (() => {
+  const table = new Map();
+  const add = bytes => {
+    const rec = [];
+    const { text } = disasm(a => (a < bytes.length ? bytes[a] : 0), 0, rec);
+    if (text === 'NOP*') return;
+    const key = text.toUpperCase();
+    const prev = table.get(key);
+    if (!prev || rec.length < prev.length) table.set(key, rec);
+  };
+  for (let op = 0; op < 256; op++) if (![0xCB, 0xED, 0xDD, 0xFD].includes(op)) add([op]);
+  for (let op = 0; op < 256; op++) { add([0xCB, op]); add([0xED, op]); }
+  for (const px of [0xDD, 0xFD]) {
+    for (let op = 0; op < 256; op++) if (![0xCB, 0xED, 0xDD, 0xFD].includes(op)) add([px, op]);
+    for (let op = 0; op < 256; op++) add([px, 0xCB, 0, op]);
+  }
+  return table;
+})();
+
+const ASM_FIXED = new Set(['A', 'B', 'C', 'D', 'E', 'H', 'L', 'I', 'R', 'AF', "AF'", 'BC', 'DE', 'HL', 'SP', 'IX', 'IY',
+  'IXH', 'IXL', 'IYH', 'IYL', '(C)', '(HL)', '(BC)', '(DE)', '(SP)', '(IX)', '(IY)', 'NZ', 'Z', 'NC', 'PO', 'PE', 'P', 'M']);
+const ASM_RESERVED = new Set([...ASM_FIXED].filter(s => /^[A-Z']+$/.test(s)));
+
+class AsmError extends Error {}
+
+function asmSplit(s, sep) { // split on sep at top level (outside quotes/parens)
+  const out = []; let depth = 0, q = null, cur = '';
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (q) { cur += ch; if (ch === q) q = null; continue; }
+    if ((ch === '"' || ch === "'") && !(ch === "'" && /AF$/i.test(cur.trim()))) { q = ch; cur += ch; continue; }
+    if (ch === '(') depth++; else if (ch === ')') depth--;
+    if (ch === sep && depth === 0) { out.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  out.push(cur);
+  return out.map(x => x.trim());
+}
+function stripComment(s) {
+  let q = null;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (q) { if (ch === q) q = null; continue; }
+    if (ch === '"') q = ch;
+    else if (ch === "'" && !/AF$/i.test(s.slice(0, i).trim())) q = ch;
+    else if (ch === ';') return s.slice(0, i);
+  }
+  return s;
+}
+
+// expression evaluator: numbers (1Fh 0x1F $1F %1010 1010b 42 'A'), $ = current address, labels, + - * / % & | ^ << >> ~ ( )
+function asmEval(expr, syms, pc, strict) {
+  const src = expr.trim();
+  let i = 0, unknown = false;
+  const ws = () => { while (i < src.length && /\s/.test(src[i])) i++; };
+  const fail = m => { throw new AsmError(m); };
+  function primary() {
+    ws();
+    const ch = src[i];
+    if (ch === '(') { i++; const v = bor(); ws(); if (src[i] !== ')') fail('missing )'); i++; return v; }
+    if (ch === '-') { i++; return -primary(); }
+    if (ch === '+') { i++; return primary(); }
+    if (ch === '~') { i++; return ~primary(); }
+    if (ch === "'" || ch === '"') { const end = src.indexOf(ch, i + 1); if (end !== i + 2) fail('character constants must be one character, like \'A\''); const v = src.charCodeAt(i + 1); i = end + 1; return v; }
+    let m;
+    const rest = src.slice(i);
+    if ((m = rest.match(/^0x([0-9a-f]+)/i))) { i += m[0].length; return parseInt(m[1], 16); }
+    if ((m = rest.match(/^\$([0-9a-f]+)/i))) { i += m[0].length; return parseInt(m[1], 16); }
+    if ((m = rest.match(/^\$/))) { i += 1; return pc; }
+    if ((m = rest.match(/^%([01]+)/))) { i += m[0].length; return parseInt(m[1], 2); }
+    if ((m = rest.match(/^([0-9][0-9a-f]*)h\b/i))) { i += m[0].length; return parseInt(m[1], 16); }
+    if ((m = rest.match(/^([01]+)b\b/i))) { i += m[0].length; return parseInt(m[1], 2); }
+    if ((m = rest.match(/^[0-9]+\b/))) { i += m[0].length; return parseInt(m[0], 10); }
+    if ((m = rest.match(/^[A-Za-z_.][A-Za-z0-9_.]*/))) {
+      i += m[0].length;
+      const k = m[0].toUpperCase();
+      if (syms.has(k)) return syms.get(k);
+      if (strict) fail(`unknown label "${m[0]}"`);
+      unknown = true; return 0;
+    }
+    fail(`can't read "${rest || expr}"`);
+  }
+  function mul() { let v = primary(); for (;;) { ws(); const c = src[i]; if (c === '*') { i++; v *= primary(); } else if (c === '/') { i++; const d = primary(); if (!d) { if (strict) fail('division by zero'); v = 0; } else v = Math.trunc(v / d); } else if (c === '%') { i++; const d = primary(); v = d ? v % d : 0; } else return v; } }
+  function add() { let v = mul(); for (;;) { ws(); const c = src[i]; if (c === '+') { i++; v += mul(); } else if (c === '-') { i++; v -= mul(); } else return v; } }
+  function shift() { let v = add(); for (;;) { ws(); if (src.startsWith('<<', i)) { i += 2; v <<= add(); } else if (src.startsWith('>>', i)) { i += 2; v >>= add(); } else return v; } }
+  function band() { let v = shift(); for (;;) { ws(); if (src[i] === '&') { i++; v &= shift(); } else return v; } }
+  function bxor() { let v = band(); for (;;) { ws(); if (src[i] === '^') { i++; v ^= band(); } else return v; } }
+  function bor() { let v = bxor(); for (;;) { ws(); if (src[i] === '|') { i++; v |= bxor(); } else return v; } }
+  if (!src) fail('missing value');
+  const v = bor(); ws();
+  if (i < src.length) fail(`unexpected "${src.slice(i)}"`);
+  return { v, unknown };
+}
+
+function wrapsWhole(s) { // "(...)" where the outer parens match each other
+  if (!s.startsWith('(') || !s.endsWith(')')) return false;
+  let d = 0;
+  for (let i = 0; i < s.length; i++) { if (s[i] === '(') d++; else if (s[i] === ')') { d--; if (d === 0 && i < s.length - 1) return false; } }
+  return true;
+}
+
+function asmOperandChoices(mn, idx, raw, ev) {
+  const up = raw.toUpperCase().replace(/\s+/g, '');
+  if (up === 'AF' && mn === 'EX' && idx === 1) return [{ t: "AF'" }];
+  if (mn === 'JP' && (up === 'HL' || up === 'IX' || up === 'IY')) return [{ t: '(' + up + ')' }];
+  if (mn === 'OUT' && idx === 1 && up === '0') return [{ t: '0' }, { t: '{N}', n: raw }];
+  if (ASM_FIXED.has(up)) {
+    const c = [{ t: up }];
+    if (up === '(IX)' || up === '(IY)') c.push({ t: '(' + up.slice(1, 3) + '+{D})', d: '0' });
+    return c;
+  }
+  let m;
+  if ((m = raw.trim().match(/^\(\s*(I[XY])\s*([+-][\s\S]*)\)$/i))) return [{ t: '(' + m[1].toUpperCase() + '+{D})', d: m[2] }];
+  if ((mn === 'BIT' || mn === 'SET' || mn === 'RES') && idx === 0) return [{ t: String(ev(raw, true) & 0xFF) }];
+  if (mn === 'IM') return [{ t: String(ev(raw, true)) }];
+  if (mn === 'RST') return [{ t: h2(ev(raw, true) & 0xFF) + 'H' }];
+  if (wrapsWhole(raw.trim())) { const inner = raw.trim().slice(1, -1); return [{ t: '({NN})', nn: inner }, { t: '({N})', n: inner }]; }
+  return [{ t: '{N}', n: raw }, { t: '{NN}', nn: raw }, { t: '{E}', e: raw }];
+}
+
+function asmFindPattern(mn, ops, ev) {
+  // accept common alternative spellings
+  if (['ADD', 'ADC', 'SBC'].includes(mn) && ops.length === 1) ops = ['A', ops[0]];
+  if (['SUB', 'AND', 'XOR', 'OR', 'CP'].includes(mn) && ops.length === 2 && ops[0].trim().toUpperCase() === 'A') ops = [ops[1]];
+  const choices = ops.map((o, i) => asmOperandChoices(mn, i, o, ev));
+  const combos = [[]];
+  for (const ch of choices) { const next = []; for (const c of combos) for (const x of ch) next.push([...c, x]); combos.splice(0, combos.length, ...next); }
+  for (const combo of combos) {
+    const key = mn + (combo.length ? ' ' + combo.map(c => c.t).join(',') : '');
+    const tpl = ASM_TABLE.get(key);
+    if (tpl) { const vals = {}; for (const c of combo) for (const k of ['n', 'nn', 'd', 'e']) if (c[k] !== undefined) vals[k] = c[k]; return { tpl, vals }; }
+  }
+  return null;
+}
+
+function parseString(s) { // "text" -> bytes, or null
+  const t = s.trim();
+  if (t.length >= 2 && t[0] === '"' && t[t.length - 1] === '"') return [...t.slice(1, -1)].map(c => c.charCodeAt(0) & 0xFF);
+  if (t.length > 3 && t[0] === "'" && t[t.length - 1] === "'") return [...t.slice(1, -1)].map(c => c.charCodeAt(0) & 0xFF);
+  return null;
+}
+
+// base: address used for code before the first ORG (default 0000h)
+function assemble(source, base = 0) {
+  const lines = source.split(/\r?\n/);
+  const syms = new Map();
+  let result, pass1Errors = [];
+  for (let pass = 1; pass <= 2; pass++) {
+    const strict = pass === 2;
+    const errors = [], chunks = [], listing = [];
+    let pc = base & 0xFFFF, cur = null;
+    const emit = (bytes, ln, text) => {
+      if (!cur || cur.addr + cur.bytes.length !== pc) { cur = { addr: pc, bytes: [] }; chunks.push(cur); }
+      listing.push({ addr: pc, bytes: bytes.slice(), line: ln, text });
+      for (const b of bytes) { cur.bytes.push(b & 0xFF); pc = (pc + 1) & 0xFFFF; }
+    };
+    for (let ln = 0; ln < lines.length; ln++) {
+      const original = lines[ln];
+      try {
+        let s = stripComment(original).replace(/\s+$/, '');
+        if (!s.trim()) continue;
+        let label = null, m;
+        if ((m = s.match(/^\s*([A-Za-z_.][A-Za-z0-9_.]*)\s*:/))) { label = m[1]; s = s.slice(m[0].length); }
+        else if ((m = s.match(/^([A-Za-z_.][A-Za-z0-9_.]*)\s+(EQU|DEFL|=)\b/i)) || (m = s.match(/^([A-Za-z_.][A-Za-z0-9_.]*)\s*=/))) { label = m[1]; s = s.slice(m[1].length); }
+        s = s.trim();
+        let mn = '', rest = '';
+        if ((m = s.match(/^(=|[A-Za-z.]+)\s*([\s\S]*)$/))) { mn = m[1].toUpperCase().replace(/^\./, ''); rest = m[2].trim(); }
+        else if (s) throw new AsmError(`can't read "${s}"`);
+        const ev = (e, must) => { const r = asmEval(e, syms, pc, strict || must); return r.v; };
+        if (label) {
+          const L = label.toUpperCase();
+          if (ASM_RESERVED.has(L)) throw new AsmError(`"${label}" is a register name and can't be a label`);
+          if (mn === 'EQU' || mn === '=' || mn === 'DEFL') {
+            const v = ev(rest);
+            if (pass === 1 && syms.has(L) && mn === 'EQU' && syms.get(L) !== v) throw new AsmError(`"${label}" is defined twice`);
+            syms.set(L, v & 0xFFFF);
+            listing.push({ addr: null, bytes: [], line: ln, text: original.trim() });
+            continue;
+          }
+          if (pass === 1 && syms.has(L)) throw new AsmError(`label "${label}" is defined twice`);
+          syms.set(L, pc);
+        }
+        if (!mn) continue;
+        switch (mn) {
+          case 'ORG': pc = ev(rest, true) & 0xFFFF; cur = null; continue;
+          case 'END': ln = lines.length; continue;
+          case 'DB': case 'DEFB': case 'DEFM': case 'BYTE': {
+            const bytes = [];
+            for (const item of asmSplit(rest, ',')) {
+              const str = parseString(item);
+              if (str) bytes.push(...str);
+              else { const v = ev(item); if (strict && (v < -128 || v > 255)) throw new AsmError(`${item} doesn't fit in a byte`); bytes.push(v & 0xFF); }
+            }
+            emit(bytes, ln, original.trim()); continue;
+          }
+          case 'DW': case 'DEFW': case 'WORD': {
+            const bytes = [];
+            for (const item of asmSplit(rest, ',')) { const v = ev(item) & 0xFFFF; bytes.push(v & 0xFF, v >> 8); }
+            emit(bytes, ln, original.trim()); continue;
+          }
+          case 'DS': case 'DEFS': case 'BLOCK': {
+            const [n, fill] = asmSplit(rest, ',');
+            const count = ev(n, true);
+            if (count < 0 || count > 65536) throw new AsmError('DS size must be 0–65536');
+            emit(new Array(count).fill(fill ? ev(fill) & 0xFF : 0), ln, original.trim()); continue;
+          }
+        }
+        const ops = rest ? asmSplit(rest, ',') : [];
+        const found = asmFindPattern(mn, ops, ev);
+        if (!found) throw new AsmError(`not a Z80 instruction: ${mn}${rest ? ' ' + rest : ''}`);
+        const { tpl, vals } = found;
+        const bytes = [];
+        const nn = vals.nn !== undefined ? ev(vals.nn) : 0;
+        for (const k of tpl) {
+          if (typeof k === 'number') bytes.push(k);
+          else if (k === 'n') { const v = ev(vals.n); if (strict && (v < -128 || v > 255)) throw new AsmError(`${vals.n.trim()}${String(v) === vals.n.trim() ? '' : ' (= ' + v + ')'} doesn't fit in a byte (−128…255)`); bytes.push(v & 0xFF); }
+          else if (k === 'nl') bytes.push(nn & 0xFF);
+          else if (k === 'nh') bytes.push((nn >> 8) & 0xFF);
+          else if (k === 'd') { const v = ev(vals.d.replace(/^\+/, '')); if (strict && (v < -128 || v > 127)) throw new AsmError(`index offset ${v} is outside −128…127`); bytes.push(v & 0xFF); }
+          else if (k === 'e') {
+            const target = ev(vals.e);
+            const off = target - ((pc + tpl.length) & 0xFFFF);
+            if (strict && (off < -128 || off > 127)) throw new AsmError(`jump target is ${off} bytes away; relative jumps reach −128…127 (use JP)`);
+            bytes.push(off & 0xFF);
+          }
+        }
+        emit(bytes, ln, original.trim());
+      } catch (e) {
+        if (!(e instanceof AsmError)) throw e;
+        errors.push({ line: ln + 1, msg: e.message });
+      }
+    }
+    if (pass === 1) { pass1Errors = errors.filter(e => /twice|register name/.test(e.msg)); continue; }
+    const seen = new Set(pass1Errors.map(e => e.line));
+    const all = pass1Errors.concat(errors.filter(e => !seen.has(e.line))).sort((x, y) => x.line - y.line);
+    result = { chunks, errors: all, listing, syms };
+  }
+  return result;
+}
+
+if (typeof module !== 'undefined') module.exports = { assemble, ASM_TABLE };
+</script>
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const SAMPLE_ASM = `; Sample program: counts on output port 01h
+; and keeps a copy of the count in memory.
+; Code starts at the Load at address (or use ORG).
+PORT    EQU  01h
+start:  ld   sp,1000h       ; stack at top of 4 KB
+        ld   a,0
+loop:   out  (PORT),a
+        inc  a
+        ld   (count),a
+        call copy
+        jr   loop
+
+copy:   ld   b,a            ; subroutine
+        ret
+
+count:  db   0              ; RAM variable
+`;
+const SAMPLE = `; Sample program: counts on output port 01h
+; and keeps a copy of the count at 0100h.
+31 00 10   ; 0000  LD SP,1000h
+3E 00      ; 0003  LD A,00h
+D3 01      ; 0005  loop: OUT (01h),A
+3C         ; 0007  INC A
+32 00 01   ; 0008  LD (0100h),A
+CD 10 00   ; 000B  CALL 0010h
+18 F5      ; 000E  JR loop
+47         ; 0010  sub: LD B,A
+C9         ; 0011  RET
+`;
+
+// ---------- system ----------
+const mem = new Uint8Array(65536);
+let memSize = 4096, mirror = false;
+const portIn = new Map();
+let inDefault = 0xFF;
+const portOut = new Map();
+const ioLog = [];
+let lastWrites = new Set();
+
+const bus = {
+  read(a) { if (a < memSize) return mem[a]; return mirror ? mem[a % memSize] : 0xFF; },
+  write(a, v) { if (a < memSize) mem[a] = v; else if (mirror) mem[a % memSize] = v; },
+  input(p) { const lo = p & 0xFF; const v = portIn.has(lo) ? portIn.get(lo) : inDefault; ioLog.push({ dir: 'IN', p, v, t: tTotal }); trimLog(); return v; },
+  output(p, v) { portOut.set(p & 0xFF, v); ioLog.push({ dir: 'OUT', p, v, t: tTotal }); trimLog(); }
+};
+function trimLog() { if (ioLog.length > 60) ioLog.splice(0, ioLog.length - 60); }
+const cpu = new Z80(bus);
+
+// ---------- pins ----------
+const pins = { int: 1, nmi: 1, wait: 1, busreq: 1, reset: 1 };
+let clk = 1;
+const PINS = [
+  [1,'A11','o'],[2,'A12','o'],[3,'A13','o'],[4,'A14','o'],[5,'A15','o'],[6,'CLK','i'],[7,'D4','b'],[8,'D3','b'],[9,'D5','b'],[10,'D6','b'],
+  [11,'+5V','p'],[12,'D2','b'],[13,'D7','b'],[14,'D0','b'],[15,'D1','b'],[16,'INT','i'],[17,'NMI','i'],[18,'HALT','o'],[19,'MREQ','o'],[20,'IORQ','o'],
+  [21,'RD','o'],[22,'WR','o'],[23,'BUSACK','o'],[24,'WAIT','i'],[25,'BUSREQ','i'],[26,'RESET','i'],[27,'M1','o'],[28,'RFSH','o'],[29,'GND','g'],[30,'A0','o'],
+  [31,'A1','o'],[32,'A2','o'],[33,'A3','o'],[34,'A4','o'],[35,'A5','o'],[36,'A6','o'],[37,'A7','o'],[38,'A8','o'],[39,'A9','o'],[40,'A10','o']
+];
+const ACTIVE_LOW = new Set(['INT','NMI','HALT','MREQ','IORQ','RD','WR','BUSACK','WAIT','BUSREQ','RESET','M1','RFSH']);
+const PIN_TITLE = {
+  CLK: 'Clock input. Click to pulse one clock (one T-state).',
+  INT: 'Maskable interrupt request, active low, level-sensitive. Click to toggle.',
+  NMI: 'Non-maskable interrupt, active low, triggers on the falling edge. Click to toggle.',
+  WAIT: 'Wait, active low. While low, memory and I/O cycles are stretched with wait states. Click to toggle.',
+  BUSREQ: 'Bus request, active low. The CPU floats its buses and asserts /BUSACK. Click to toggle.',
+  RESET: 'Reset, active low. Holds the CPU in reset; it restarts at 0000h when released. Click to toggle.'
+};
+const pinEls = {};
+const SVGNS = 'http://www.w3.org/2000/svg';
+function svg(tag, attrs, parent) { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function buildChip() {
+  const s = $('chip');
+  const top = 26, pitch = 24, bx = 128, bw = 124, bh = 20 * pitch + 12;
+  svg('rect', { class: 'body-rect', x: bx, y: top - 6, width: bw, height: bh, rx: 5 }, s);
+  svg('path', { d: `M ${bx + bw / 2 - 12} ${top - 6} a 12 12 0 0 0 24 0`, fill: 'var(--bg)' }, s);
+  const t1 = svg('text', { class: 'chiptitle', x: bx + bw / 2, y: top + 228, 'text-anchor': 'middle', 'font-size': 26 }, s); t1.textContent = 'Z80';
+  const t2 = svg('text', { class: 'chipsub', x: bx + bw / 2, y: top + 248, 'text-anchor': 'middle' }, s); t2.textContent = 'CPU';
+  for (const [n, name, kind] of PINS) {
+    const left = n <= 20;
+    const idx = left ? n - 1 : 40 - n;
+    const y = top + idx * pitch + 6;
+    const g = svg('g', { class: 'pin' + (kind === 'i' ? ' input' : ''), 'data-pin': name }, s);
+    const sx = left ? bx - 30 : bx + bw + 4;
+    if (kind === 'i') {
+      svg('rect', { x: left ? sx - 70 : sx - 4, y: y - 11, width: 104, height: 22, fill: 'transparent' }, g);
+      svg('rect', { class: 'ring', x: sx - 3, y: y - 9, width: 32, height: 18, rx: 3 }, g);
+    }
+    svg('rect', { class: 'stub', x: sx, y: y - 6, width: 26, height: 12, rx: 2 }, g);
+    const sv = svg('text', { class: 'sv', x: sx + 13, y: y + 0.5 }, g);
+    const num = svg('text', { class: 'num', x: left ? bx + 7 : bx + bw - 7, y, 'text-anchor': left ? 'start' : 'end' }, g); num.textContent = n;
+    const nm = svg('text', { class: 'nm', x: left ? sx - 8 : sx + 34, y, 'text-anchor': left ? 'end' : 'start' }, g);
+    if (ACTIVE_LOW.has(name)) { const ov = svg('tspan', { class: 'ov' }, nm); ov.textContent = name; }
+    else nm.textContent = name;
+    const title = svg('title', {}, g); title.textContent = PIN_TITLE[name] || (name + (kind === 'b' ? ' (data bus, bidirectional)' : kind === 'o' ? ' (output)' : ''));
+    if (kind === 'i') {
+      g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button');
+      g.addEventListener('click', () => pinClick(name));
+      g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pinClick(name); } });
+    }
+    pinEls[name] = { g, sv, prev: null };
+  }
+}
+function pinClick(name) {
+  if (name === 'CLK') { pulseClock(); return; }
+  const k = name.toLowerCase();
+  const was = pins[k];
+  pins[k] = was ? 0 : 1;
+  if (k === 'nmi' && was === 1) cpu.nmiPending = true;
+  if (k === 'int') cpu.intLine = pins.int === 0;
+  if (k === 'reset' && pins.reset === 1) setStatus('Reset released: the CPU starts at 0000h on the next clock');
+  else if (k === 'reset') { setStatus('/RESET is low: the CPU resets on the next clock', true); }
+  else describeInputs();
+  render();
+}
+
+// ---------- T-state engine ----------
+let timeline = null, ti = 0, pre = null, lastTimeline = null, curT = null, waitT = null;
+let tTotal = 0, instrCount = 0, busReleased = false, inReset = false;
+let curInstr = null;
+const BASE = { m1: 1, mreq: 1, iorq: 1, rd: 1, wr: 1, rfsh: 1, a: null, d: null };
+const CYCNAME = { M1: 'Opcode fetch', MR: 'Memory read', MW: 'Memory write', IR: 'I/O read', IW: 'I/O write', IA: 'Interrupt acknowledge', ID: 'Internal' };
+const CYCSHORT = { M1: 'M1', MR: 'MEM RD', MW: 'MEM WR', IR: 'I/O RD', IW: 'I/O WR', IA: 'INT ACK', ID: 'INT' };
+function expand(cycles) {
+  const T = []; let lastA = null, mc = 0;
+  const S = (c, o) => Object.assign({}, BASE, { a: lastA, k: c.k, mc }, o);
+  for (const c of cycles) {
+    mc++;
+    switch (c.k) {
+      case 'M1':
+        T.push(S(c, { t: 'T1', a: c.a, m1: 0, mreq: 0, rd: 0, first: true, halt: c.halt }));
+        T.push(S(c, { t: 'T2', a: c.a, m1: 0, mreq: 0, rd: 0, d: c.d, ws: true, halt: c.halt }));
+        T.push(S(c, { t: 'T3', a: c.rf, mreq: 0, rfsh: 0, halt: c.halt }));
+        T.push(S(c, { t: 'T4', a: c.rf, rfsh: 0, halt: c.halt }));
+        lastA = c.rf; break;
+      case 'MR':
+        T.push(S(c, { t: 'T1', a: c.a, mreq: 0, rd: 0, first: true }));
+        T.push(S(c, { t: 'T2', a: c.a, mreq: 0, rd: 0, d: c.d, ws: true }));
+        T.push(S(c, { t: 'T3', a: c.a, mreq: 0, rd: 0, d: c.d }));
+        lastA = c.a; break;
+      case 'MW':
+        T.push(S(c, { t: 'T1', a: c.a, mreq: 0, d: c.d, first: true }));
+        T.push(S(c, { t: 'T2', a: c.a, mreq: 0, wr: 0, d: c.d, ws: true }));
+        T.push(S(c, { t: 'T3', a: c.a, mreq: 0, wr: 0, d: c.d }));
+        lastA = c.a; break;
+      case 'IR':
+        T.push(S(c, { t: 'T1', a: c.a, first: true }));
+        T.push(S(c, { t: 'T2', a: c.a, iorq: 0, rd: 0 }));
+        T.push(S(c, { t: 'TW', a: c.a, iorq: 0, rd: 0, d: c.d, ws: true }));
+        T.push(S(c, { t: 'T3', a: c.a, iorq: 0, rd: 0, d: c.d }));
+        lastA = c.a; break;
+      case 'IW':
+        T.push(S(c, { t: 'T1', a: c.a, d: c.d, first: true }));
+        T.push(S(c, { t: 'T2', a: c.a, iorq: 0, wr: 0, d: c.d }));
+        T.push(S(c, { t: 'TW', a: c.a, iorq: 0, wr: 0, d: c.d, ws: true }));
+        T.push(S(c, { t: 'T3', a: c.a, iorq: 0, wr: 0, d: c.d }));
+        lastA = c.a; break;
+      case 'IA':
+        T.push(S(c, { t: 'T1', a: c.a, m1: 0, first: true }));
+        T.push(S(c, { t: 'T2', a: c.a, m1: 0 }));
+        T.push(S(c, { t: 'TW', a: c.a, m1: 0, iorq: 0, d: c.d }));
+        T.push(S(c, { t: 'TW', a: c.a, m1: 0, iorq: 0, d: c.d, ws: true }));
+        T.push(S(c, { t: 'T3', a: c.rf, mreq: 0, rfsh: 0 }));
+        T.push(S(c, { t: 'T4', a: c.rf, rfsh: 0 }));
+        lastA = c.rf; break;
+      case 'ID':
+        for (let i = 0; i < c.n; i++) T.push(S(c, { t: 'T' + (i + 1), first: i === 0 }));
+        break;
+    }
+  }
+  return T;
+}
+function cycleT(cycles) { let n = 0; for (const c of cycles) n += c.k === 'M1' ? 4 : c.k === 'MR' || c.k === 'MW' ? 3 : c.k === 'IR' || c.k === 'IW' ? 4 : c.k === 'IA' ? 6 : c.n; return n; }
+const RESET_T = Object.assign({}, BASE, { a: 'z', d: null, reset: true, t: '–' });
+const BUSREL_T = Object.assign({}, BASE, { a: 'z', d: null, mreq: 'z', iorq: 'z', rd: 'z', wr: 'z', rel: true, t: '–' });
+curT = Object.assign({}, BASE, { a: 0, t: '–' });
+
+function describe(c0, pc) {
+  if (cpu.lastEvent === 'NMI') return 'NMI response → 0066h';
+  if (cpu.lastEvent === 'INT') return 'Interrupt response (IM ' + cpu.im + ')';
+  if (c0 && c0.halt) return 'HALT (executing NOPs)';
+  return disasm(bus.read, pc).text;
+}
+function beginInstruction() {
+  pre = cpu.snapshot();
+  const pc = cpu.pc;
+  const text = cpu.halted ? null : disasm(bus.read, pc).text;
+  const cyc = cpu.step();
+  timeline = expand(cyc); ti = 0; lastTimeline = timeline;
+  lastWrites = new Set(cyc.filter(c => c.k === 'MW').map(c => c.a));
+  curInstr = { pc, text: cpu.lastEvent === 'NMI' ? 'NMI response → 0066h' : cpu.lastEvent === 'INT' ? 'Interrupt response (IM ' + pre.im + ')' : (cyc[0] && cyc[0].halt) ? 'HALT state (NOP fetch)' : text, tlen: timeline.length };
+}
+// one clock: returns 'mid' | 'done' | 'wait' | 'busreq' | 'reset'
+function tick() {
+  tTotal++;
+  if (pins.reset === 0) {
+    cpu.reset(); cpu.intLine = pins.int === 0;
+    timeline = null; pre = null; waitT = null; curT = RESET_T; busReleased = false; inReset = true;
+    lastTimeline = null; curInstr = null;
+    return 'reset';
+  }
+  if (inReset) { inReset = false; }
+  if (waitT) {
+    if (pins.wait === 0) { curT = Object.assign({}, waitT, { t: 'TW', waitIns: true }); return 'wait'; }
+    waitT = null;
+  }
+  const atBoundary = !timeline || ti >= timeline.length;
+  const atMC = atBoundary || timeline[ti].first;
+  if (atMC && pins.busreq === 0) { busReleased = true; curT = BUSREL_T; return 'busreq'; }
+  busReleased = false;
+  if (atBoundary) beginInstruction();
+  const T = timeline[ti];
+  curT = T; ti++;
+  if (T.ws) waitT = T;
+  if (ti >= timeline.length) { instrCount++; pre = null; return 'done'; }
+  return 'mid';
+}
+function midInstruction() { return timeline && ti < timeline.length; }
+
+// ---------- controls ----------
+let running = false, runRate = 'max', lastFrame = 0, acc = 0;
+function setStatus(text, warn, run) {
+  const el = $('status'); el.textContent = text;
+  el.className = 'status' + (warn ? ' warn' : run ? ' run' : '');
+}
+function describeInputs() {
+  if (pins.reset === 0) return setStatus('Held in reset (/RESET low)', true);
+  if (busReleased) return setStatus('Bus released to another device (/BUSREQ low)', true);
+  if (waitT && pins.wait === 0) return setStatus('Wait state: /WAIT is low', true);
+  if (running) return setStatus('Running', false, true);
+  if (cpu.halted) return setStatus(cpu.iff1 ? 'Halted: waiting for an interrupt' : 'Halted (interrupts disabled)');
+  setStatus('Ready');
+}
+function stalledMsg(r) {
+  if (r === 'reset') setStatus('Held in reset (/RESET low)', true);
+  else if (r === 'busreq') setStatus('Bus released to another device (/BUSREQ low)', true);
+  else if (r === 'wait') setStatus('Wait state: /WAIT is low', true);
+}
+let clkTimer = null;
+function pulseClock() {
+  if (running) stopRun();
+  clk = 0; renderPins();
+  const r = tick();
+  if (r === 'done' && breakpoints.has(cpu.pc)) setStatus('Breakpoint at ' + h4(cpu.pc) + 'h', true);
+  else if (r === 'reset' || r === 'busreq' || r === 'wait') stalledMsg(r); else describeInputs();
+  render();
+  clearTimeout(clkTimer);
+  clkTimer = setTimeout(() => { clk = 1; renderPins(); }, 140);
+}
+function stepInstruction() {
+  if (running) stopRun();
+  let r, guard = 0;
+  do { r = tick(); guard++; } while (r === 'mid' && guard < 400);
+  if (r === 'done') { breakpoints.has(cpu.pc) ? setStatus('Breakpoint at ' + h4(cpu.pc) + 'h', true) : describeInputs(); }
+  else stalledMsg(r);
+  render();
+}
+function startRun() {
+  running = true; $('btnRun').innerHTML = 'Pause<kbd>R</kbd>'; skipBp = true;
+  lastFrame = performance.now(); acc = 0;
+  setStatus('Running', false, true);
+  requestAnimationFrame(frame);
+}
+function stopRun(msg, warn) {
+  running = false; $('btnRun').innerHTML = 'Run<kbd>R</kbd>';
+  if (msg) setStatus(msg, warn); else describeInputs();
+  render();
+}
+let skipBp = false;
+function checkBoundary() {
+  if (!skipBp && breakpoints.has(cpu.pc)) { stopRun('Breakpoint at ' + h4(cpu.pc) + 'h', true); return true; }
+  skipBp = false;
+  return false;
+}
+function frame(now) {
+  if (!running) return;
+  const dt = Math.min(100, now - lastFrame); lastFrame = now;
+  if (runRate !== 'max') {
+    acc += dt * (+runRate) / 1000;
+    let n = Math.floor(acc); acc -= n;
+    let stall = null;
+    while (n-- > 0) {
+      const r = tick();
+      if (r === 'done' && checkBoundary()) return;
+      if (r !== 'mid' && r !== 'done') stall = r;
+    }
+    if (stall) stalledMsg(stall); else setStatus('Running at ' + $('speed').selectedOptions[0].textContent.replace('Clock ', ''), false, true);
+    clk = clk ? 0 : 1;
+    render();
+    requestAnimationFrame(frame);
+    return;
+  }
+  // full speed
+  const t0 = performance.now();
+  let last = null, stall = null;
+  while (performance.now() - t0 < 12) {
+    for (let k = 0; k < 400; k++) {
+      if (pins.wait === 0 || pins.busreq === 0 || pins.reset === 0 || midInstruction() || waitT) {
+        const r = tick();
+        if (r === 'done' && checkBoundary()) return;
+        if (r === 'wait' || r === 'busreq' || r === 'reset') { stall = r; break; }
+        continue;
+      }
+      const pc = cpu.pc;
+      const cyc = cpu.step();
+      tTotal += cycleT(cyc); instrCount++; last = cyc;
+      if (checkBoundary()) { finishFast(last, pc); return; }
+      if (cpu.halted && !cpu.iff1 && !cpu.nmiPending) { finishFast(last, pc); stopRun('Halted (interrupts disabled)'); return; }
+      last.pc = pc;
+    }
+    if (stall) break;
+  }
+  if (last) finishFast(last, last.pc);
+  if (stall) stalledMsg(stall); else setStatus('Running at full speed', false, true);
+  render();
+  requestAnimationFrame(frame);
+}
+function finishFast(cyc, pc) {
+  if (!cyc) return;
+  timeline = null; pre = null;
+  lastTimeline = expand(cyc);
+  curT = lastTimeline[lastTimeline.length - 1];
+  lastWrites = new Set(cyc.filter(c => c.k === 'MW').map(c => c.a));
+  curInstr = { pc, text: (cyc[0] && cyc[0].halt) ? 'HALT state (NOP fetch)' : cyc[0] && cyc[0].k === 'IA' ? 'Interrupt response' : disasmSafe(pc), tlen: lastTimeline.length };
+}
+function disasmSafe(pc) { try { return disasm(bus.read, pc).text; } catch (e) { return '?'; } }
+function resetCPU() {
+  if (running) stopRun();
+  cpu.reset(); cpu.intLine = pins.int === 0;
+  timeline = null; pre = null; waitT = null; lastTimeline = null; curInstr = null; lastWrites = new Set();
+  curT = Object.assign({}, BASE, { a: 0, t: '–' });
+  tTotal = 0; instrCount = 0;
+  disStart = 0;
+  setStatus('CPU reset: PC = 0000h');
+  render();
+}
+
+// ---------- rendering ----------
+let prevRegs = {};
+const breakpoints = new Set();
+let disStart = 0, memFrom = 0;
+function regsView() { return midInstruction() && pre ? pre : cpu; }
+function pinValue(name) {
+  const T = curT;
+  if (name === '+5V') return 'p';
+  if (name === 'GND') return 'g';
+  if (name === 'CLK') return clk;
+  if (/^A\d+$/.test(name)) { if (T.a === null || T.a === 'z') return 'z'; return (T.a >> +name.slice(1)) & 1; }
+  if (/^D\d$/.test(name)) { if (T.d === null || T.d === undefined) return 'z'; return (T.d >> +name.slice(1)) & 1; }
+  switch (name) {
+    case 'M1': return T.m1; case 'MREQ': return T.mreq; case 'IORQ': return T.iorq; case 'RD': return T.rd; case 'WR': return T.wr; case 'RFSH': return T.rfsh;
+    case 'HALT': return inReset ? 1 : (regsView().halted ? 0 : 1);
+    case 'BUSACK': return busReleased ? 0 : 1;
+    default: return pins[name.toLowerCase()];
+  }
+}
+function renderPins() {
+  for (const [, name] of PINS) {
+    const v = pinValue(name), el = pinEls[name];
+    const cls = v === 'z' ? 'vz' : v === 'p' ? 'vp' : v === 'g' ? 'vg' : v ? 'v1' : 'v0';
+    const changed = el.prev !== null && el.prev !== v && v !== 'p' && v !== 'g';
+    el.g.classList.remove('v1', 'v0', 'vz', 'vp', 'vg', 'changed');
+    el.g.classList.add(cls);
+    if (changed && !running) el.g.classList.add('changed');
+    el.sv.textContent = v === 'z' ? 'Z' : v === 'p' ? '+' : v === 'g' ? '⏚' : v;
+    el.prev = v;
+  }
+  const T = curT;
+  let cy;
+  if (T.reset) cy = 'Reset';
+  else if (T.rel) cy = 'Bus released (/BUSACK low)';
+  else if (!T.k) cy = '–';
+  else cy = CYCNAME[T.k] + ' · ' + T.t + (T.waitIns ? ' (wait state)' : '') + (T.halt ? ' · halted' : '');
+  $('brCycle').textContent = cy;
+  $('brAddr').textContent = (T.a === null || T.a === 'z') ? 'floating' : h4(T.a) + 'h' + (T.k === 'M1' && (T.t === 'T3' || T.t === 'T4') ? '  (refresh: I, R)' : T.k === 'IR' || T.k === 'IW' ? '  (port ' + h2(T.a & 0xFF) + 'h)' : '');
+  let dtxt = 'floating';
+  if (T.d !== null && T.d !== undefined) {
+    const src = T.k === 'MW' || T.k === 'IW' ? 'driven by CPU' : T.k === 'IR' ? 'from I/O device' : T.k === 'IA' ? 'from interrupting device' : 'from memory';
+    dtxt = h2(T.d) + 'h  ' + T.d.toString(2).padStart(8, '0') + 'b  ' + src;
+  }
+  $('brData').textContent = dtxt;
+}
+const REGDEF = [
+  ['AF', s => (s.a << 8) | s.f, 4], ['BC', s => (s.b << 8) | s.c, 4], ['DE', s => (s.d << 8) | s.e, 4], ['HL', s => (s.h << 8) | s.l, 4],
+  ['AF′', s => (s.a_ << 8) | s.f_, 4], ['BC′', s => (s.b_ << 8) | s.c_, 4], ['DE′', s => (s.d_ << 8) | s.e_, 4], ['HL′', s => (s.h_ << 8) | s.l_, 4],
+  ['IX', s => s.ix, 4], ['IY', s => s.iy, 4], ['SP', s => s.sp, 4], ['PC', s => s.pc, 4],
+  ['I', s => s.i, 2], ['R', s => s.r, 2]
+];
+const REGSET = {
+  'AF': v => { cpu.a = v >> 8; cpu.f = v & 0xFF; }, 'BC': v => { cpu.bc = v; }, 'DE': v => { cpu.de = v; }, 'HL': v => { cpu.hl = v; },
+  'AF′': v => { cpu.a_ = v >> 8; cpu.f_ = v & 0xFF; }, 'BC′': v => { cpu.b_ = v >> 8; cpu.c_ = v & 0xFF; }, 'DE′': v => { cpu.d_ = v >> 8; cpu.e_ = v & 0xFF; }, 'HL′': v => { cpu.h_ = v >> 8; cpu.l_ = v & 0xFF; },
+  'IX': v => { cpu.ix = v; }, 'IY': v => { cpu.iy = v; }, 'SP': v => { cpu.sp = v; }, 'PC': v => { cpu.pc = v; disStart = v; }, 'I': v => { cpu.i = v; }, 'R': v => { cpu.r = v; }
+};
+const regInputs = {};
+function buildRegs() {
+  const box = $('regs');
+  REGDEF.forEach(([name, , w], idx) => {
+    if (idx === 4 || idx === 8) { const s = document.createElement('div'); s.className = 'regs-sep'; box.appendChild(s); }
+    const d = document.createElement('div'); d.className = 'reg';
+    const id = 'reg_' + idx;
+    d.innerHTML = `<label for="${id}">${name}</label><input id="${id}" type="text" maxlength="${w}" spellcheck="false" autocomplete="off">`;
+    box.appendChild(d);
+    const inp = d.querySelector('input');
+    inp.addEventListener('change', () => {
+      const v = parseInt(inp.value, 16);
+      if (isNaN(v)) { render(); return; }
+      if (midInstruction()) { timeline = null; pre = null; }
+      REGSET[name](v & (w === 4 ? 0xFFFF : 0xFF));
+      render();
+    });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+    regInputs[name] = { inp, w };
+  });
+  const fl = $('flags');
+  ['S', 'Z', 'Y', 'H', 'X', 'P/V', 'N', 'C'].forEach((n, i) => {
+    const b = document.createElement('button'); b.className = 'flag'; b.textContent = n; b.dataset.bit = 7 - i; b.id = 'flag_' + (7 - i);
+    b.title = ['Sign', 'Zero', 'Undocumented bit 5', 'Half carry', 'Undocumented bit 3', 'Parity / overflow', 'Add / subtract', 'Carry'][i] + ' — click to toggle';
+    b.addEventListener('click', () => { if (midInstruction()) { timeline = null; pre = null; } cpu.f ^= 1 << (7 - i); render(); });
+    fl.appendChild(b);
+  });
+}
+function renderRegs() {
+  const s = regsView();
+  for (const [name, get, w] of REGDEF) {
+    const { inp } = regInputs[name];
+    const v = get(s);
+    if (document.activeElement !== inp) inp.value = w === 4 ? h4(v) : h2(v);
+    inp.classList.toggle('chg', prevRegs[name] !== undefined && prevRegs[name] !== v && !running);
+  }
+  for (let b = 0; b < 8; b++) $('flag_' + b).classList.toggle('on', !!(s.f & (1 << b)));
+  $('iff1').textContent = s.iff1; $('iff2').textContent = s.iff2;
+  if (document.activeElement !== $('imSel')) $('imSel').value = s.im;
+  $('cpuState').textContent = inReset ? 'reset' : busReleased ? 'bus released' : s.halted ? 'halted' : 'running';
+  $('regNote').textContent = midInstruction() ? 'values before the current instruction' : '';
+}
+function snapshotPrevRegs() { const s = regsView(); prevRegs = {}; for (const [name, get] of REGDEF) prevRegs[name] = get(s); }
+function renderTiming() {
+  const tl = timeline || lastTimeline;
+  const tab = $('timing');
+  if (!tl || !tl.length) {
+    tab.innerHTML = '';
+    $('tnow').innerHTML = inReset ? 'Held in reset.' : 'No instruction has run yet. Press <b>Clock</b> or <b>Step instruction</b>.';
+    return;
+  }
+  const curIdx = timeline ? ti - 1 : tl.length - 1;
+  const groups = [];
+  tl.forEach((T, i) => { if (!groups.length || groups[groups.length - 1].mc !== T.mc) groups.push({ mc: T.mc, k: T.k, n: 0, start: i }); groups[groups.length - 1].n++; });
+  let html = '<tr class="cyc"><th class="rl"></th>' + groups.map(g => `<th colspan="${g.n}" title="${CYCNAME[g.k]}">${CYCSHORT[g.k]}</th>`).join('') + '</tr>';
+  html += '<tr class="tlab"><th class="rl"></th>' + tl.map((T, i) => `<th class="${i === curIdx ? 'cur' : ''}">${T.t}</th>`).join('') + '</tr>';
+  const rows = [['M1', 'm1'], ['MREQ', 'mreq'], ['IORQ', 'iorq'], ['RD', 'rd'], ['WR', 'wr'], ['RFSH', 'rfsh']];
+  for (const [lab, key] of rows) {
+    html += `<tr><th class="rl"><span style="text-decoration:overline">${lab}</span></th>`;
+    tl.forEach((T, i) => {
+      const v = T[key], pv = i ? tl[i - 1][key] : v;
+      const c = v === 'z' ? 'zz' : v ? 'hi' : 'lo';
+      html += `<td class="w ${c}${i && pv !== v ? ' edge' : ''}${i === curIdx ? ' cur' : ''}"></td>`;
+    });
+    html += '</tr>';
+  }
+  html += '<tr><th class="rl">A</th>' + tl.map((T, i) => `<td class="hx${T.a === null ? ' zz' : ''}${i === curIdx ? ' cur' : ''}">${T.a === null ? '··' : h4(T.a)}</td>`).join('') + '</tr>';
+  html += '<tr><th class="rl">D</th>' + tl.map((T, i) => `<td class="hx${T.d === null || T.d === undefined ? ' zz' : ''}${i === curIdx ? ' cur' : ''}">${T.d === null || T.d === undefined ? '··' : h2(T.d)}</td>`).join('') + '</tr>';
+  tab.innerHTML = html;
+  const total = tl.length;
+  const where = timeline ? `T-state ${ti} of ${total}` : `${total} T-states`;
+  $('tnow').innerHTML = curInstr ? `<b>${h4(curInstr.pc)}h  ${esc(curInstr.text)}</b> · ${where}` : where;
+}
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+function renderDis() {
+  const s = regsView();
+  const pc = s.pc;
+  const lines = 18;
+  let rows = [], a = disStart, found = false;
+  for (let i = 0; i < lines; i++) { const d = disasm(bus.read, a); rows.push({ a, d }); if (a === pc) found = true; a = (a + d.len) & 0xFFFF; }
+  if (!found) {
+    disStart = pc; rows = []; a = pc;
+    for (let i = 0; i < lines; i++) { const d = disasm(bus.read, a); rows.push({ a, d }); a = (a + d.len) & 0xFFFF; }
+  } else {
+    const idx = rows.findIndex(r => r.a === pc);
+    if (idx > lines - 5) { disStart = rows[idx - 3].a; return renderDis(); }
+  }
+  const exec = midInstruction() ? pre.pc : -1;
+  $('dis').innerHTML = rows.map(({ a, d }) => {
+    const bytes = []; for (let i = 0; i < d.len; i++) bytes.push(h2(bus.read((a + i) & 0xFFFF)));
+    const unm = a >= memSize && !mirror;
+    const cls = ['dis-row', breakpoints.has(a) ? 'isbp' : '', a === exec ? 'exec' : (a === pc && exec < 0 ? 'pc' : '')].join(' ');
+    return `<div class="${cls}" data-a="${a}" tabindex="0" role="button" aria-label="Toggle breakpoint at ${h4(a)}h"><span class="bp"></span><span class="ad">${h4(a)}</span><span class="by">${bytes.join(' ')}</span><span class="mn${unm ? ' unm' : ''}">${esc(d.text)}${unm ? '  (no memory)' : ''}</span></div>`;
+  }).join('');
+}
+function renderMem() {
+  const s = regsView();
+  const tab = $('mem');
+  const pcSet = new Set();
+  const d = disasm(bus.read, s.pc); for (let i = 0; i < d.len; i++) pcSet.add((s.pc + i) & 0xFFFF);
+  let html = '';
+  for (let r = 0; r < 16; r++) {
+    const base = (memFrom + r * 16) & 0xFFFF;
+    html += `<tr><td class="ma">${h4(base)}</td>`;
+    let asc = '';
+    for (let c = 0; c < 16; c++) {
+      const a = (base + c) & 0xFFFF;
+      const mapped = a < memSize || mirror;
+      const v = bus.read(a);
+      const cls = ['b', c === 8 ? 'gap' : '', !mapped ? 'un' : '', pcSet.has(a) ? 'pc' : '', lastWrites.has(a) ? 'wr' : '', a === s.sp ? 'sp' : ''].join(' ');
+      html += `<td class="${cls}" data-a="${a}">${mapped ? h2(v) : '··'}</td>`;
+      asc += mapped ? (v >= 32 && v < 127 ? String.fromCharCode(v) : '.') : ' ';
+    }
+    html += `<td class="asc">${esc(asc)}</td></tr>`;
+  }
+  tab.innerHTML = html;
+  if (document.activeElement !== $('memFrom')) $('memFrom').value = h4(memFrom);
+  $('memInfo').textContent = (memSize / 1024) + ' KB installed';
+}
+function renderIO() {
+  const lat = $('latches');
+  if (!portOut.size) lat.innerHTML = '<div class="empty">No OUT instructions yet.</div>';
+  else lat.innerHTML = [...portOut.entries()].sort((a, b) => a[0] - b[0]).map(([p, v]) => {
+    let leds = ''; for (let b = 7; b >= 0; b--) leds += `<span class="led${(v >> b) & 1 ? ' on' : ''}" title="bit ${b}"></span>`;
+    return `<div class="latch"><span>Port ${h2(p)}h</span><span class="leds">${leds}</span><span>${h2(v)}h  ${v.toString(2).padStart(8, '0')}b</span></div>`;
+  }).join('');
+  $('iolog').innerHTML = ioLog.slice(-14).reverse().map(e => `<div>${e.dir === 'OUT' ? 'OUT' : 'IN '} port <b>${h2(e.p & 0xFF)}h</b> ${e.dir === 'OUT' ? '←' : '→'} <b>${h2(e.v)}h</b>  <span>(A15–A8 ${h2(e.p >> 8)}h, T ${e.t})</span></div>`).join('') || '';
+  const pl = [...portIn.entries()].sort((a, b) => a[0] - b[0]).map(([p, v]) => `${h2(p)}h→${h2(v)}h`).join('  ');
+  $('portList').textContent = pl ? 'Input ports: ' + pl + '  (click Set with an empty value to remove)' : '';
+}
+function render() {
+  renderPins(); renderRegs(); renderTiming(); renderDis(); renderMem(); renderIO();
+  $('cntT').textContent = tTotal.toLocaleString('en-AU');
+  $('cntI').textContent = instrCount.toLocaleString('en-AU');
+}
+
+// ---------- loader ----------
+function parseHex(text, start) {
+  const chunks = []; let addr = start, errors = [];
+  const lines = text.split(/\r?\n/);
+  if (lines.some(l => l.trim().startsWith(':'))) {
+    let base = 0;
+    lines.forEach((l, ln) => {
+      l = l.trim(); if (!l) return;
+      if (!l.startsWith(':')) { errors.push(`line ${ln + 1}: not an Intel HEX record`); return; }
+      const b = l.slice(1).match(/../g).map(x => parseInt(x, 16));
+      if (b.some(isNaN)) { errors.push(`line ${ln + 1}: bad hex`); return; }
+      const n = b[0], off = (b[1] << 8) | b[2], type = b[3];
+      if (b.reduce((s, v) => s + v, 0) & 0xFF) errors.push(`line ${ln + 1}: checksum mismatch`);
+      if (type === 0) chunks.push({ addr: (base + off) & 0xFFFF, bytes: b.slice(4, 4 + n) });
+      else if (type === 2) base = ((b[4] << 8) | b[5]) << 4;
+    });
+    return { chunks, errors };
+  }
+  let cur = { addr, bytes: [] }; chunks.push(cur);
+  lines.forEach((l, ln) => {
+    l = l.replace(/;.*$/, '').replace(/\/\/.*$/, '');
+    for (let tok of l.split(/[\s,]+/)) {
+      if (!tok) continue;
+      if (/^[0-9a-f]{1,4}:$/i.test(tok)) { addr = parseInt(tok, 16); cur = { addr, bytes: [] }; chunks.push(cur); continue; }
+      tok = tok.replace(/^0x/i, '').replace(/^\$/, '').replace(/h$/i, '');
+      if (!/^[0-9a-f]+$/i.test(tok)) { errors.push(`line ${ln + 1}: "${tok}" is not hex`); continue; }
+      if (tok.length % 2) tok = '0' + tok;
+      for (let i = 0; i < tok.length; i += 2) cur.bytes.push(parseInt(tok.slice(i, i + 2), 16));
+    }
+  });
+  return { chunks: chunks.filter(c => c.bytes.length), errors };
+}
+let mode = 'asm';
+function setMode(m) {
+  mode = m;
+  const asm = m === 'asm';
+  $('modeAsm').setAttribute('aria-selected', asm); $('modeHex').setAttribute('aria-selected', !asm);
+  $('asmIn').hidden = !asm; $('hexIn').hidden = asm;
+  $('hintAsm').hidden = !asm; $('hintHex').hidden = asm;
+  $('btnToHex').hidden = !asm;
+  $('btnLoad').textContent = asm ? 'Assemble and load' : 'Load into memory';
+  $('loadMsg').textContent = ''; $('loadMsg').className = 'msg';
+  try { localStorage.setItem('z80bench.mode', m); } catch (e) {}
+}
+function selectLine(ta, line) {
+  const lines = ta.value.split('\n');
+  let s = 0; for (let i = 0; i < line - 1 && i < lines.length; i++) s += lines[i].length + 1;
+  ta.focus(); ta.setSelectionRange(s, s + (lines[line - 1] || '').length);
+  const lh = parseFloat(getComputedStyle(ta).lineHeight) || 18; ta.scrollTop = Math.max(0, (line - 4) * lh);
+}
+function readLoadAddr() {
+  const v = parseInt($('loadAddr').value, 16);
+  if (isNaN(v) || v < 0 || v > 0xFFFF || !/^\s*[0-9a-f]{1,4}\s*$/i.test($('loadAddr').value)) {
+    const msg = $('loadMsg'); msg.className = 'msg err'; msg.textContent = 'Load at must be a hex address from 0000 to FFFF, e.g. C000.';
+    $('loadAddr').focus(); return null;
+  }
+  $('loadAddr').value = h4(v);
+  try { localStorage.setItem('z80bench.loadAddr', h4(v)); } catch (e) {}
+  return v;
+}
+function assembleSource() {
+  const base = readLoadAddr(); if (base === null) return null;
+  const r = assemble($('asmIn').value, base);
+  r.base = base;
+  try { localStorage.setItem('z80bench.asm', $('asmIn').value); } catch (e) {}
+  if (r.errors.length) {
+    const msg = $('loadMsg'); msg.className = 'msg err';
+    msg.textContent = 'Not assembled. ' + r.errors.slice(0, 4).map(e => `Line ${e.line}: ${e.msg}`).join('. ') + (r.errors.length > 4 ? ` (+${r.errors.length - 4} more)` : '') + '.';
+    selectLine($('asmIn'), r.errors[0].line);
+    return null;
+  }
+  if (!r.chunks.length) { const msg = $('loadMsg'); msg.className = 'msg err'; msg.textContent = 'Nothing to load: the source has no instructions or data.'; return null; }
+  return r;
+}
+function loadChunks(chunks, note, tail) {
+  const msg = $('loadMsg');
+  if ($('clearFirst').checked) mem.fill(0);
+  let total = 0, outside = 0; const ranges = [];
+  for (const c of chunks) {
+    c.bytes.forEach((v, i) => { const a = (c.addr + i) & 0xFFFF; if (a >= memSize) outside++; mem[a] = v; });
+    total += c.bytes.length; ranges.push(h4(c.addr) + '–' + h4((c.addr + c.bytes.length - 1) & 0xFFFF));
+  }
+  if ($('resetAfter').checked) { resetCPU(); cpu.pc = chunks[0].addr; disStart = cpu.pc; memFrom = chunks[0].addr & 0xFFF0; setStatus('Program loaded, CPU reset, PC = ' + h4(cpu.pc) + 'h'); }
+  portOut.clear(); ioLog.length = 0;
+  msg.className = outside ? 'msg err' : 'msg ok';
+  msg.textContent = (note || '') + `Loaded ${total} byte${total === 1 ? '' : 's'} at ${ranges.join(', ')}.` + (outside ? ` ${outside} byte(s) fall above installed memory and won't be visible to the CPU; raise Installed memory in the System panel.` : '') + (tail || '');
+  render();
+}
+function loadProgram() {
+  if (mode === 'asm') {
+    const r = assembleSource(); if (!r) return;
+    loadChunks(r.chunks, 'Assembled without errors. ', r.chunks[0].addr !== r.base ? ` (The source's ORG overrides Load at ${h4(r.base)}h.)` : '');
+    return;
+  }
+  const start = readLoadAddr(); if (start === null) return;
+  const msg = $('loadMsg');
+  const { chunks, errors } = parseHex($('hexIn').value, start & 0xFFFF);
+  if (errors.length) { msg.className = 'msg err'; msg.textContent = 'Not loaded. ' + errors.slice(0, 3).join('; ') + (errors.length > 3 ? ` (+${errors.length - 3} more)` : ''); return; }
+  if (!chunks.length) { msg.className = 'msg err'; msg.textContent = 'No bytes found to load.'; return; }
+  try { localStorage.setItem('z80bench.hex', $('hexIn').value); } catch (e) {}
+  const intel = $('hexIn').value.split(/\r?\n/).some(l => l.trim().startsWith(':'));
+  loadChunks(chunks, '', intel && chunks[0].addr !== start ? ' (Intel HEX records carry their own addresses, so Load at is not used.)' : '');
+}
+function toHex() {
+  const r = assembleSource(); if (!r) return;
+  const out = []; let next = null;
+  for (const item of r.listing) {
+    if (item.addr === null || !item.bytes.length) continue;
+    if (next !== null && item.addr !== next) out.push(h4(item.addr) + ':');
+    for (let i = 0; i < item.bytes.length; i += 16) {
+      const part = item.bytes.slice(i, i + 16).map(h2).join(' ');
+      const src = i === 0 ? item.text.replace(/\s*;.*$/, '').replace(/\s+/g, ' ') : '…';
+      out.push(part.padEnd(12) + ' ; ' + h4((item.addr + i) & 0xFFFF) + '  ' + src);
+    }
+    next = (item.addr + item.bytes.length) & 0xFFFF;
+  }
+  $('hexIn').value = out.join('\n') + '\n';
+  $('loadAddr').value = h4(r.chunks[0].addr);
+  setMode('hex');
+  const msg = $('loadMsg'); msg.className = 'msg ok';
+  msg.textContent = 'Assembled bytes copied here. Press Load into memory to use them.';
+}
+
+// ---------- file import ----------
+const BIN_EXT = /\.(bin|rom|com)$/i, HEX_EXT = /\.(hex|ihx|ihex)$/i;
+function looksLikeHex(text) {
+  const lines = text.split(/\r?\n/).map(l => l.replace(/;.*$/, '').trim()).filter(Boolean);
+  if (!lines.length) return false;
+  if (lines.every(l => l.startsWith(':'))) return true;
+  return lines.every(l => /^([0-9a-f]{1,4}:\s*)?((0x|\$)?[0-9a-f]{1,2}h?[\s,]*)+$/i.test(l));
+}
+function binToHex(bytes, name) {
+  const out = [`; ${name}: ${bytes.length} bytes, loaded at the Load at address`];
+  for (let i = 0; i < bytes.length; i += 16) out.push(Array.from(bytes.slice(i, i + 16), h2).join(' ') + '   ; +' + h4(i));
+  return out.join('\n') + '\n';
+}
+function importFile(file) {
+  if (!file) return;
+  const msg = $('loadMsg');
+  if (file.size > 1024 * 1024) { msg.className = 'msg err'; msg.textContent = `${file.name} is ${Math.round(file.size / 1024)} KB, too large for a 64 KB address space.`; return; }
+  const reader = new FileReader();
+  reader.onerror = () => { msg.className = 'msg err'; msg.textContent = `Couldn't read ${file.name}.`; };
+  reader.onload = () => {
+    const bytes = new Uint8Array(reader.result);
+    const binary = BIN_EXT.test(file.name) || bytes.subarray(0, 4096).some(b => b === 0 || (b < 9));
+    let text, target, note;
+    if (binary) {
+      if (bytes.length > 65536) { msg.className = 'msg err'; msg.textContent = `${file.name} is ${bytes.length} bytes; a Z80 can address at most 65,536.`; return; }
+      text = binToHex(bytes, file.name); target = 'hex';
+      note = `Imported ${file.name} (${bytes.length} bytes of binary) into the Hex tab.`;
+    } else {
+      text = new TextDecoder().decode(bytes);
+      target = HEX_EXT.test(file.name) || looksLikeHex(text) ? 'hex' : 'asm';
+      const lines = text.split(/\r?\n/).length;
+      note = `Imported ${file.name} (${lines} line${lines === 1 ? '' : 's'}) into the ${target === 'hex' ? 'Hex' : 'Assembly'} tab.`;
+    }
+    $(target === 'hex' ? 'hexIn' : 'asmIn').value = text;
+    setMode(target);
+    try { localStorage.setItem(target === 'hex' ? 'z80bench.hex' : 'z80bench.asm', text); } catch (e) {}
+    msg.className = 'msg ok';
+    msg.textContent = note + ` Check Load at (now ${h4(parseInt($('loadAddr').value, 16) || 0)}h), then press ${target === 'hex' ? 'Load into memory' : 'Assemble and load'}.`;
+    $('loadAddr').focus(); $('loadAddr').select();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ---------- events ----------
+function hexField(id, fn) { $(id).addEventListener('change', () => { const v = parseInt($(id).value, 16); if (!isNaN(v)) fn(v & 0xFF); $(id).value = h2(id === 'intVec' ? cpu.intVector : inDefault); render(); }); }
+function bind() {
+  $('btnReset').onclick = resetCPU;
+  $('btnClock').onclick = pulseClock;
+  $('btnStep').onclick = stepInstruction;
+  $('btnRun').onclick = () => running ? stopRun() : startRun();
+  $('speed').onchange = () => { runRate = $('speed').value; acc = 0; };
+  $('btnLoad').onclick = loadProgram;
+  $('btnToHex').onclick = toHex;
+  $('btnImport').onclick = () => $('fileIn').click();
+  $('fileIn').onchange = () => { importFile($('fileIn').files[0]); $('fileIn').value = ''; };
+  for (const id of ['asmIn', 'hexIn']) {
+    const ta = $(id);
+    ta.addEventListener('dragover', e => { if ([...e.dataTransfer.types].includes('Files')) { e.preventDefault(); ta.classList.add('drop'); } });
+    ta.addEventListener('dragleave', () => ta.classList.remove('drop'));
+    ta.addEventListener('drop', e => { if (!e.dataTransfer.files.length) return; e.preventDefault(); ta.classList.remove('drop'); importFile(e.dataTransfer.files[0]); });
+  }
+  $('loadAddr').addEventListener('keydown', e => { if (e.key === 'Enter') loadProgram(); });
+  $('modeAsm').onclick = () => setMode('asm');
+  $('modeHex').onclick = () => setMode('hex');
+  $('memSize').onchange = () => { memSize = +$('memSize').value; render(); };
+  $('unmapped').onchange = () => { mirror = $('unmapped').value === 'mirror'; render(); };
+  hexField('intVec', v => { cpu.intVector = v; });
+  hexField('inDefault', v => { inDefault = v; });
+  $('btnPort').onclick = () => {
+    const p = parseInt($('portNo').value, 16), v = parseInt($('portVal').value, 16);
+    if (isNaN(p)) return;
+    if (isNaN(v)) portIn.delete(p & 0xFF); else portIn.set(p & 0xFF, v & 0xFF);
+    render();
+  };
+  $('imSel').onchange = () => { cpu.im = +$('imSel').value; render(); };
+  $('dis').addEventListener('click', e => {
+    const row = e.target.closest('.dis-row'); if (!row) return;
+    const a = +row.dataset.a; breakpoints.has(a) ? breakpoints.delete(a) : breakpoints.add(a); renderDis();
+  });
+  $('dis').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.dis-row')) { e.preventDefault(); e.target.click(); } });
+  $('memFrom').addEventListener('change', () => { const v = parseInt($('memFrom').value, 16); if (!isNaN(v)) memFrom = v & 0xFFF0; renderMem(); });
+  $('memPrev').onclick = () => { memFrom = (memFrom - 256) & 0xFFFF; renderMem(); };
+  $('memNext').onclick = () => { memFrom = (memFrom + 256) & 0xFFFF; renderMem(); };
+  $('memPC').onclick = () => { memFrom = regsView().pc & 0xFFF0; renderMem(); };
+  $('memSP').onclick = () => { memFrom = regsView().sp & 0xFFF0; renderMem(); };
+  $('mem').addEventListener('click', e => {
+    const td = e.target.closest('td.b'); if (!td || td.classList.contains('un') || td.querySelector('input')) return;
+    const a = +td.dataset.a;
+    const inp = document.createElement('input'); inp.value = h2(bus.read(a)); inp.maxLength = 2; inp.setAttribute('aria-label', 'Byte at ' + h4(a) + 'h');
+    td.textContent = ''; td.appendChild(inp); inp.focus(); inp.select();
+    let done = false;
+    const commit = save => { if (done) return; done = true; const v = parseInt(inp.value, 16); if (save && !isNaN(v)) bus.write(a, v & 0xFF); render(); };
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') commit(true); else if (ev.key === 'Escape') commit(false); });
+    inp.addEventListener('blur', () => commit(true));
+  });
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === 'c') { e.preventDefault(); pulseClock(); }
+    else if (k === 's') { e.preventDefault(); stepInstruction(); }
+    else if (k === 'r') { e.preventDefault(); running ? stopRun() : startRun(); }
+  });
+  // snapshot register values at the start of each user action so changes highlight
+  for (const id of ['btnClock', 'btnStep', 'btnRun']) $(id).addEventListener('pointerdown', snapshotPrevRegs, true);
+  document.addEventListener('keydown', e => { if (!e.target.closest('input, textarea, select') && 'csr'.includes(e.key.toLowerCase())) snapshotPrevRegs(); }, true);
+  $('chip').addEventListener('pointerdown', e => { if (e.target.closest('[data-pin="CLK"]')) snapshotPrevRegs(); }, true);
+}
+
+// ---------- init ----------
+buildChip(); buildRegs(); bind();
+let savedHex = null, savedAsm = null, savedMode = null;
+try { savedHex = localStorage.getItem('z80bench.hex'); savedAsm = localStorage.getItem('z80bench.asm'); savedMode = localStorage.getItem('z80bench.mode'); const la = localStorage.getItem('z80bench.loadAddr'); if (la && /^[0-9A-F]{4}$/.test(la)) $('loadAddr').value = la; } catch (e) {}
+$('hexIn').value = savedHex || SAMPLE;
+$('asmIn').value = savedAsm || SAMPLE_ASM;
+portIn.set(0x02, 0x5A);
+setMode(savedMode === 'hex' ? 'hex' : 'asm');
+loadProgram();
+if ($('loadMsg').classList.contains('ok')) $('loadMsg').textContent += ' Press Step instruction to begin.';
+})();
+</script>
+</html>

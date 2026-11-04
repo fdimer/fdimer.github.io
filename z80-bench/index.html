@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Z80 Bench</title>
-  <meta name="description" content="Z80 Bench: a Z80 emulator for debugging and designing hardware.">
+  <meta name="description" content="Z80 Bench: a Z80 emulator for debugging and designing hardware. Runs in your browser.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css">
@@ -16,23 +16,29 @@
     <header class="site" style="margin-top:20px">
       <p class="prompt">&gt; LOAD "Z80BENCH"</p>
       <h1>Z80 Bench</h1>
-      <p class="lead">A Z80 emulator for debugging and designing hardware around the Zilog Z80.</p>
+      <p class="lead">A Z80 emulator for debugging programs and designing hardware around the Zilog Z80. It runs right in your browser, with nothing to install.</p>
     </header>
+
+    <a class="button" href="app/">Open the emulator</a>
 
     <h2>Features</h2>
     <ul class="features">
-      <li>Pinout view with clickable input pins, so you can drive signals by hand</li>
-      <li>Program entry as raw hex or assembler</li>
-      <li>Configurable memory</li>
-      <li>Step-by-step execution to watch exactly what the CPU does</li>
+      <li><b>Pinout:</b> a 40-pin view that updates every T-state. Click CLK, /INT, /NMI, /WAIT, /BUSREQ and /RESET to drive them by hand</li>
+      <li><b>Program input:</b> Zilog-syntax assembler with labels and directives, or raw hex and Intel HEX. You can also import .asm, .hex or .bin files</li>
+      <li><b>Memory:</b> 1 to 64 KB installed, editable in the memory view</li>
+      <li><b>Stepping:</b> one T-state, one instruction, or run at 5 Hz, 50 Hz, 1 kHz or full speed, with breakpoints</li>
+      <li><b>Bus timing:</b> waveforms of /M1, /MREQ, /IORQ, /RD, /WR and /RFSH for the current instruction</li>
+      <li><b>I/O:</b> OUT writes shown as LED latches, and you set what IN returns for each port</li>
     </ul>
 
-    <h2>Coming next</h2>
-    <p>Peripheral support is planned.</p>
+    <h2>Verified</h2>
+    <p>Passes all 67 zexdoc groups, matches datasheet T-state counts, and assembles all 1,136 instruction forms correctly.</p>
 
-    <h2>Get it</h2>
-    <a class="button" href="https://github.com/fdimer/z80-bench">View on GitHub</a>
-    <a class="button secondary" href="https://github.com/fdimer/z80-bench/releases">Downloads</a>
+    <h2>Coming next</h2>
+    <p>Peripherals such as memory-mapped devices, UART and PIO.</p>
+
+    <h2>Source</h2>
+    <a class="button secondary" href="https://github.com/fdimer/fdimer.github.io/tree/main/z80-bench/app">View the code</a>
 
     <h2>Licence</h2>
     <p>Free for anyone to use non-commercially under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>.</p>
