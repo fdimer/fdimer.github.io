@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Font Developer</title>
+  <meta name="description" content="Font Developer: design a font in your browser. Draw each character with pixels, lines and arcs, watch the result as you go, and export a TrueType (.ttf) font.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; All projects</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LOAD "FONTDEV"</p>
+      <h1>Font Developer</h1>
+      <p class="lead">Design a font in your browser. Pick a character, draw it on the left with pixels, lines and arcs, and see the result on the right as you go. When you're done, export it as a TrueType font you can install and use anywhere.</p>
+    </header>
+
+    <a class="button" href="app/">Open Font Developer</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>Pixel drawing:</b> paint on a grid for blocky, bitmap-style letters. The right mouse button rubs out</li>
+      <li><b>Lines and arcs:</b> draw strokes with a chosen width and round or flat ends, then move them or drag their handles to reshape them. Pixels and strokes can be mixed in one letter</li>
+      <li><b>Live result:</b> a large preview of the current character, sample text you can edit at four sizes, and a grid of every character, all using the font as it's being built</li>
+      <li><b>Guides:</b> baseline, x-height, cap height, ascender and descender lines, snap to grid, and a faint letter behind to trace over</li>
+      <li><b>Export .ttf:</b> builds a real TrueType font from every character you've drawn</li>
+      <li><b>Save and open projects:</b> as <code>.fontdev.json</code> files, with undo and redo, plus copy and paste between characters</li>
+      <li><b>Private:</b> everything happens in your browser; nothing is sent anywhere</li>
+    </ul>
+
+    <h2>Source</h2>
+    <p>Plain HTML, CSS and JavaScript with no libraries, including its own TrueType font writer. It covers the basic Latin characters (space to <code>~</code>) and one regular style. Built with Claude Code.</p>
+    <a class="button secondary" href="https://github.com/fdimer/FontDeveloper">View on GitHub</a>
+
+    <footer><a href="../">&larr; Back to all projects</a></footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Font Developer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <strong class="app">Font Developer</strong>
+  <label>Font name <input id="family" type="text" size="14"></label>
+  <span class="sep"></span>
+  <button id="prevChar" title="Previous character (Page Up)">&lsaquo;</button>
+  <select id="charSelect" title="Character being designed"></select>
+  <button id="nextChar" title="Next character (Page Down)">&rsaquo;</button>
+  <label title="Advance width: how far the cursor moves after this character. You can also drag the right-hand dashed line with the Select tool.">Width <input id="advance" type="number" min="0" max="5000" step="10"></label>
+  <span class="grow"></span>
+  <button id="newBtn">New</button>
+  <button id="openBtn">Open…</button>
+  <button id="saveBtn">Save project</button>
+  <button id="exportBtn" class="primary">Export .ttf</button>
+  <input id="openFile" type="file" accept=".json,.fontdev" hidden>
+</header>
+
+<main>
+  <section class="pane editor">
+    <div class="tools">
+      <div class="group" role="radiogroup" aria-label="Tool">
+        <button data-tool="pixel" title="Pixel pen (P). Left button draws, right button erases.">Pixel</button>
+        <button data-tool="erase" title="Pixel eraser (E)">Erase</button>
+        <button data-tool="line" title="Line (L). Press, drag, release.">Line</button>
+        <button data-tool="arc" title="Arc (A). Drag from start to end, then move to bend it and click.">Arc</button>
+        <button data-tool="select" title="Select (V). Click a line or arc, drag it or its handles. Delete removes it.">Select</button>
+      </div>
+      <div class="group">
+        <label title="Stroke width for lines and arcs, in font units">Stroke <input id="strokeW" type="number" min="2" max="1000" step="2"></label>
+        <select id="cap" title="Line ends">
+          <option value="round">Round ends</option>
+          <option value="butt">Flat ends</option>
+        </select>
+      </div>
+      <div class="group">
+        <label title="Snap line and arc points to a grid"><input id="snap" type="checkbox"> Snap</label>
+        <input id="snapSize" type="number" min="1" max="500" step="1" title="Snap grid size, in font units">
+        <label title="Show a faint system-font letter as a tracing guide"><input id="guide" type="checkbox"> Guide</label>
+      </div>
+      <div class="group">
+        <button id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
+        <button id="redoBtn" title="Redo (Ctrl+Y)">Redo</button>
+        <button id="copyBtn" title="Copy this glyph">Copy</button>
+        <button id="pasteBtn" title="Replace this glyph with the copied one">Paste</button>
+        <button id="clearBtn" title="Clear this glyph">Clear</button>
+      </div>
+    </div>
+    <div class="canvasWrap"><canvas id="editor"></canvas></div>
+    <details class="metrics">
+      <summary>Font metrics</summary>
+      <div class="grid">
+        <label>Units per em <input id="m_upm" type="number" min="16" max="16384" step="1"></label>
+        <label>Ascender <input id="m_asc" type="number" step="10"></label>
+        <label>Descender <input id="m_desc" type="number" step="10"></label>
+        <label>Cap height <input id="m_cap" type="number" step="10"></label>
+        <label>x-height <input id="m_x" type="number" step="10"></label>
+        <label title="Size of one pixel cell for the Pixel pen, in font units. Changing it rescales existing pixel drawings.">Pixel size <input id="m_px" type="number" min="1" step="1"></label>
+        <label>Default width <input id="m_adv" type="number" min="0" step="10"></label>
+      </div>
+    </details>
+  </section>
+
+  <section class="pane preview">
+    <h2>Result</h2>
+    <canvas id="glyphPreview"></canvas>
+    <label class="sampleLabel">Sample text <textarea id="sample" rows="2" spellcheck="false"></textarea></label>
+    <div id="samples"></div>
+    <h2>All characters <span class="hint">(click to edit)</span></h2>
+    <div id="overview"></div>
+  </section>
+</main>
+
+<footer class="bar status"><span id="status">Ready.</span></footer>
+
+<script src="js/ttf.js"></script>
+<script src="js/outline.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
