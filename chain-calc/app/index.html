@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chain Calc</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --line: #23402b;
+    --green: #39ff7a;
+    --green-dim: #1f8a45;
+    --error: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--green);
+    font: 20pt/1.3 "Consolas", "Courier New", monospace;
+  }
+  main {
+    width: min(560px, 100% - 32px);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 2fr) minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .head {
+    font-size: 12pt;
+    color: var(--green-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom-color: var(--green-dim);
+  }
+  .op, input {
+    font: inherit;
+    color: var(--green);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .op {
+    height: 48px;
+    cursor: pointer;
+  }
+  .op:hover, .op:focus-visible { border-color: var(--green); outline: none; }
+  input {
+    width: 100%;
+    height: 48px;
+    padding: 0 10px;
+    text-align: right;
+  }
+  input:focus { outline: none; border-color: var(--green); }
+  input::placeholder { color: var(--green-dim); }
+  .sub { text-align: right; color: var(--green-dim); overflow: hidden; text-overflow: ellipsis; }
+  .total {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 16px;
+    font-weight: bold;
+  }
+  .error { color: var(--error); }
+  .actions { margin-top: 16px; text-align: right; }
+  .actions button {
+    font: 12pt "Consolas", monospace;
+    color: var(--green-dim);
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  .actions button:hover { color: var(--green); border-color: var(--green); }
+</style>
+</head>
+<body>
+<main>
+  <div class="row head"><span>Op</span><span>Value</span><span class="sub">Running</span></div>
+  <div id="rows"></div>
+  <div class="total"><span>Result</span><span id="total">0</span></div>
+  <div class="actions"><button id="clear" type="button">Clear</button></div>
+</main>
+
+<script>
+  const CELL_COUNT = 5;
+  const OPS = ['+', '−', '×', '÷'];
+
+  const apply = {
+    '+': (a, b) => a + b,
+    '−': (a, b) => a - b,
+    '×': (a, b) => a * b,
+    '÷': (a, b) => (b === 0 ? NaN : a / b),
+  };
+
+  const rowsEl = document.getElementById('rows');
+  const totalEl = document.getElementById('total');
+  const cells = [];
+
+  for (let i = 0; i < CELL_COUNT; i++) {
+    const row = document.createElement('div');
+    row.className = 'row';
+
+    const op = document.createElement('button');
+    op.type = 'button';
+    op.className = 'op';
+    op.dataset.index = 0;
+    op.textContent = OPS[0];
+    op.title = 'Click to change operation';
+    op.addEventListener('click', () => {
+      op.dataset.index = (Number(op.dataset.index) + 1) % OPS.length;
+      op.textContent = OPS[op.dataset.index];
+      recalc();
+    });
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.inputMode = 'decimal';
+    input.placeholder = '0';
+    input.setAttribute('aria-label', `Cell ${i + 1}`);
+    input.addEventListener('input', recalc);
+
+    const sub = document.createElement('span');
+    sub.className = 'sub';
+
+    row.append(op, input, sub);
+    rowsEl.append(row);
+    cells.push({ op, input, sub });
+  }
+
+  function parse(text) {
+    const t = text.trim();
+    if (t === '') return 0;
+    const n = Number(t);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  function format(n) {
+    if (Number.isNaN(n)) return 'Error';
+    return Number(n.toPrecision(12)).toString();
+  }
+
+  // The chain starts at 0, so every cell, including the first, applies its operation.
+  function recalc() {
+    let result = 0;
+    cells.forEach((cell) => {
+      const value = parse(cell.input.value);
+      cell.input.classList.toggle('error', Number.isNaN(value));
+      // Empty cells pass the running result through unchanged.
+      if (cell.input.value.trim() !== '') {
+        result = apply[OPS[cell.op.dataset.index]](result, value);
+      }
+      cell.sub.textContent = format(result);
+      cell.sub.classList.toggle('error', Number.isNaN(result));
+    });
+    totalEl.textContent = format(result);
+    totalEl.classList.toggle('error', Number.isNaN(result));
+  }
+
+  document.getElementById('clear').addEventListener('click', () => {
+    cells.forEach((cell) => {
+      cell.input.value = '';
+      cell.op.dataset.index = 0;
+      cell.op.textContent = OPS[0];
+    });
+    recalc();
+    cells[0].input.focus();
+  });
+
+  recalc();
+</script>
+</body>
+</html>

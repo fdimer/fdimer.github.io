@@ -125,6 +125,15 @@ h2 {
   text-decoration: none;
 }
 
+.shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 24px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
 ul.features { padding-left: 20px; }
 ul.features li { margin-bottom: 6px; }
 

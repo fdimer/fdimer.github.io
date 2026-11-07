@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chain Calc</title>
+  <meta name="description" content="Chain Calc: a five-cell calculator where every cell picks its own operation and shows the running result. Runs in your browser, and as a Windows app.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; All projects</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LOAD "CHAINCALC"</p>
+      <h1>Chain Calc</h1>
+      <p class="lead">A calculator laid out like a tiny spreadsheet. Type up to five numbers, give each one its own operation, and watch the result build up line by line.</p>
+    </header>
+
+    <a class="button" href="app/">Open the calculator</a>
+
+    <img class="shot" src="screenshot.png" width="2560" height="1440"
+         alt="Chain Calc working out 10 + 5 × 3 ÷ 9 one cell at a time, with running results 10, 15, 45 and 5, and a final result of 5.">
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>One operation per cell:</b> click a cell's button to cycle through + − × ÷. Each operation acts on the result of the cells above it</li>
+      <li><b>Running result:</b> every row shows the result so far, and the final answer sits at the bottom</li>
+      <li><b>Forgiving:</b> empty cells are skipped, and dividing by zero or a typo shows a clear Error instead of a wrong number</li>
+      <li><b>Easy on the eyes:</b> green text on a dark background, in a large monospace font</li>
+    </ul>
+
+    <h2>Windows app</h2>
+    <p>There is also a Windows version built with C# and WPF, coming soon to the Microsoft Store. It works just like the browser version.</p>
+
+    <h2>Source</h2>
+    <p>The browser version is a single HTML file. The Windows version is a .NET 10 WPF app with unit tests and MSIX packaging. Built with Claude Code.</p>
+    <a class="button secondary" href="https://github.com/fdimer/ChainCalculator">View on GitHub</a>
+
+    <footer><a href="../">&larr; Back to all projects</a></footer>
+  </main>
+</body>
+</html>
