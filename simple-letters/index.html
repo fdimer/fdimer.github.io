@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SimpleLetters</title>
+  <meta name="description" content="SimpleLetters: a plain word processor with one A4 page. The only things you can change are the margins and the font size. A Windows app, with a simpler version that runs in your browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; All projects</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LOAD "SIMPLELETTERS"</p>
+      <h1>SimpleLetters</h1>
+      <p class="lead">A plain word processor: one A4 page, and you write on it. The only things you can change are the margins and the font size.</p>
+    </header>
+
+    <a class="button" href="app/">Try the browser version</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>One page, nothing else:</b> no menus full of options, no styles, no ribbons. Just the page and your words</li>
+      <li><b>Margins you can see:</b> four arrows around the page mark the margins. Click one to show a line where it is, and drag it to move it</li>
+      <li><b>Text size:</b> the − and + buttons set the size of what you type next. Text already on the page keeps its size</li>
+      <li><b>Open, save and print:</b> letters are saved as <code>.sletter</code> files, plain XML that's easy to read without the app. Plain <code>.txt</code> files open too</li>
+      <li><b>Easy to read:</b> text is set in Atkinson Hyperlegible Next, designed by the Braille Institute for legibility</li>
+      <li><b>Private:</b> collects no data, and your writing stays on your computer</li>
+    </ul>
+
+    <h2>Windows app</h2>
+    <p>The full version is a Windows app built with C# and WPF, coming soon to the Microsoft Store. The browser version above is an earlier, simpler one: margins and a single text size for the whole page, with no saving to <code>.sletter</code> files.</p>
+
+    <h2>Source</h2>
+    <p>The Windows version is a .NET 10 WPF app; the browser version is plain HTML, CSS and JavaScript. MIT licence. Built with Claude Code.</p>
+    <a class="button secondary" href="https://github.com/fdimer/SimpleLetters">View on GitHub</a>
+
+    <footer><a href="../">&larr; Back to all projects</a></footer>
+  </main>
+</body>
+</html>
