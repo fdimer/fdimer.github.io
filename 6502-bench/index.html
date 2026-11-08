@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>6502 Bench</title>
+  <meta name="description" content="6502 Bench: an NMOS 6502 emulator for debugging and designing hardware. Runs in your browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; All projects</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LOAD "6502BENCH"</p>
+      <h1>6502 Bench</h1>
+      <p class="lead">The sister project to <a href="../z80-bench/">Z80 Bench</a>: the same bench, built around the NMOS 6502. Debug programs and design hardware right in your browser, with nothing to install.</p>
+    </header>
+
+    <a class="button" href="app/">Open the emulator</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>Pinout:</b> a 40-pin view that updates every clock cycle. Click &phi;0, RDY, /IRQ, /NMI, /SO and /RES to drive them by hand</li>
+      <li><b>Program input:</b> standard 6502 assembler with labels, directives and automatic zero-page addressing, or raw hex and Intel HEX. You can also import .asm, .hex or .bin files and choose the address they load at, for example the start of ROM</li>
+      <li><b>Memory map:</b> RAM from 0000h, write-protected ROM up to FFFFh with the reset, NMI and IRQ vectors, and a block of 16 memory-mapped I/O registers</li>
+      <li><b>Memory:</b> a scrolling view you can edit that follows the instruction being executed</li>
+      <li><b>Disassembly:</b> scrolls through all of memory and keeps the current instruction in view as you step. Loading hex or a ROM image also turns it into labelled source you can edit and reassemble</li>
+      <li><b>Stepping:</b> one cycle, one instruction, or run at 5 Hz, 50 Hz, 1 kHz or full speed, with breakpoints</li>
+      <li><b>Bus timing:</b> every bus cycle of the current instruction, including the dummy reads and writes real hardware sees</li>
+      <li><b>Layout:</b> the registers and bus timing panels fold away to give memory and disassembly more room</li>
+    </ul>
+
+    <h2>Verified</h2>
+    <p>Passes Klaus Dormann's 6502 functional test and all 1.51 million SingleStepTests cases, cycle by cycle, including decimal mode.</p>
+
+    <h2>Coming next</h2>
+    <p>Peripherals such as a 6522 VIA and a 6551 ACIA.</p>
+
+    <h2>Source</h2>
+    <a class="button secondary" href="https://github.com/fdimer/6502-bench">View on GitHub</a>
+
+    <h2>Licence</h2>
+    <p>Free for anyone to use non-commercially under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>.</p>
+
+    <footer><a href="../">&larr; Back to all projects</a></footer>
+  </main>
+</body>
+</html>
