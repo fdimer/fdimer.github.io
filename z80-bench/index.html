@@ -24,8 +24,9 @@
     <h2>Features</h2>
     <ul class="features">
       <li><b>Pinout:</b> a 40-pin view that updates every T-state. Click CLK, /INT, /NMI, /WAIT, /BUSREQ and /RESET to drive them by hand</li>
-      <li><b>Program input:</b> Zilog-syntax assembler with labels and directives, or raw hex and Intel HEX. You can also import .asm, .hex or .bin files</li>
-      <li><b>Memory:</b> 1 to 64 KB installed, editable in the memory view</li>
+      <li><b>Program input:</b> Zilog-syntax assembler with labels and directives, or raw hex and Intel HEX. You can also import .asm, .hex or .bin files and choose the address they load at, for example the start of ROM</li>
+      <li><b>Memory:</b> 1 to 64 KB installed, with a scrolling view you can edit that follows the instruction being executed</li>
+      <li><b>Disassembly:</b> scrolls through all of memory and keeps the current instruction in view as you step. Loading hex or a ROM image also turns it into labelled source you can edit and reassemble</li>
       <li><b>Stepping:</b> one T-state, one instruction, or run at 5 Hz, 50 Hz, 1 kHz or full speed, with breakpoints</li>
       <li><b>Bus timing:</b> waveforms of /M1, /MREQ, /IORQ, /RD, /WR and /RFSH for the current instruction</li>
       <li><b>I/O:</b> OUT writes shown as LED latches, and you set what IN returns for each port</li>
