@@ -175,3 +175,6 @@ ol.pubs .authors b { color: var(--text); font-weight: 600; }
 ol.pubs .venue { font-style: italic; }
 ol.pubs .cites { display: inline-block; margin-top: 4px; font-family: var(--mono); font-size: 12px;
   background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 1px 6px; }
+
+/* Favourite books */
+ol.pubs .book-title { font-weight: 600; }
