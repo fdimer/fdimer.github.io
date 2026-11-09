@@ -13,6 +13,15 @@ The projects are split into two groups, each with its own section page:
 | `personal/index.html` | **Personal projects**: hardware and retro-computing work and other hobby tools that are *not* part of the aWkward sn@ail business. |
 | `awkward-snail/index.html` | **aWkward sn@ail projects**: apps published under the aWkward sn@ail software label (Microsoft Store apps). |
 
+> **Currently hidden.** At the user's request, the aWkward sn@ail section is
+> hidden until the Microsoft Store account is up and running. Its card on
+> `index.html` is wrapped in an HTML comment, and `awkward-snail/index.html` plus
+> the six aWkward sn@ail project pages carry `<meta name="robots" content="noindex">`.
+> The pages still exist and can be updated, but don't link to them from
+> `index.html` or the personal pages, and don't un-hide them until the user says so.
+> To un-hide: remove the comment wrapper around the card on `index.html` and the
+> `robots` meta lines from those seven pages.
+
 Each project keeps its own folder at the site root (for example `z80-bench/`,
 `chain-calc/`), with its page at `<folder>/index.html` and any browser version at
 `<folder>/app/`. Folders are **not** moved into the section folders, so existing
