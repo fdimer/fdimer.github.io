@@ -161,3 +161,17 @@ footer {
   font-size: 14px;
   color: var(--muted);
 }
+
+/* Publications list */
+.pub-stats { font-family: var(--mono); font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+.pub-blurb { color: var(--muted); margin-top: -4px; }
+ol.pubs { list-style: none; padding: 0; margin: 0 0 32px; }
+ol.pubs li { padding: 14px 0; border-bottom: 1px solid var(--line); }
+ol.pubs li:last-child { border-bottom: 0; }
+ol.pubs li > a { font-weight: 600; text-decoration: none; }
+ol.pubs li > a:hover, ol.pubs li > a:focus-visible { text-decoration: underline; }
+ol.pubs .authors, ol.pubs .venue { display: block; color: var(--muted); font-size: 15px; }
+ol.pubs .authors b { color: var(--text); font-weight: 600; }
+ol.pubs .venue { font-style: italic; }
+ol.pubs .cites { display: inline-block; margin-top: 4px; font-family: var(--mono); font-size: 12px;
+  background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 1px 6px; }
