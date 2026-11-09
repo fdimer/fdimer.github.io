@@ -26,13 +26,14 @@
       <li><b>The real ROM:</b> load your own 4 KB ZX80 ROM image (it isn't included); your browser remembers it. It boots to the K cursor and runs 4K Integer BASIC</li>
       <li><b>Video from the CPU:</b> character bytes become NOPs, the font is fetched during refresh cycles, HALT and the interrupt end each line, and a virtual TV locks onto the sync pulses. The screen blanks while BASIC is busy, just as the real one does</li>
       <li><b>Keyboard:</b> type on your keyboard, or click the on-screen ZX80 keys, which show each key's BASIC keyword and SHIFT symbol from the ROM's own tables</li>
-      <li><b>Memory:</b> 1K as supplied, or 16K with the RAM pack</li>
+      <li><b>Tape:</b> LOAD and SAVE programs as standard .o files, instantly: insert a file and type LOAD, or type SAVE and the program downloads</li>
+      <li><b>Memory:</b> 1K as supplied, or 16K with the RAM pack. Dump the RAM as a binary file, or as a readable listing with the system variables, memory areas, the BASIC program as text and a hex dump</li>
       <li><b>Real time:</b> 3.25 MHz, or full speed</li>
       <li><b>Debugging:</b> Z80 Bench's tools, including the disassembler, memory view, breakpoints and stepping, plus a panel showing the video logic: line counter, sync and the character latch</li>
     </ul>
 
     <h2>Coming next</h2>
-    <p>Loading and saving programs as tape files, and the ZX81.</p>
+    <p>The ZX81.</p>
 
     <h2>Source</h2>
     <a class="button secondary" href="https://github.com/fdimer/z80-bench/tree/zx80">View on GitHub (zx80 branch)</a>
