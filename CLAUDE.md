@@ -12,7 +12,7 @@ The projects are split into two groups, each with its own section page:
 | `index.html` | Hub only: one card per group, linking to the two section pages, plus the Publications card. No project cards here. |
 | `personal/index.html` | **Personal projects**: hardware and retro-computing work and other hobby tools that are *not* part of the aWkward sn@ail business. |
 | `awkward-snail/index.html` | **aWkward sn@ail projects**: apps published under the aWkward sn@ail software label (Microsoft Store apps). |
-| `publications/index.html` | **Publications**: the user's research papers, taken from their Google Scholar profile (user `nXwTI4cAAAAJ`), grouped by field. Linked from its own card on `index.html` (the hub's only non-group card). Citation counts are a dated snapshot; when refreshing, update the stats line, the counts and the card's publication count. Google Scholar blocks automated fetching, so read it through the user's browser. |
+| `publications/index.html` | **Publications**: the user's research papers, taken from their Google Scholar profile (user `nXwTI4cAAAAJ`), grouped by field. Linked from its own card on `index.html` (the hub's only non-group card). Citation counts are a dated snapshot; when refreshing, update the stats line, the counts and the card's publication count. Google Scholar blocks automated fetching, so read it through the user's browser. **Never list** "Desenvolvimento de Pacotes de Auto-Aprendizagem e Avaliação no ISUTC" (F Oliveira, CO Smith, CLME'08): Scholar attributes it to the user, but it isn't theirs. |
 
 > **Currently hidden.** At the user's request, the aWkward sn@ail section is
 > hidden until the Microsoft Store account is up and running. Its card on
