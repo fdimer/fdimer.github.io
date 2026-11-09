@@ -1,8 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Z80 Bench</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -938,8 +933,7 @@ function disasm(read, addr, rec) {
 }
 
 if (typeof module !== 'undefined') module.exports = { Z80, disasm, h2, h4 };
-</script>
-<script>
+
 // ---- Z80 assembler (two-pass). Opcode table is generated from the disassembler. ----
 const ASM_TABLE = (() => {
   const table = new Map();
@@ -1182,6 +1176,7 @@ function assemble(source, base = 0) {
 }
 
 if (typeof module !== 'undefined') module.exports = { assemble, ASM_TABLE };
+
 </script>
 <script>
 (() => {
@@ -1411,12 +1406,19 @@ function setStatus(text, warn, run) {
   const el = $('status'); el.textContent = text;
   el.className = 'status' + (warn ? ' warn' : run ? ' run' : '');
 }
+// what a halted CPU is waiting for, and which input pins can still wake it
+function haltMsg() {
+  const at = h4((cpu.pc - 1) & 0xFFFF) + 'h';
+  if (cpu.nmiPending) return `Halted at ${at}; /NMI received: press Step or Run and the CPU jumps to 0066h`;
+  if (cpu.iff1) return pins.int === 0 ? `Halted at ${at}; /INT is low: press Step or Run to take the interrupt` : `Halted at ${at}: waiting for an interrupt (pull /INT or /NMI low)`;
+  return `Halted at ${at} with interrupts disabled (DI): /INT is ignored, so only /NMI or /RESET can wake the CPU`;
+}
 function describeInputs() {
   if (pins.reset === 0) return setStatus('Held in reset (/RESET low)', true);
   if (busReleased) return setStatus('Bus released to another device (/BUSREQ low)', true);
   if (waitT && pins.wait === 0) return setStatus('Wait state: /WAIT is low', true);
   if (running) return setStatus('Running', false, true);
-  if (cpu.halted) return setStatus(cpu.iff1 ? 'Halted: waiting for an interrupt' : 'Halted (interrupts disabled)');
+  if (cpu.halted) return setStatus(haltMsg(), !cpu.iff1 && !cpu.nmiPending);
   setStatus('Ready');
 }
 function stalledMsg(r) {
@@ -1503,7 +1505,7 @@ function frame(now) {
       if (wb) { const wn = watchHit(wb); if (wn != null) { finishFast(last, pc); watchStop(wn); return; } }
       if (mb) { const mh = memHit(mb); if (mh) { finishFast(last, pc); watchStop(mh); return; } }
       if (afterBps.size && afterBps.has(pc) && cpu.pc !== pc) { finishFast(last, pc); watchStop(pc); return; }
-      if (cpu.halted && !cpu.iff1 && !cpu.nmiPending) { finishFast(last, pc); stopRun('Halted (interrupts disabled)'); return; }
+      if (cpu.halted && !cpu.iff1 && !cpu.nmiPending) { finishFast(last, pc); stopRun(haltMsg()); return; }
       last.pc = pc;
     }
     if (stall) break;
@@ -2254,4 +2256,3 @@ loadProgram();
 if ($('loadMsg').classList.contains('ok')) $('loadMsg').textContent += ' Press Step instruction to begin.';
 })();
 </script>
-</html>
