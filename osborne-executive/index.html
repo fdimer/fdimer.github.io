@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Osborne Executive</title>
+  <meta name="description" content="An Osborne Executive emulator built on Z80 Bench, from the original schematics. Runs in your browser with your own ROM.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; All projects</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LOAD "OSBEXEC"</p>
+      <h1>Osborne Executive</h1>
+      <p class="lead">An emulator of Osborne's 1983 portable, built on <a href="../z80-bench/">Z80 Bench</a> and modelled from the OCC2 main logic board schematics. It boots the real ROM to its sign-on screen, with a working keyboard and amber display, and every chip's pins can be watched clock by clock.</p>
+    </header>
+
+    <a class="button" href="app/">Open the emulator</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>The real ROM:</b> load your own 8 KB Executive v1.2 ROM image (it isn't included); your browser remembers it. The ROM runs its self-test and shows its sign-on screen</li>
+      <li><b>Screen:</b> the 80 × 24 amber display, drawn from the font the ROM loads, with half intensity, underline, blink, reverse video and the graphics character set</li>
+      <li><b>Keyboard:</b> your keys drive the Executive's key matrix, scanned by the ROM 60 times a second</li>
+      <li><b>Memory banks:</b> 128K of DRAM, the boot ROM, font RAM and video RAM switched by the system PIA, with memory and disassembly views that follow the active bank</li>
+      <li><b>Chips:</b> live pinouts of the Z80A, both MC6821 PIAs and the Z80A SIO/2, wired as on the schematic</li>
+      <li><b>Real time:</b> 3.99 MHz with 60 Hz video, or full speed</li>
+      <li><b>Debugging:</b> all of Z80 Bench's tools, including stepping clock by clock, bus timing, breakpoints and register, memory, pin and bus stops</li>
+    </ul>
+
+    <h2>Coming next</h2>
+    <p>The MB8877 floppy disk controller and disk images, so the Executive can boot CP/M Plus.</p>
+
+    <h2>Source</h2>
+    <a class="button secondary" href="https://github.com/fdimer/z80-bench/tree/osborne">View on GitHub (osborne branch)</a>
+
+    <h2>Licence</h2>
+    <p>The emulator is free for anyone to use non-commercially under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The Osborne Executive ROM is not part of this project.</p>
+
+    <footer><a href="../">&larr; Back to all projects</a></footer>
+  </main>
+</body>
+</html>
