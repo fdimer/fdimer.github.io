@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sinclair ZX80</title>
+  <meta name="description" content="A Sinclair ZX80 emulator built on Z80 Bench, where the Z80 draws the picture itself. Runs in your browser with your own ROM.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; All projects</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; RUN</p>
+      <h1>Sinclair ZX80</h1>
+      <p class="lead">An emulator of Sinclair's 1980 home computer, built on <a href="../z80-bench/">Z80 Bench</a>. The ZX80 has no video chip: the Z80 itself runs through the display file, and a handful of logic chips turn its refresh cycles into a TV picture. This emulator models that trick cycle by cycle, so the picture comes from the CPU exactly as on the real machine.</p>
+    </header>
+
+    <a class="button" href="app/">Open the emulator</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>The real ROM:</b> load your own 4 KB ZX80 ROM image (it isn't included); your browser remembers it. It boots to the K cursor and runs 4K Integer BASIC</li>
+      <li><b>Video from the CPU:</b> character bytes become NOPs, the font is fetched during refresh cycles, HALT and the interrupt end each line, and a virtual TV locks onto the sync pulses. The screen blanks while BASIC is busy, just as the real one does</li>
+      <li><b>Keyboard:</b> type on your keyboard, or click the on-screen ZX80 keys, which show each key's BASIC keyword and SHIFT symbol from the ROM's own tables</li>
+      <li><b>Memory:</b> 1K as supplied, or 16K with the RAM pack</li>
+      <li><b>Real time:</b> 3.25 MHz, or full speed</li>
+      <li><b>Debugging:</b> Z80 Bench's tools, including the disassembler, memory view, breakpoints and stepping, plus a panel showing the video logic: line counter, sync and the character latch</li>
+    </ul>
+
+    <h2>Coming next</h2>
+    <p>Loading and saving programs as tape files, and the ZX81.</p>
+
+    <h2>Source</h2>
+    <a class="button secondary" href="https://github.com/fdimer/z80-bench/tree/zx80">View on GitHub (zx80 branch)</a>
+
+    <h2>Licence</h2>
+    <p>The emulator is free for anyone to use non-commercially under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The ZX80 ROM is not part of this project.</p>
+
+    <footer><a href="../">&larr; Back to all projects</a></footer>
+  </main>
+</body>
+</html>
