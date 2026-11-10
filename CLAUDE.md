@@ -18,15 +18,15 @@ The projects are split into three groups, each with its own section page:
 
 > **Released one app at a time.** The aWkward sn@ail apps are being released
 > in the Microsoft Store one per day, and each app appears on the site only from
-> its release day. Released so far: **Chain Calc** (free; listed on the sites, but its pages say "coming soon to the Microsoft Store" until the user confirms Microsoft has approved it, then switch them to "in the Microsoft Store"). The hub card on
+> its release day. Released so far: **Chain Calc** (free; Store page https://apps.microsoft.com/detail/9NS3M6ZN477C). The hub card on
 > `index.html` and `awkward-snail/index.html` are visible. Unreleased apps
 > (SimpleMusic, SimpleMusic Rhythm, TextBrowser, SimpleLetters, SimpleFunLetters)
 > have their cards on `awkward-snail/index.html` wrapped in an `UNRELEASED`
 > HTML comment, and their project pages carry `<meta name="robots" content="noindex">`.
 > To release an app: remove the comment wrapper around its card, remove the
 > `robots` meta line from its project page, change "coming soon to the
-> Microsoft Store" on that page to say it's in the Store (add the Store link
-> once the user has it), update the app count and summary on the hub card, and
+> Microsoft Store" on that page to say it's in the Store (add a "Get it from the Microsoft Store"
+> button with the Store link, https://apps.microsoft.com/detail/<Store ID>, once the user has it), update the app count and summary on the hub card, and
 > add it to the apps list on awkwardsnail.com.au (see Related). Only release an
 > app when the user says it's out.
 
