@@ -17,7 +17,7 @@ The projects are split into two groups, each with its own section page:
 
 > **Released one app at a time.** The aWkward sn@ail apps are being released
 > in the Microsoft Store one per day, and each app appears on the site only from
-> its release day. Released so far: **Chain Calc** (free). The hub card on
+> its release day. Released so far: **Chain Calc** (free; listed on the sites, but its pages say "coming soon to the Microsoft Store" until the user confirms Microsoft has approved it, then switch them to "in the Microsoft Store"). The hub card on
 > `index.html` and `awkward-snail/index.html` are visible. Unreleased apps
 > (SimpleMusic, SimpleMusic Rhythm, TextBrowser, SimpleLetters, SimpleFunLetters)
 > have their cards on `awkward-snail/index.html` wrapped in an `UNRELEASED`
