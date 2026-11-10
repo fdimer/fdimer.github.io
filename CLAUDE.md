@@ -5,12 +5,13 @@ fdimer's projects. Live at https://fdimer.github.io.
 
 ## Site structure
 
-The projects are split into two groups, each with its own section page:
+The projects are split into three groups, each with its own section page:
 
 | Page | What goes there |
 |---|---|
-| `index.html` | Hub only: one card per group, linking to the two section pages, plus the Publications and Favourite books cards. No project cards here. |
-| `personal/index.html` | **Personal projects**: hardware and retro-computing work and other hobby tools that are *not* part of the aWkward sn@ail business. |
+| `index.html` | Hub only: one card per group, linking to the three section pages, plus the Publications and Favourite books cards. No project cards here. |
+| `emulators/index.html` | **Emulators**: Z80 Bench and every emulator built on it or derived from it (6502 Bench, Osborne Executive, Sinclair ZX80/ZX81). |
+| `personal/index.html` | **Miscellaneous projects**: the user's other personal hobby tools that are neither emulators nor part of the aWkward sn@ail business. The folder keeps its old name `personal/` so existing links work; its title is "Miscellaneous projects". |
 | `awkward-snail/index.html` | **aWkward sn@ail projects**: apps published under the aWkward sn@ail software label (Microsoft Store apps). |
 | `publications/index.html` | **Publications**: the user's research papers, taken from their Google Scholar profile (user `nXwTI4cAAAAJ`), grouped by field. Linked from its own card on `index.html`. Citation counts are a dated snapshot; when refreshing, update the stats line, the counts and the card's publication count. Google Scholar blocks automated fetching, so read it through the user's browser. **Never list** "Desenvolvimento de Pacotes de Auto-Aprendizagem e Avaliação no ISUTC" (F Oliveira, CO Smith, CLME'08): Scholar attributes it to the user, but it isn't theirs. Also leave out "Phase transition in the Dicke model: Phase space approach": an internal communication, not a publication. **Keep** the items that aren't on Scholar when refreshing: the 2015 Adelaide earthquake loss scenario paper and the whole "Articles and talks" section (found by web search or supplied by the user, and approved by the user; "Tails of Woe" is Risk Frontiers Newsletter 15(2), Nov 2015). |
 | `books/index.html` | **Favourite books**: the user's own list of favourite books, grouped by kind (Science and mathematics, Computers, Fiction, Comics). Linked from its own card on `index.html`; update the card's book count when the list changes. Only list books the user has chosen: don't add guesses from their orders or profile without asking. |
@@ -41,25 +42,27 @@ links keep working.
   SimpleMusic Rhythm (`music-rhythm/`), TextBrowser (`text-browser/`),
   Chain Calc (`chain-calc/`), SimpleLetters (`simple-letters/`),
   SimpleFunLetters (`fun-letters/`).
-- **Personal:** the repo exists only under `fdimer`. Currently: Z80 Bench
-  (`z80-bench/`), 6502 Bench (`6502-bench/`), Osborne Executive
-  (`osborne-executive/`), Sinclair ZX80 (`zx80/`), Font Developer
-  (`font-developer/`). Z80 Bench and the emulators built on it are never part of
-  aWkward sn@ail.
+- **Emulators:** personal (repo only under `fdimer`) and an emulator. Currently:
+  Z80 Bench (`z80-bench/`), 6502 Bench (`6502-bench/`), Osborne Executive
+  (`osborne-executive/`), Sinclair ZX80/ZX81 (`zx80/`). Z80 Bench and the
+  emulators built on it are never part of aWkward sn@ail.
+- **Miscellaneous:** any other personal project (repo only under `fdimer`).
+  Currently: Font Developer (`font-developer/`).
 - If it's unclear which group a new project belongs to, ask the user.
 
 ## Adding or updating a project
 
 1. Create or update the project's folder at the root: `<folder>/index.html`
    (copy an existing project page as the template) and optionally `<folder>/app/`.
-2. Add a card to the right section page (`personal/index.html` or
-   `awkward-snail/index.html`). Card links go up one level: `href="../<folder>/"`.
+2. Add a card to the right section page (`emulators/index.html`,
+   `personal/index.html` or `awkward-snail/index.html`). Card links go up one level: `href="../<folder>/"`.
 3. In the project page, point the back links at its section:
-   - top: `<a class="back" href="../personal/">&larr; Personal projects</a>`
+   - top: `<a class="back" href="../emulators/">&larr; Emulators</a>`,
+     `<a class="back" href="../personal/">&larr; Miscellaneous projects</a>`
      or `<a class="back" href="../awkward-snail/">&larr; aWkward sn@ail projects</a>`
    - footer: `<footer><a href="../<section>/">&larr; Back to …</a> · <a href="../">All projects</a></footer>`
 4. On `index.html`, update the project count in that group's card tag
-   (for example `6 apps`), and the card's one-line summary if the new project
+   (for example `4 emulators`, `6 apps`), and the card's one-line summary if the new project
    changes it.
 5. aWkward sn@ail projects: also push the project's code to both
    `fdimer/<repo>` and `AwkwardSnail/<repo>` so the mirrors stay identical.
