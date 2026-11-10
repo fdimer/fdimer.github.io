@@ -15,14 +15,19 @@ The projects are split into two groups, each with its own section page:
 | `publications/index.html` | **Publications**: the user's research papers, taken from their Google Scholar profile (user `nXwTI4cAAAAJ`), grouped by field. Linked from its own card on `index.html`. Citation counts are a dated snapshot; when refreshing, update the stats line, the counts and the card's publication count. Google Scholar blocks automated fetching, so read it through the user's browser. **Never list** "Desenvolvimento de Pacotes de Auto-Aprendizagem e Avaliação no ISUTC" (F Oliveira, CO Smith, CLME'08): Scholar attributes it to the user, but it isn't theirs. Also leave out "Phase transition in the Dicke model: Phase space approach": an internal communication, not a publication. **Keep** the items that aren't on Scholar when refreshing: the 2015 Adelaide earthquake loss scenario paper and the whole "Articles and talks" section (found by web search or supplied by the user, and approved by the user; "Tails of Woe" is Risk Frontiers Newsletter 15(2), Nov 2015). |
 | `books/index.html` | **Favourite books**: the user's own list of favourite books, grouped by kind (Science and mathematics, Computers, Fiction, Comics). Linked from its own card on `index.html`; update the card's book count when the list changes. Only list books the user has chosen: don't add guesses from their orders or profile without asking. |
 
-> **Currently hidden.** At the user's request, the aWkward sn@ail section is
-> hidden until the Microsoft Store account is up and running. Its card on
-> `index.html` is wrapped in an HTML comment, and `awkward-snail/index.html` plus
-> the six aWkward sn@ail project pages carry `<meta name="robots" content="noindex">`.
-> The pages still exist and can be updated, but don't link to them from
-> `index.html` or the personal pages, and don't un-hide them until the user says so.
-> To un-hide: remove the comment wrapper around the card on `index.html` and the
-> `robots` meta lines from those seven pages.
+> **Released one app at a time.** The aWkward sn@ail apps are being released
+> in the Microsoft Store one per day, and each app appears on the site only from
+> its release day. Released so far: **Chain Calc** (free). The hub card on
+> `index.html` and `awkward-snail/index.html` are visible. Unreleased apps
+> (SimpleMusic, SimpleMusic Rhythm, TextBrowser, SimpleLetters, SimpleFunLetters)
+> have their cards on `awkward-snail/index.html` wrapped in an `UNRELEASED`
+> HTML comment, and their project pages carry `<meta name="robots" content="noindex">`.
+> To release an app: remove the comment wrapper around its card, remove the
+> `robots` meta line from its project page, change "coming soon to the
+> Microsoft Store" on that page to say it's in the Store (add the Store link
+> once the user has it), update the app count and summary on the hub card, and
+> add it to the apps list on awkwardsnail.com.au (see Related). Only release an
+> app when the user says it's out.
 
 Each project keeps its own folder at the site root (for example `z80-bench/`,
 `chain-calc/`), with its page at `<folder>/index.html` and any browser version at
@@ -63,5 +68,6 @@ links keep working.
 
 - The aWkward sn@ail business website is a separate site:
   `AwkwardSnail/awkwardsnail.github.io`, live at https://awkwardsnail.com.au.
-  Don't list apps there until the user says so (on hold until the Microsoft
-  Store publisher name is fixed).
+  Its "apps" section lists each app on its release day (name, price, one-line
+  description, and a link to the app's `AwkwardSnail/<repo>` source); keep it
+  in step with the released apps here.
