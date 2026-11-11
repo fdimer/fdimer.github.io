@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Commodore PET 2001-N</title>
+  <meta name="description" content="A Commodore PET 2001-N emulator built on 6502 Bench from the Dynamic PET board schematics, with the PIAs, the VIA and the keyboard laid open for debugging. Runs in your browser with your own ROMs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../emulators/">&larr; Emulators</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; RUN</p>
+      <h1>Commodore PET 2001-N</h1>
+      <p class="lead">An emulator of Commodore's PET 2001-N and CBM 3000 series, the machines built on the "Dynamic PET" main board (assembly 320351), made with <a href="../6502-bench/">6502 Bench</a>. A PET is a 6502 with two 6520 PIAs and a 6522 VIA: they scan the keyboard, run the cassette and the IEEE-488 bus, and take the 60 Hz interrupt from the video circuit. The emulator runs the real BASIC and kernal ROMs, and shows what each chip is doing while it runs.</p>
+    </header>
+
+    <a class="button" href="app/">Open the emulator</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>The machine:</b> 8K, 16K or 32K of RAM, the 1K screen at 8000h, the ROM sockets, both PIAs and the VIA, laid out as on the 320351 board</li>
+      <li><b>The real ROMs:</b> load your own BASIC, editor, kernal and character ROM images (they aren't included) all at once; the page places each by its checksum or name, and your browser remembers them. BASIC 2 or BASIC 4, whichever set is complete</li>
+      <li><b>Video:</b> the 40 by 25 screen drawn through the character ROM in green phosphor, with both character sets, and the retrace signal that gives the PET its 60 Hz interrupt</li>
+      <li><b>Keyboard:</b> type on your keyboard (each character goes to the PET key that carries it), or click the on-screen graphic keyboard with its number pad</li>
+      <li><b>Programs:</b> load a .prg file straight into memory and RUN it; save your BASIC program as a .prg</li>
+      <li><b>Sound:</b> the VIA's CB2 line, as used by the PET's sound add-ons</li>
+      <li><b>Memory bitmap:</b> every bit of RAM, the screen, the ROMs and the character ROM as a pixel, with RAM tinted by BASIC's use of it: program, variables, strings, stack</li>
+      <li><b>Debugging:</b> 6502 Bench's tools, including the pinout, bus timing, disassembler, breakpoints and stepping, plus a panel showing both PIAs, the VIA and the video state, a log of every access to the interface chips, and a text listing with the BASIC program</li>
+      <li><b>Real time:</b> 1 MHz, or full speed. Cassette and disk drives are not emulated yet</li>
+    </ul>
+
+    <h2>Source</h2>
+    <a class="button secondary" href="https://github.com/fdimer/6502-bench/tree/pet">View on GitHub (pet branch)</a>
+
+    <h2>Licence</h2>
+    <p>The emulator is free for anyone to use non-commercially under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The Commodore ROMs are not part of this project.</p>
+
+    <footer><a href="../emulators/">&larr; Back to emulators</a> · <a href="../">All projects</a></footer>
+  </main>
+</body>
+</html>
