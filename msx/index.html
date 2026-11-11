@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MSX (Sony HB-55P)</title>
+  <meta name="description" content="An MSX home computer emulator (Sony HB-55P and HB-75P) built on Z80 Bench, with the video processor, slots and keyboard laid open for debugging. Runs in your browser with your own ROMs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../emulators/">&larr; Emulators</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; RUN</p>
+      <h1>MSX: Sony HB-55P</h1>
+      <p class="lead">An emulator of the MSX home computer, set up as Sony's 1984 HB-55P and HB-75P and built on <a href="../z80-bench/">Z80 Bench</a>. An MSX is a Z80 with three support chips: a TMS9929A video processor with its own video memory, an 8255 that switches memory slots and reads the keyboard, and an AY-3-8910 sound generator. The emulator runs the real BIOS and MSX BASIC, and shows what each chip is doing while it runs.</p>
+    </header>
+
+    <a class="button" href="app/">Open the emulator</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>Two machines:</b> the Sony HB-55P with 16K of RAM and the HB-75P with 64K, with memory slots switched through the 8255 as on the real machines</li>
+      <li><b>The real ROMs:</b> load your own 32 KB BIOS and BASIC ROM and, if you like, Sony's 16 KB Personal Data Bank firmware (they aren't included); your browser remembers them</li>
+      <li><b>Video:</b> the TMS9929A's four screen modes and 32 sprites, drawn line by line as the CPU runs, with the frame interrupt 50 times a second</li>
+      <li><b>Keyboard:</b> type on your keyboard, mapped by key position to the MSX international layout, or click the on-screen MSX keyboard</li>
+      <li><b>Cartridges:</b> plain ROM cartridges and the Konami, Konami SCC, ASCII 8K and ASCII 16K mega-ROM mappers</li>
+      <li><b>Tape:</b> insert a .cas tape file and CLOAD, BLOAD or RUN"CAS:" load instantly; CSAVE, BSAVE and SAVE record to a new .cas file you can download</li>
+      <li><b>Memory bitmap:</b> every bit of the ROMs, the RAM and the video RAM as a pixel, tinted by use: BASIC's program, variables and stack, and the video processor's screen, pattern, colour and sprite tables</li>
+      <li><b>Dumps:</b> save the RAM or the video RAM as a binary file, or a readable listing with the system variables, the BASIC program as text, the screen and hex dumps</li>
+      <li><b>Debugging:</b> Z80 Bench's tools, including the pinout, bus timing, disassembler, breakpoints and stepping, plus a panel showing the slots, the video processor's registers, the 8255 and the sound chip's registers</li>
+      <li><b>Real time:</b> 3.58 MHz, or full speed. Sound is not played yet</li>
+    </ul>
+
+    <h2>Source</h2>
+    <a class="button secondary" href="https://github.com/fdimer/z80-bench/tree/msx">View on GitHub (msx branch)</a>
+
+    <h2>Licence</h2>
+    <p>The emulator is free for anyone to use non-commercially under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The MSX BIOS, BASIC and Sony firmware ROMs are not part of this project.</p>
+
+    <footer><a href="../emulators/">&larr; Back to emulators</a> · <a href="../">All projects</a></footer>
+  </main>
+</body>
+</html>
