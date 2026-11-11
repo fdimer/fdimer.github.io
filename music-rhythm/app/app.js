@@ -1,6 +1,6 @@
 'use strict';
 
-// SimpleMusic Rhythm (web): write a rhythm freely, then divide it into bars.
+// Simple Music Rhythm (web): write a rhythm freely, then divide it into bars.
 // Everything runs in the browser; the sheet is remembered in localStorage.
 
 /* =====================================================================
