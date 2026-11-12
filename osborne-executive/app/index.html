@@ -390,7 +390,7 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
             <div class="row mcbtns"><button id="mcClear" type="button">Clear this chip's faults</button><button id="mcClearAll" type="button">Clear all memory faults</button></div>
           </figure>
         </div>
-        <p class="hint">Every memory chip in the machine. The eight on the main logic board are drawn from the OCC2 schematic (sheets 5, 9 and 10): the boot ROM, the scratch RAM in the ROM 1 socket, four video RAMs and two font RAMs. The 128K of dynamic RAM is on the separate RAM board, which that schematic does not include, so it is shown as sixteen 4164s, one per data bit in each bank, with the usual wiring (the low address byte as the row, the high byte as the column). A tile's dot lights while its chip is being accessed. Click a tile to see that chip's pins, which follow the bus on every clock; the video and font RAMs show the display circuit's own reads between CPU accesses.</p>
+        <p class="hint">Every memory chip in the machine. The eight on the main logic board are drawn from the OCC2 schematic (sheets 5, 9 and 10): the boot ROM, the scratch RAM in the ROM 1 socket, four video RAMs and two font RAMs. The 128K of dynamic RAM is on the separate RAM board (RD1140), drawn from photos and continuity readings of a real board: sixteen OKI M3764 (4164 type), U8–U15 holding D0–D7 of bank 0 and U17–U24 holding D0–D7 of bank 1, laid out here as on the board. The board keeps F000h–FFFFh in U8–U15 for both banks. The order of the address lines on the RAM pins has not been measured, so the usual one is shown (the low address byte as the row, the high byte as the column). A tile's dot lights while its chip is being accessed. Click a tile to see that chip's pins, which follow the bus on every clock; the video and font RAMs show the display circuit's own reads between CPU accesses.</p>
         <p class="hint">To simulate a fault, click a pin: Disconnected lifts the pin from the board (an input then floats high, an output no longer reaches the bus), Stuck high and Stuck low hold it at that level. An address pin fault makes the chip use the wrong cell; a data pin fault changes that bit on reads and writes; chip enable held high (or RAS or CAS on a 4164) takes the chip out of circuit; chip enable held low makes it fight every other memory read; write enable held high loses writes, held low turns every access into a write. Faults are listed in the Debug panel and cleared there, here, or by Master reset. The memory view and the disassembly show what the CPU reads through the faults.</p>
       </section>
 
@@ -1582,9 +1582,13 @@ const OSB_KEYS = [
 // Main logic board (schematic sheets 5, 9 and 10): UD18 is the 2764 boot ROM (ROM 0); UD15 is the ROM 1 socket,
 // fitted with a 6116 as scratch RAM; UC3, UC6, UA3 and UA4 are the four 6116 video RAMs (characters C000h-C7FFh
 // and C800h-CFFFh, attributes D000h-D7FFh and D800h-DFFFh); UB12 and UA11 are the two 6116 font RAMs.
-// The 128K of dynamic RAM is on the separate RAM board (connector P11), which the main-board schematic does not
-// show: it is modelled as sixteen 4164s, one per data bit per bank, with the usual multiplexing (A0-A7 = row,
-// A8-A15 = column), so a chip's address pin n carries CPU address lines n and n+8.
+// The 128K of dynamic RAM is on the separate RAM board RD1140 (connector P11), which the main-board schematic does
+// not show. Its wiring was worked out from photos and continuity readings of a real board: sixteen OKI M3764-20RS
+// (4164 type), U8-U15 = D0-D7 of the row selected while PRI1 (PIA PA0) is low, U17-U24 = D0-D7 of the row selected
+// while PRI1 is high. A 74LS20 decodes A15-A12 all high, which keeps F000h-FFFFh in U8-U15 whatever PRI1 says.
+// Neither row gets CAS during a ROM or video RAM access. U25 (74LS244, enabled by RAE*) passes the row address and
+// U16 the column address; which CPU address line reaches which RAM address pin has not been measured, so the usual
+// order is assumed (A0-A7 = row, A8-A15 = column: a chip's address pin n carries CPU address lines n and n+8).
 // Each chip pin can be given a fault: 'z' (disconnected), 0 (stuck low) or 1 (stuck high).
 //   address pin: that address bit is forced (a disconnected input floats high)
 //   data pin: the bit reads as the forced level and is stored as the forced level (disconnected: reads and stores 1)
@@ -1600,6 +1604,7 @@ const OSB_PINOUTS = {
   '4164': [[1, 'NC', 'c'], [2, 'DIN', 'i'], [3, 'WE', 'i'], [4, 'RAS', 'i'], [5, 'A0', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'VCC', 'p'],
     [9, 'A7', 'i'], [10, 'A5', 'i'], [11, 'A4', 'i'], [12, 'A3', 'i'], [13, 'A6', 'i'], [14, 'DOUT', 'i'], [15, 'CAS', 'i'], [16, 'GND', 'g']]
 };
+OSB_PINOUTS.M3764 = OSB_PINOUTS['4164'];   // OKI's 64K x 1 dynamic RAM, same pinout
 class OsbChip {
   constructor(id, part, what, range, arr, base, abits, extra) {
     Object.assign(this, { id, part, what, range, arr, base, abits, mask: (1 << abits) - 1, f: {} }, extra || {});
@@ -1664,7 +1669,7 @@ class Osborne {
       C('UA11', '6116', 'font RAM: alternate character shapes', 'written through 0800h-0FFFh (and 1800h-1FFFh) while the ROM bank is on', this.font, 0x800, 11)
     ];
     for (let bank = 0; bank < 2; bank++) for (let bit = 0; bit < 8; bit++)
-      this.chips.push(C(`RAM${bank}.D${bit}`, '4164', `RAM board: bank ${bank}, data bit ${bit}`, bank ? '0000h-EFFFh while bank 1 is selected' : '0000h-EFFFh while bank 0 is selected, and F000h-FFFFh always', this.dram[bank], 0, 16, { dram: true, bank, bit }));
+      this.chips.push(C('U' + ((bank ? 17 : 8) + bit), 'M3764', `RAM board: data bit ${bit}, ${bank ? 'bank 1 row (PRI1 high)' : 'bank 0 row (PRI1 low)'}`, bank ? '0000h-EFFFh while bank 1 is selected' : '0000h-EFFFh while bank 0 is selected, and F000h-FFFFh always', this.dram[bank], 0, 16, { dram: true, bank, bit }));
     this.chipById = {}; for (const c of this.chips) this.chipById[c.id] = c;
     this.acc = new Uint32Array(10);          // accesses: 0-7 the byte-wide chips in the order above, 8 and 9 the two DRAM banks
     this.faulty = false;
@@ -3453,11 +3458,11 @@ function mcMenu(name, ev) {
   const b0 = el.querySelector('button:not([disabled])'); if (b0) b0.focus();
 }
 function mcTiles() {
-  const tile = (c, i) => { const n = Object.keys(c.f).length; return `<button type="button" class="mctile${i === mcSel ? ' sel' : ''}${n ? ' fault' : ''}" data-i="${i}" title="${esc(c.id)}: ${esc(c.part)}, ${esc(c.what)}. ${esc(c.range)}."><i class="dot"></i><b>${esc(c.dram ? 'D' + c.bit : c.id)}</b><span>${esc(c.dram ? '4164' : c.part + ' · ' + (i === 0 ? 'ROM' : i === 1 ? 'scratch' : i < 4 ? 'chars' : i < 6 ? 'attrs' : 'font'))}</span>${n ? `<span class="nf">${n} fault${n === 1 ? '' : 's'}</span>` : ''}</button>`; };
+  const tile = (c, i) => { const n = Object.keys(c.f).length; return `<button type="button" class="mctile${i === mcSel ? ' sel' : ''}${n ? ' fault' : ''}" data-i="${i}" title="${esc(c.id)}: ${esc(c.part)}, ${esc(c.what)}. ${esc(c.range)}."><i class="dot"></i><b>${esc(c.id)}</b><span>${esc(c.dram ? 'M3764 · D' + c.bit : c.part + ' · ' + (i === 0 ? 'ROM' : i === 1 ? 'scratch' : i < 4 ? 'chars' : i < 6 ? 'attrs' : 'font'))}</span>${n ? `<span class="nf">${n} fault${n === 1 ? '' : 's'}</span>` : ''}</button>`; };
   const ch = osb.chips, grp = (title, from, order) => `<div><h3>${title}</h3><div class="grp">${order.map(k => tile(ch[from + k], from + k)).join('')}</div></div>`;
   const sig = mcSel + '|' + ch.map(c => Object.keys(c.f).length).join('');
   if (sig === mcTileSig) return; mcTileSig = sig;
-  $('mcTiles').innerHTML = grp('Main logic board', 0, [0, 1, 2, 3, 4, 5, 6, 7]) + grp('RAM board · bank 0 · one 4164 per data bit', 8, [7, 6, 5, 4, 3, 2, 1, 0]) + grp('RAM board · bank 1', 16, [7, 6, 5, 4, 3, 2, 1, 0]);
+  $('mcTiles').innerHTML = grp('Main logic board', 0, [0, 1, 2, 3, 4, 5, 6, 7]) + grp('RAM board · bank 0 (PRI1 low), and F000h–FFFFh always', 8, [0, 1, 2, 3, 4, 5, 6, 7]) + grp('RAM board · bank 1 (PRI1 high)', 16, [0, 1, 2, 3, 4, 5, 6, 7]);
 }
 $('mcTiles').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; mcSel = +b.dataset.i; closePinPop(); mcDraw(); render(); });
 $('mcClear').onclick = () => { const c = osb.chips[mcSel]; for (const k of Object.keys(c.f)) osb.setFault(c.id, k, null); disDirty = true; render(); };
