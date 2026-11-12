@@ -333,6 +333,36 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
 .ptstate .hd { font-weight: 600; margin-bottom: 3px; }
 .ptstate .kv { font-family: var(--font-mono); font-size: 11.5px; line-height: 1.55; color: var(--muted); overflow-wrap: anywhere; }
 .ptstate .kv b { color: var(--ink); font-weight: 600; }
+/* memory chips panel */
+.mcwrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 330px); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .mcwrap { grid-template-columns: minmax(0, 1fr); } }
+.mctiles { display: grid; gap: 10px; }
+.mctiles h3 { margin: 0 0 4px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.mctiles .grp { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 700px) { .mctiles .grp { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.mctile { position: relative; display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 8px 4px 6px; text-align: center; background: #26282c; color: #e9e9ea; border: 2px solid #26282c; border-radius: 4px; font-family: var(--font-mono); cursor: pointer; }
+.mctile b { font-size: 12.5px; }
+.mctile span { font-size: 9.5px; opacity: 0.75; line-height: 1.2; overflow-wrap: anywhere; }
+.mctile .dot { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: #4a4d52; }
+.mctile.act .dot { background: #5fd97a; }
+.mctile.sel { border-color: var(--sel); }
+.mctile.fault { background: #5a2a22; border-color: #5a2a22; }
+.mctile.fault.sel { border-color: var(--sel); }
+.mctile .nf { font-size: 9.5px; color: #ffb4a6; opacity: 1; }
+.mcfig { margin: 0; min-width: 0; position: relative; }
+.mcfig svg.chip { display: block; width: 100%; max-width: 330px; margin: 0 auto; height: auto; }
+.mcfig figcaption { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+.mcfig figcaption b { color: var(--ink); font-weight: 600; }
+.mcfaults { font-size: 11.5px; color: var(--warn); margin-top: 6px; text-align: center; line-height: 1.5; }
+.mcbtns { justify-content: center; margin-top: 6px; }
+#mcChip .pin.forced .ring { stroke: var(--warn); stroke-width: 2.6; stroke-dasharray: 4 2; }
+#mcChip .pin.forced .nm { fill: var(--warn); }
+#mcChip .pin.forced.fz .ring { stroke-dasharray: 2 3; }
+.mcpop { position: absolute; z-index: 30; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2); padding: 8px 10px; font-size: 12.5px; width: max-content; max-width: 250px; }
+.mcpop .ttl { font-weight: 600; margin-bottom: 2px; }
+.mcpop .sub { color: var(--muted); margin-bottom: 6px; font-family: var(--font-mono); font-size: 11.5px; }
+.mcpop .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.mcpop button { padding: 4px 10px; font-size: 12.5px; }
 </style>
 
 <div class="wrap">
@@ -387,6 +417,20 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
         <div class="ptromlist mono" id="ptRomList"></div>
         <div class="ptkb" id="ptKb" aria-label="Keyboard"></div>
         <p class="hint">Click the picture and type. Letters, digits and symbols go to the PET key with that character, whatever your keyboard layout; hold Shift with a letter for its graphics character. Enter is RETURN, Backspace is DEL, Esc is STOP, Home is HOME (Shift+Home clears the screen), Insert is INST, Tab is RVS, the arrow keys move the cursor, ^ is the up-arrow key and _ the left-arrow key. The keyboard above is laid out like the PET's own; the graphics character each key gives with SHIFT is drawn on its front face from the character ROM, and SHIFT stays down for the next key. Load ROM folder asks for the folder that holds your ROM files and fits the ones the chosen BASIC needs; the files must keep their standard names: basic-2-c000, basic-2-d000, edit-2-n and kernal-2 for BASIC 2; basic-4-b000, basic-4-c000, basic-4-d000, edit-4-n and kernal-4 for BASIC 4; characters-2 for both. The row of sockets shows which file sits in each ROM socket on the board. Click a socket to fit a ROM of your own there instead, whatever it is called: a different editor, a patched kernal, or an option ROM in the spare sockets UD3 and UD4. Load program puts a .prg file straight into memory: wait for READY, load it, then type RUN. The ROMs are not included; your browser keeps them once loaded.</p>
+      </section>
+      <section class="panel" id="pMemChips">
+        <h2>Memory chips <span class="aside" id="mcInfo">live pins · click a pin to disconnect it or hold it high or low</span></h2>
+        <div class="mcwrap">
+          <div class="mctiles" id="mcTiles"></div>
+          <figure class="mcfig" id="mcFig">
+            <svg class="chip" id="mcChip" role="group" aria-label="Selected memory chip pinout"></svg>
+            <figcaption id="mcCap"></figcaption>
+            <div class="mcfaults mono" id="mcFaults"></div>
+            <div class="row mcbtns"><button id="mcClear" type="button">Clear this chip's faults</button><button id="mcClearAll" type="button">Clear all memory faults</button></div>
+          </figure>
+        </div>
+        <p class="hint">Every memory chip on the board, from the 320351 parts list and layout: the sixteen 4116 dynamic RAMs (UI2–UI9 and UJ2–UJ9, one per data bit in each 16K bank), the two 2114s of the screen RAM (UF7, UF8), the ROM sockets UD3–UD9 and the character generator UF10. A tile's dot lights while its chip is being accessed. Click a tile to see that chip's pins, which follow the bus on every clock; the screen RAM and the character generator show the video circuit's own reads between CPU accesses. Assumed rather than read from the logic diagram: UI is the bank at 0000h, position 2 is data bit 0 and position 9 bit 7, and UF7 holds screen bits 0–3.</p>
+        <p class="hint">To simulate a fault, click a pin: Disconnected lifts the pin from the board (an input then floats high, an output no longer reaches the bus), Stuck high and Stuck low hold it at that level. An address pin fault makes the chip use the wrong cell; a data pin fault changes that bit on reads and writes; chip select held high (or a fault on RAS or CAS of a dynamic RAM) takes the chip out of circuit; write enable held high loses writes, held low turns every access into a write. Faults are listed in the Debug panel and cleared there, here, or by Master reset. The memory view and the disassembly show what the CPU reads through the faults.</p>
       </section>
   </div>
   <div class="grid">
@@ -1246,6 +1290,104 @@ class M6522 {
 }
 if (typeof module !== 'undefined') module.exports = { M6522 };
 
+// Memory chips as objects with pins, for the live pin display and for fault simulation.
+// A MemChip stores some of the bits (dmask) of every byte in part of a machine's memory array: all eight for a
+// byte-wide ROM or RAM, four for a 2114, one for a 4116 or 4164 dynamic RAM. The chips that together make up the
+// bytes of one area form a bank (an array of MemChips); memBankRead and memBankWrite go through the bank.
+// Each pin can be given a fault: 'z' (disconnected), 0 (stuck low) or 1 (stuck high).
+//   address pin: that address bit is forced (a disconnected input floats high); on a multiplexed dynamic RAM the
+//     pin carries a row bit and a column bit, so two CPU address lines are affected
+//   data pin: the bit reads as the forced level and is stored as the forced level (disconnected: reads and stores 1)
+//   chip select stuck high or disconnected (or a fault on RAS or CAS): the chip is out of circuit; its bits read 1
+//     and writes to it are lost
+//   chip select stuck low: the chip is selected all the time (chip.always; the machine decides what that does)
+//   output enable stuck high or disconnected: the chip never drives the bus
+//   write enable stuck high or disconnected: writes are lost; stuck low: every access is a write, so the cell is
+//     overwritten with 1s and reads float to 1s
+const MEM_PINOUTS = {
+  '2764': [[1, 'VPP', 'p'], [2, 'A12', 'i'], [3, 'A7', 'i'], [4, 'A6', 'i'], [5, 'A5', 'i'], [6, 'A4', 'i'], [7, 'A3', 'i'], [8, 'A2', 'i'], [9, 'A1', 'i'], [10, 'A0', 'i'], [11, 'O0', 'i'], [12, 'O1', 'i'], [13, 'O2', 'i'], [14, 'GND', 'g'],
+    [15, 'O3', 'i'], [16, 'O4', 'i'], [17, 'O5', 'i'], [18, 'O6', 'i'], [19, 'O7', 'i'], [20, 'CE', 'i'], [21, 'A10', 'i'], [22, 'OE', 'i'], [23, 'A11', 'i'], [24, 'A9', 'i'], [25, 'A8', 'i'], [26, 'NC', 'c'], [27, 'PGM', 'p'], [28, 'VCC', 'p']],
+  '27128': [[1, 'VPP', 'p'], [2, 'A12', 'i'], [3, 'A7', 'i'], [4, 'A6', 'i'], [5, 'A5', 'i'], [6, 'A4', 'i'], [7, 'A3', 'i'], [8, 'A2', 'i'], [9, 'A1', 'i'], [10, 'A0', 'i'], [11, 'O0', 'i'], [12, 'O1', 'i'], [13, 'O2', 'i'], [14, 'GND', 'g'],
+    [15, 'O3', 'i'], [16, 'O4', 'i'], [17, 'O5', 'i'], [18, 'O6', 'i'], [19, 'O7', 'i'], [20, 'CE', 'i'], [21, 'A10', 'i'], [22, 'OE', 'i'], [23, 'A11', 'i'], [24, 'A9', 'i'], [25, 'A8', 'i'], [26, 'A13', 'i'], [27, 'PGM', 'p'], [28, 'VCC', 'p']],
+  '27256': [[1, 'VPP', 'p'], [2, 'A12', 'i'], [3, 'A7', 'i'], [4, 'A6', 'i'], [5, 'A5', 'i'], [6, 'A4', 'i'], [7, 'A3', 'i'], [8, 'A2', 'i'], [9, 'A1', 'i'], [10, 'A0', 'i'], [11, 'O0', 'i'], [12, 'O1', 'i'], [13, 'O2', 'i'], [14, 'GND', 'g'],
+    [15, 'O3', 'i'], [16, 'O4', 'i'], [17, 'O5', 'i'], [18, 'O6', 'i'], [19, 'O7', 'i'], [20, 'CE', 'i'], [21, 'A10', 'i'], [22, 'OE', 'i'], [23, 'A11', 'i'], [24, 'A9', 'i'], [25, 'A8', 'i'], [26, 'A13', 'i'], [27, 'A14', 'i'], [28, 'VCC', 'p']],
+  // 24-pin mask ROMs: 2316 (2K), 2332 (4K) and 2364 (8K) share one layout; the upper address pins differ
+  '2316': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
+    [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'CS3', 'c'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'CS2', 'c'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
+  '2332': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
+    [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'A11', 'i'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'CS2', 'c'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
+  '2364': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
+    [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'A11', 'i'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'A12', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
+  '6116': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
+    [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'CE', 'i'], [19, 'A10', 'i'], [20, 'OE', 'i'], [21, 'WE', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
+  '2114': [[1, 'A6', 'i'], [2, 'A5', 'i'], [3, 'A4', 'i'], [4, 'A3', 'i'], [5, 'A0', 'i'], [6, 'A1', 'i'], [7, 'A2', 'i'], [8, 'CS', 'i'], [9, 'GND', 'g'],
+    [10, 'WE', 'i'], [11, 'I/O4', 'i'], [12, 'I/O3', 'i'], [13, 'I/O2', 'i'], [14, 'I/O1', 'i'], [15, 'A9', 'i'], [16, 'A8', 'i'], [17, 'A7', 'i'], [18, 'VCC', 'p']],
+  '4116': [[1, 'VBB', 'p'], [2, 'DIN', 'i'], [3, 'WE', 'i'], [4, 'RAS', 'i'], [5, 'A0', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'VDD', 'p'],
+    [9, 'VCC', 'p'], [10, 'A5', 'i'], [11, 'A4', 'i'], [12, 'A3', 'i'], [13, 'A6', 'i'], [14, 'DOUT', 'i'], [15, 'CAS', 'i'], [16, 'GND', 'g']],
+  '4164': [[1, 'NC', 'c'], [2, 'DIN', 'i'], [3, 'WE', 'i'], [4, 'RAS', 'i'], [5, 'A0', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'VCC', 'p'],
+    [9, 'A7', 'i'], [10, 'A5', 'i'], [11, 'A4', 'i'], [12, 'A3', 'i'], [13, 'A6', 'i'], [14, 'DOUT', 'i'], [15, 'CAS', 'i'], [16, 'GND', 'g']],
+  // 16K x 4 dynamic RAM (TMS4416 and equivalents): 8 row and 6 column address bits on A0-A7
+  '4416': [[1, 'OE', 'i'], [2, 'DQ1', 'i'], [3, 'DQ2', 'i'], [4, 'WE', 'i'], [5, 'RAS', 'i'], [6, 'A6', 'i'], [7, 'A5', 'i'], [8, 'A4', 'i'], [9, 'VCC', 'p'],
+    [10, 'A7', 'i'], [11, 'A3', 'i'], [12, 'A2', 'i'], [13, 'A1', 'i'], [14, 'A0', 'i'], [15, 'DQ3', 'i'], [16, 'CAS', 'i'], [17, 'DQ4', 'i'], [18, 'GND', 'g']]
+};
+const MEM_ACTIVE_LOW = new Set(['CE', 'CS', 'OE', 'WE', 'RAS', 'CAS', 'PGM']);
+class MemChip {
+  // arr/base/abits: where the chip's cells are (arr[base + address], address 0 .. 2^abits - 1)
+  // extra: rom, dram (1-bit dynamic RAM: bit, mux = address pins), nib (2114 or 4416: 0 = low nibble, 4 = high),
+  //        mux (multiplexed address pins: pin n carries bits n and n + mux), amap (instead: the address bits each pin carries, as a mask per pin),
+  //        en (name of the chip-select pin), plus anything the machine wants
+  constructor(id, part, what, range, arr, base, abits, extra) {
+    Object.assign(this, { id, part, what, range, arr, base, abits, mask: (1 << abits) - 1, f: {}, en: 'CE', mux: 0, nib: -1 }, extra || {});
+    this.dmask = this.dram ? 1 << this.bit : this.nib >= 0 ? 0x0F << this.nib : 0xFF;
+    this.recalc();
+  }
+  setFault(pin, v) { if (v === null || v === undefined) delete this.f[pin]; else this.f[pin] = v; this.recalc(); }
+  recalc() {
+    const f = this.f, lvl = k => f[k] === 'z' ? 1 : f[k], high = k => k in f && lvl(k) === 1;
+    let aAnd = 0xFFFF, aOr = 0, dAnd = 0xFF, dOr = 0, n = 0;
+    for (const k in f) {
+      n++; let m;
+      if ((m = /^A(\d+)$/.exec(k))) { const b = +m[1], bits = this.amap ? this.amap[b] : this.mux ? (1 << b) | (1 << (b + this.mux)) : 1 << b; if (lvl(k)) aOr |= bits; else aAnd &= ~bits; }
+      else if ((m = /^[DO](\d)$/.exec(k)) || (m = /^(?:I\/O|DQ)(\d)$/.exec(k))) { const b = /^[DO]\d$/.test(k) ? +m[1] : +m[1] - 1 + this.nib; if (lvl(k)) dOr |= 1 << b; else dAnd &= ~(1 << b); }
+    }
+    Object.assign(this, { aAnd, aOr, dAnd, dOr, faulty: n > 0 });
+    const strobed = this.mux > 0, off = strobed ? 'RAS' in f || 'CAS' in f : high(this.en);
+    this.weLow = !off && f.WE === 0;
+    this.noRead = off || high('OE') || this.weLow; this.noWrite = off || high('WE') || !!this.rom;
+    this.always = !strobed && f[this.en] === 0;
+    this.dout = 'DOUT' in f ? lvl('DOUT') : -1; this.din = 'DIN' in f ? lvl('DIN') : -1;
+  }
+  cell(off) { return this.base + ((off & this.aAnd | this.aOr) & this.mask); }
+}
+// a bank's faulty flag, to be refreshed whenever a fault changes
+function memBankFlag(bank) { bank.faulty = bank.some(c => c.faulty); return bank.faulty; }
+function memBankRead(bank, off, quiet) {
+  const c0 = bank[0]; let v = c0.arr[c0.base + (off & c0.mask)];
+  for (const c of bank) {
+    if (!c.faulty) continue;
+    const o = c.cell(off); let bits;
+    if (c.noRead) { bits = c.dmask; if (c.weLow && !quiet) c.arr[o] |= c.dmask; }
+    else bits = c.dout >= 0 ? (c.dout ? c.dmask : 0) : c.arr[o] & c.dAnd | c.dOr;
+    v = v & ~c.dmask | bits & c.dmask;
+  }
+  return v;
+}
+function memBankWrite(bank, off, v) {
+  const c0 = bank[0]; let keep = 0;
+  for (const c of bank) {
+    if (!c.faulty) continue;
+    keep |= c.dmask; if (c.noWrite) continue;
+    const o = c.cell(off), bits = c.din >= 0 ? (c.din ? c.dmask : 0) : v & c.dAnd | c.dOr;
+    c.arr[o] = c.arr[o] & ~c.dmask | bits & c.dmask;
+  }
+  if (!c0.rom) { const o0 = c0.base + (off & c0.mask); c0.arr[o0] = c0.arr[o0] & keep | v & ~keep; }
+}
+// fault bookkeeping shared by the machines: chips is the machine's full list, banks every bank to re-flag
+function memSetFault(m, id, pin, v) { m.chipById[id].setFault(pin, v); for (const b of m.banks) memBankFlag(b); m.faulty = m.chips.some(c => c.faulty); }
+function memClearFaults(m) { for (const c of m.chips) { c.f = {}; c.recalc(); } for (const b of m.banks) memBankFlag(b); m.faulty = false; }
+function memFaultList(m) { const out = []; for (const c of m.chips) for (const k in c.f) out.push([c.id, k, c.f[k]]); return out; }
+if (typeof module !== 'undefined') module.exports = { MemChip, MEM_PINOUTS, MEM_ACTIVE_LOW, memBankFlag, memBankRead, memBankWrite, memSetFault, memClearFaults, memFaultList };
+
 // Commodore PET 2001-N / CBM 3000 series ("Dynamic PET", main board assembly 320351) for 6502 Bench.
 // A 6502 at 1 MHz with:
 //   RAM      0000h-7FFFh   8K, 16K or 32K of 4116 dynamic RAM
@@ -1260,6 +1402,12 @@ if (typeof module !== 'undefined') module.exports = { M6522 };
 // from the video RAM once per frame, and the one video signal the software sees, VIDEO ON (high while the 200
 // picture lines are being drawn), is timed from the line counter: it drives PIA 1 CB1, whose falling edge is the
 // machine's 60 Hz interrupt, and VIA PB5.
+// Memory chips (src/memchips.js), for the pin display and fault simulation. From the 320351 parts list and layout:
+//   UI2-UI9 and UJ2-UJ9   sixteen 4116 dynamic RAMs, one per data bit: two banks of 16K (an 8K machine has 4108s in UI2-UI9)
+//   UF7, UF8              two 2114s: the 1K of screen RAM, four bits each
+//   UD3-UD9               the ROM sockets (6332 4K ROMs; UD8 is a 6316 2K ROM), UF10 the 6316 character generator
+// Assumed, because the logic diagram was not read for it: UI is the bank at 0000h-3FFFh and UJ the one at 4000h-7FFFh,
+// position 2 holds data bit 0 up to position 9 for bit 7, and UF7 holds screen bits 0-3.
 // Keyboard (graphic layout): PIA 1 PA0-PA3 go to a decoder that pulls one of ten rows low; PIA 1 port B reads the
 // eight columns, low for a key that is down.
 
@@ -1303,6 +1451,18 @@ class PETMachine {
     this.audioRate = 0; this.abuf = new Float32Array(32768); this.aw = 0; this.audioT = 0;
     this.bus = { read: a => this.read(a), write: (a, v) => this.write(a, v), peek: a => this.peek(a) };
     this.cpu = new M6502(this.bus);
+    const C = (id, part, what, range, arr, base, abits, extra) => new MemChip(id, part, what, range, arr, base, abits, extra);
+    this.ramBanks = [[], []];
+    for (let b = 0; b < 2; b++) for (let bit = 0; bit < 8; bit++)
+      this.ramBanks[b].push(C('U' + 'IJ'[b] + (bit + 2), '4116', `RAM: ${b ? 'upper' : 'lower'} 16K, data bit ${bit}`, b ? '4000h-7FFFh (32K machines)' : '0000h-3FFFh', this.ram, b * 0x4000, 14, { dram: true, bit, mux: 7, bank: b }));
+    this.vBank = [C('UF7', '2114', 'screen RAM, data bits 0-3', '8000h-83FFh, repeated to 8FFFh', this.vram, 0, 10, { nib: 0, en: 'CS' }), C('UF8', '2114', 'screen RAM, data bits 4-7', '8000h-83FFh, repeated to 8FFFh', this.vram, 0, 10, { nib: 4, en: 'CS' })];
+    this.romChips = PET_SOCKETS.map(([name, a, n]) => C(name, n === 0x800 ? '2316' : '2332', name === 'UD8' ? 'ROM socket: screen editor' : name === 'UD9' ? 'ROM socket: kernal' : a >= 0xB000 ? 'ROM socket: BASIC' : 'ROM socket: option ROM', `${a.toString(16).toUpperCase()}h-${(a + n - 1).toString(16).toUpperCase()}h`, this.rom, a, n === 0x800 ? 11 : 12, { rom: true, en: 'CS' }));
+    this.cgChip = C('UF10', '2316', 'character generator ROM', 'not on the CPU bus: read by the video circuit', this.chargen, 0, 11, { rom: true, en: 'CS' });
+    this.chips = [...this.ramBanks[0], ...this.ramBanks[1], ...this.vBank, ...this.romChips, this.cgChip];
+    this.banks = [this.ramBanks[0], this.ramBanks[1], this.vBank, ...this.romChips.map(c => [c]), [this.cgChip]];
+    this.chipById = {}; for (const c of this.chips) this.chipById[c.id] = c;
+    this.acc = new Uint32Array(12);          // accesses: 0, 1 the RAM banks; 2 screen RAM; 3-9 the ROM sockets UD3-UD9; 10 the character generator
+    this.faulty = false;
     this.pia1.onPA = () => this.scanKeys();
     this.reset();
   }
@@ -1323,30 +1483,49 @@ class PETMachine {
   }
   // ---- memory ----
   socketAt(a) { for (const [name, s, n] of PET_SOCKETS) if (a >= s && a < s + n) return name; return null; }
+  socketIndex(a) { return a >= 0xF000 ? 6 : a >= 0xE000 ? (a < 0xE800 ? 5 : -1) : a >= 0x9000 ? (a >> 12) - 9 : -1; }
   read(a) {
-    if (a < 0x8000) return a < this.ramSize ? this.ram[a] : (a >> 8);          // empty RAM reads the bus's last value: the address high byte
-    if (a < 0x9000) return this.vram[a & 0x3FF];
-    if (a >= 0xE800 && a < 0xF000) {
-      let v = 0xFF;                                                            // more than one chip can be selected at once; they share the bus
-      if (a & 0x10) v &= this.pia1.read(a & 3);
-      if (a & 0x20) v &= this.pia2.read(a & 3);
-      if (a & 0x40) v &= this.via.read(a & 15);
-      return (a & 0x70) ? v : (a >> 8);
-    }
-    return this.fitted[this.socketAt(a)] ? this.rom[a] : (a >> 8);
+    if (this.faulty) return this.readF(a, false);
+    if (a < 0x8000) { this.acc[a >> 14]++; return a < this.ramSize ? this.ram[a] : (a >> 8); }      // empty RAM reads the bus's last value: the address high byte
+    if (a < 0x9000) { this.acc[2]++; return this.vram[a & 0x3FF]; }
+    if (a >= 0xE800 && a < 0xF000) return this.readIO(a);
+    const i = this.socketIndex(a); this.acc[3 + i]++;
+    return this.fitted[PET_SOCKETS[i][0]] ? this.rom[a] : (a >> 8);
+  }
+  readIO(a) {
+    let v = 0xFF;                                                            // more than one chip can be selected at once; they share the bus
+    if (a & 0x10) v &= this.pia1.read(a & 3);
+    if (a & 0x20) v &= this.pia2.read(a & 3);
+    if (a & 0x40) v &= this.via.read(a & 15);
+    return (a & 0x70) ? v : (a >> 8);
+  }
+  // memory with chip faults (used only while at least one pin fault is set)
+  readF(a, quiet) {
+    let v, sel = -1;
+    if (a < 0x8000) { if (!quiet) this.acc[a >> 14]++; v = a < this.ramSize ? memBankRead(this.ramBanks[a >> 14], a & 0x3FFF, quiet) : (a >> 8); }
+    else if (a < 0x9000) { if (!quiet) this.acc[2]++; v = memBankRead(this.vBank, a & 0x3FF, quiet); }
+    else if (a >= 0xE800 && a < 0xF000) v = quiet ? this.peekIO(a) : this.readIO(a);
+    else { sel = this.socketIndex(a); if (!quiet) this.acc[3 + sel]++; v = this.fitted[PET_SOCKETS[sel][0]] ? memBankRead(this.banks[3 + sel], a & this.romChips[sel].mask, quiet) : (a >> 8); }
+    // a ROM whose chip select is stuck low drives the bus during every read: the lines carry the AND of the two
+    for (let i = 0; i < 7; i++) { const c = this.romChips[i]; if (c.always && i !== sel && this.fitted[c.id]) v &= memBankRead(this.banks[3 + i], a & c.mask, true); }
+    return v;
   }
   // reading without side effects, for the memory and disassembly panes
+  peekIO(a) {
+    if (a & 0x40) { const r = a & 15, v = this.via; return r === 0 ? v.pb() : r === 1 || r === 15 ? v.pa() : r === 4 ? v.t1 & 0xFF : r === 8 ? v.t2 & 0xFF : r === 10 ? v.sr : v.read(r); }
+    const p = a & 0x10 ? this.pia1 : a & 0x20 ? this.pia2 : null; if (!p) return a >> 8;
+    switch (a & 3) { case 0: return p.cra & 4 ? p.pa() : p.ddra; case 2: return p.crb & 4 ? p.pb() : p.ddrb; default: return p.read(a & 3); }
+  }
   peek(a) {
-    if (a >= 0xE800 && a < 0xF000) {
-      if (a & 0x40) { const r = a & 15, v = this.via; return r === 0 ? v.pb() : r === 1 || r === 15 ? v.pa() : r === 4 ? v.t1 & 0xFF : r === 8 ? v.t2 & 0xFF : r === 10 ? v.sr : v.read(r); }
-      const p = a & 0x10 ? this.pia1 : a & 0x20 ? this.pia2 : null; if (!p) return a >> 8;
-      switch (a & 3) { case 0: return p.cra & 4 ? p.pa() : p.ddra; case 2: return p.crb & 4 ? p.pb() : p.ddrb; default: return p.read(a & 3); }
-    }
-    return this.read(a);
+    if (this.faulty) return this.readF(a, true);
+    if (a >= 0xE800 && a < 0xF000) return this.peekIO(a);
+    if (a < 0x8000) return a < this.ramSize ? this.ram[a] : (a >> 8);
+    if (a < 0x9000) return this.vram[a & 0x3FF];
+    return this.fitted[this.socketAt(a)] ? this.rom[a] : (a >> 8);
   }
   write(a, v) {
-    if (a < 0x8000) { if (a < this.ramSize) this.ram[a] = v; return; }
-    if (a < 0x9000) { this.vram[a & 0x3FF] = v; return; }
+    if (a < 0x8000) { this.acc[a >> 14]++; if (a < this.ramSize) { if (this.faulty && this.ramBanks[a >> 14].faulty) memBankWrite(this.ramBanks[a >> 14], a & 0x3FFF, v); else this.ram[a] = v; } return; }
+    if (a < 0x9000) { this.acc[2]++; if (this.faulty && this.vBank.faulty) memBankWrite(this.vBank, a & 0x3FF, v); else this.vram[a & 0x3FF] = v; return; }
     if (a >= 0xE800 && a < 0xF000) {
       if (a & 0x10) this.pia1.write(a & 3, v);
       if (a & 0x20) this.pia2.write(a & 3, v);
@@ -1361,10 +1540,11 @@ class PETMachine {
   charSet() { return this.via.ca2() ? 1 : 0; }       // VIA CA2 high selects the second character set (lower case)
   draw() {
     const fb = this.fb, B = PET.BORDER, FW = PET.FW, cg = this.chargen, set = this.charSet() << 10; fb.fill(0);
+    const vf = this.faulty && this.vBank.faulty, cf = this.faulty && this.cgChip.faulty, cgB = this.banks[this.banks.length - 1];
     for (let cy = 0; cy < 25; cy++) for (let cx = 0; cx < 40; cx++) {
-      const c = this.vram[cy * 40 + cx], inv = c & 0x80 ? 0xFF : 0, base = set | (c & 0x7F) << 3;
+      const c = vf ? memBankRead(this.vBank, cy * 40 + cx, true) : this.vram[cy * 40 + cx], inv = c & 0x80 ? 0xFF : 0, base = set | (c & 0x7F) << 3;
       for (let y = 0; y < 8; y++) {
-        const bits = cg[base + y] ^ inv, o = (B + cy * 8 + y) * FW + B + cx * 8;
+        const bits = (cf ? memBankRead(cgB, base + y, true) : cg[base + y]) ^ inv, o = (B + cy * 8 + y) * FW + B + cx * 8;
         for (let x = 0; x < 8; x++) fb[o + x] = (bits >> (7 - x)) & 1;
       }
     }
@@ -1952,7 +2132,7 @@ function renderIO() {
 function render() {
   const pcNow = regsView().pc, focus = pcNow !== lastFocusPc || tTotal !== lastFocusT;
   lastFocusPc = pcNow; lastFocusT = tTotal;
-  renderPins(); renderRegs(); renderStops(); renderDebug(); mmDraw(); renderPt(); renderTiming(); renderDis(focus); renderMem(focus); renderIO();
+  renderPins(); renderRegs(); renderStops(); renderDebug(); mmDraw(); renderPt(); if (mcReady) renderMemChips(); renderTiming(); renderDis(focus); renderMem(focus); renderIO();
   $('cntPC').textContent = h4(pcNow) + 'h';
   $('cntT').textContent = tTotal.toLocaleString('en-AU');
   $('cntI').textContent = instrCount.toLocaleString('en-AU');
@@ -2460,7 +2640,7 @@ function dbgRemove(k) {
   const i = k.indexOf(':'), t = k.slice(0, i), v = k.slice(i + 1);
   if (t === 'at') breakpoints.delete(+v); else if (t === 'after') afterBps.delete(+v);
   else if (t === 'reg') { watches.delete(v); if (hitReg === v) hitReg = null; }
-  else if (t === 'mem') memWatches.delete(+v); else if (t === 'pin') pinWatches.delete(v); else if (t === 'bus') busWatches.delete(v);
+  else if (t === 'mem') memWatches.delete(+v); else if (t === 'pin') pinWatches.delete(v); else if (t === 'bus') busWatches.delete(v); else if (t === 'mfault') mcDebugRemove(t, v);
   if (dbgHit === k) dbgHit = null;
   render();
 }
@@ -2483,6 +2663,7 @@ function renderDebug() {
   for (const a of sorted(memWatches.keys())) { const w = memWatches.get(a); items.push(['mem:' + a, 'memory', h4(a) + 'h ' + (w.to === null ? 'changes' : 'becomes ' + h2(w.to) + 'h') + (now ? ', now ' + h2(peekMem(a)) + 'h' : '')]); }
   for (const [n, w] of pinWatches) items.push(['pin:' + n, 'pin', pinLabel(n) + ' ' + { any: 'changes', rise: 'goes high', fall: 'goes low' }[w.edge] + (now ? ', now ' + pv(pinValue(n)) : '')]);
   for (const w of [...busWatches.values()].sort((x, y) => (x.bus > y.bus) - (x.bus < y.bus) || x.v - y.v)) { const cur = busVal(w.bus); items.push(['bus:' + w.bus + ':' + w.v, w.bus === 'a' ? 'address bus' : 'data bus', 'becomes ' + (w.bus === 'a' ? h4(w.v) : h2(w.v)) + 'h' + (now ? ', now ' + (cur === null ? 'floating' : (w.bus === 'a' ? h4(cur) : h2(cur)) + 'h') : '')]); }
+  if (mcReady) for (const it of mcDebugItems()) items.push(it);
   $('dbgCount').textContent = items.length ? items.length + ' active' : '';
   const sig = JSON.stringify(items) + dbgHit;
   if (sig === dbgSig) return;
@@ -2495,7 +2676,7 @@ $('dbgType').onchange = dbgFields; $('dbgMemCond').onchange = dbgFields;
 $('dbgAdd').onclick = dbgAdd;
 for (const id of ['dbgAddr', 'dbgMemVal', 'dbgBusVal']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); dbgAdd(); } });
 $('dbgList').addEventListener('click', e => { const b = e.target.closest('button[data-key]'); if (!b) return; b.classList.contains('x') ? dbgRemove(b.dataset.key) : dbgGo(b.dataset.key); });
-$('dbgClear').onclick = () => { breakpoints.clear(); afterBps.clear(); watches.clear(); memWatches.clear(); pinWatches.clear(); busWatches.clear(); hitReg = null; dbgHit = null; render(); };
+$('dbgClear').onclick = () => { if (mcReady) { memClearFaults(MC.m); disDirty = true; } breakpoints.clear(); afterBps.clear(); watches.clear(); memWatches.clear(); pinWatches.clear(); busWatches.clear(); hitReg = null; dbgHit = null; render(); };
 // ---------- dump memory to a file ----------
 // Files leave through the claude.ai viewer's save prompt when this page runs there (it accepts .txt and .zip, so the
 // binary dump goes inside a .zip); anywhere else, through an ordinary browser download.
@@ -2940,6 +3121,142 @@ function ptAudioStart() {
 for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, ptAudioStart, { passive: true });
 $('ptSound').onchange = () => { try { localStorage.setItem(PT_LS + 'sound', ptSoundOn() ? '1' : '0'); } catch (e) {} if (ptSoundOn()) ptAudioStart(); else if (ptAudio) ptAudio.suspend().catch(() => {}); };
 try { if (localStorage.getItem(PT_LS + 'sound') === '0') $('ptSound').checked = false; } catch (e) {}
+
+// ---------- memory chips: what this machine has, and what each pin's board net is doing ----------
+const MC = {
+  m: pet,
+  groups() {
+    const g = [['RAM · lower 16K, 0000h–3FFFh · one 4116 per data bit', [7, 6, 5, 4, 3, 2, 1, 0]]];
+    if (pet.ramSize > 0x4000) g.push(['RAM · upper 16K, 4000h–7FFFh', [15, 14, 13, 12, 11, 10, 9, 8]]);
+    g.push(['Screen RAM and character generator', [17, 16, 25]], ['ROM sockets', [18, 19, 20, 21, 22, 23, 24]]);
+    return g;
+  },
+  tile(c, i) { return i < 16 ? [c.id, '4116 · D' + c.bit] : i < 18 ? [c.id, '2114 · D' + (c.nib ? '4–7' : '0–3')] : i === 25 ? [c.id, '6316 · chars'] : [c.id, pet.fitted[c.id] ? (c.abits === 11 ? '6316' : '6332') + ' · ' + h4(c.base) + 'h' : 'empty']; },
+  acc(i) { return i < 8 ? 0 : i < 16 ? 1 : i < 18 ? 2 : i < 25 ? 3 + (i - 18) : 10; },
+  bus() {
+    const T = curT, A = T.a === null || T.a === 'z' || T.a === undefined ? null : T.a, D = T.d === null || T.d === undefined || T.d === 'z' ? null : T.d;
+    // where the video circuit is reading: the character cell under the beam
+    const col = Math.max(0, Math.min(63, pet.t - (pet.nextLine - PET.LINE_T))), row = Math.min(24, pet.line >> 3), va = pet.line < PET.VISIBLE && col < 40 ? row * 40 + col : row * 40;
+    return { A, D, rd: A !== null && T.rw === 1, wr: A !== null && T.rw === 0, va, scan: pet.line & 7 };
+  },
+  net(c, i, name, B) {
+    const A = B.A, db = n => B.D === null ? 'z' : (B.D >> n) & 1;
+    let m = /^A(\d+)$/.exec(name), d;
+    if (i < 16) {                       // 4116s: seven address pins carry the row (A0-A6), then the column (A7-A13)
+      const sel = A !== null && A < 0x8000 && (A >> 14) === c.bank && A < pet.ramSize;
+      if (m) return A === null ? 'z' : sel ? (A >> (7 + +m[1])) & 1 : (A >> +m[1]) & 1;
+      switch (name) { case 'RAS': return A === null ? 1 : 0; case 'CAS': return sel ? 0 : 1; case 'WE': return sel && B.wr ? 0 : 1; case 'DIN': return db(c.bit); case 'DOUT': return sel && B.rd ? db(c.bit) : 'z'; }
+      return 'z';
+    }
+    if (i < 18) {                       // screen RAM: the CPU's address during a CPU access, the video circuit's otherwise
+      const sel = A !== null && A >= 0x8000 && A < 0x9000, addr = sel ? A & 0x3FF : B.va;
+      if (m) return (addr >> +m[1]) & 1;
+      if (name === 'CS') return 0; if (name === 'WE') return sel && B.wr ? 0 : 1;
+      if ((d = /^I\/O(\d)$/.exec(name))) { const bit = +d[1] - 1 + c.nib; return sel ? db(bit) : (pet.vram[addr] >> bit) & 1; }
+      return 'z';
+    }
+    if (i === 25) {                     // character generator: scan line, character code and the character-set line from the VIA
+      const addr = pet.charSet() << 10 | (pet.vram[B.va] & 0x7F) << 3 | B.scan;
+      if (m) return (addr >> +m[1]) & 1; if ((d = /^D(\d)$/.exec(name))) return pet.hasChargen ? (pet.chargen[addr] >> +d[1]) & 1 : 'z';
+      return name === 'CS' ? 0 : 1;
+    }
+    {                                   // ROM sockets
+      const sel = A !== null && A >= c.base && A <= c.base + c.mask && !(A >= 0xE800 && A < 0xF000);
+      if (m) return A === null ? 'z' : (A >> +m[1]) & 1;
+      if ((d = /^D(\d)$/.exec(name))) return sel && B.rd && pet.fitted[c.id] ? db(+d[1]) : 'z';
+      return name === 'CS' ? (sel ? 0 : 1) : 1;
+    }
+  }
+};
+// ---------- memory chips: tiles, a live pinout of the selected chip, and pin faults ----------
+// The page supplies MC: { m (the machine: chips, acc, faulty), groups(), tile(c, i), acc(i), bus(), net(c, i, name, B) }.
+let mcSel = 0, mcEls = {}, mcDrawn = '', mcPrevAcc = null, mcSeen = null, mcTileSig = '', mcPop = null;
+const mcFaultText = v => v === 'z' ? 'disconnected' : v ? 'stuck high' : 'stuck low';
+function mcSetFault(id, pin, v) { memSetFault(MC.m, id, pin, v); disDirty = true; }
+function mcClosePop() { if (mcPop) { mcPop.remove(); mcPop = null; } }
+document.addEventListener('click', e => { if (mcPop && !mcPop.contains(e.target) && !e.target.closest('#mcChip .pin.input')) mcClosePop(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') mcClosePop(); });
+// debug-pane entries for the faults
+function mcDebugItems() { return memFaultList(MC.m).map(([id, pin, v]) => ['mfault:' + id + ':' + pin, 'chip fault', `${id} (${MC.m.chipById[id].part}) pin ${pin} ${mcFaultText(v)}`]); }
+function mcDebugRemove(t, v) { if (t !== 'mfault') return false; const i = v.lastIndexOf(':'); mcSetFault(v.slice(0, i), v.slice(i + 1), null); return true; }
+// a DIP of any size, drawn the same way as the CPU
+function mcDraw() {
+  const ch = MC.m.chips; if (mcSel >= ch.length) mcSel = 0;
+  const c = ch[mcSel], list = MEM_PINOUTS[c.part], half = list.length / 2, s = $('mcChip');
+  const top = 26, pitch = 24, bx = 128, bw = 124, bh = half * pitch + 12;
+  s.innerHTML = ''; s.setAttribute('viewBox', `0 0 380 ${bh + 34}`); mcEls = {}; mcDrawn = c.id + '/' + c.part;
+  svg('rect', { class: 'body-rect', x: bx, y: top - 6, width: bw, height: bh, rx: 5 }, s);
+  svg('path', { d: `M ${bx + bw / 2 - 12} ${top - 6} a 12 12 0 0 0 24 0`, fill: 'var(--bg)' }, s);
+  const t1 = svg('text', { class: 'chiptitle', x: bx + bw / 2, y: top + bh / 2 - 8, 'text-anchor': 'middle', 'font-size': 24 }, s); t1.textContent = c.part;
+  const t2 = svg('text', { class: 'chipsub', x: bx + bw / 2, y: top + bh / 2 + 12, 'text-anchor': 'middle' }, s); t2.textContent = c.id;
+  for (const [n, name, kind] of list) {
+    const left = n <= half, idx = left ? n - 1 : list.length - n, y = top + idx * pitch + 6, sx = left ? bx - 30 : bx + bw + 4;
+    const g = svg('g', { class: 'pin' + (kind === 'i' ? ' input' : ''), 'data-pin': name }, s);
+    if (kind === 'i') { svg('rect', { x: left ? sx - 70 : sx - 4, y: y - 11, width: 104, height: 22, fill: 'transparent' }, g); svg('rect', { class: 'ring', x: sx - 3, y: y - 9, width: 32, height: 18, rx: 3 }, g); }
+    svg('rect', { class: 'stub', x: sx, y: y - 6, width: 26, height: 12, rx: 2 }, g);
+    const sv = svg('text', { class: 'sv', x: sx + 13, y: y + 0.5 }, g);
+    const num = svg('text', { class: 'num', x: left ? bx + 7 : bx + bw - 7, y, 'text-anchor': left ? 'start' : 'end' }, g); num.textContent = n;
+    const nm = svg('text', { class: 'nm', x: left ? sx - 8 : sx + 34, y, 'text-anchor': left ? 'end' : 'start' }, g);
+    if (MEM_ACTIVE_LOW.has(name)) { const ov = svg('tspan', { class: 'ov' }, nm); ov.textContent = name; } else nm.textContent = name;
+    const title = svg('title', {}, g); title.textContent = kind === 'i' ? `${c.id} pin ${n}, ${name}: click to disconnect it or hold it high or low` : `${c.id} pin ${n}, ${name}`;
+    if (kind === 'i') {
+      g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button');
+      g.addEventListener('click', ev => mcMenu(name, ev));
+      g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const r = g.getBoundingClientRect(); mcMenu(name, { clientX: r.left, clientY: r.top }); } });
+    }
+    mcEls[name] = { g, sv, prev: null, kind };
+  }
+  $('mcCap').innerHTML = `<b>${esc(c.id)} · ${esc(c.part)}</b><br>${esc(c.what)}<br>${esc(c.range)}`;
+}
+function mcMenu(name, ev) {
+  mcClosePop();
+  const c = MC.m.chips[mcSel], f = name in c.f ? c.f[name] : null, fig = $('mcFig'), r = fig.getBoundingClientRect();
+  const el = document.createElement('div'); el.className = 'mcpop';
+  el.innerHTML = `<div class="ttl">${esc(c.id)} · ${esc(name)}</div><div class="sub">${f === null ? 'normal: connected to the board' : mcFaultText(f)}</div><div class="btns">` +
+    `<button type="button" data-a="z"${f === 'z' ? ' disabled' : ''}>Disconnected</button><button type="button" data-a="1"${f === 1 ? ' disabled' : ''}>Stuck high</button><button type="button" data-a="0"${f === 0 ? ' disabled' : ''}>Stuck low</button>` +
+    (f !== null ? '<button type="button" class="primary" data-a="r">Normal</button>' : '') + '</div>';
+  fig.appendChild(el); mcPop = el;
+  el.style.left = Math.max(4, Math.min(ev.clientX - r.left, r.width - el.offsetWidth - 4)) + 'px'; el.style.top = (ev.clientY - r.top + 10) + 'px';
+  el.addEventListener('click', e2 => { e2.stopPropagation(); const a = e2.target.dataset.a; if (!a) return; mcSetFault(c.id, name, a === 'r' ? null : a === 'z' ? 'z' : +a); mcClosePop(); render(); });
+  const b0 = el.querySelector('button:not([disabled])'); if (b0) b0.focus();
+}
+function mcTiles() {
+  const ch = MC.m.chips, groups = MC.groups();
+  const sig = mcSel + '|' + groups.map(g => g[0] + g[1].join(',')).join(';') + '|' + ch.map(c => c.id + Object.keys(c.f).length).join('');
+  if (sig === mcTileSig) return; mcTileSig = sig;
+  const q = t => esc(t).replace(/"/g, '&quot;');
+  const tile = i => { const c = ch[i], n = Object.keys(c.f).length, [lab, sub] = MC.tile(c, i); return `<button type="button" class="mctile${i === mcSel ? ' sel' : ''}${n ? ' fault' : ''}" data-i="${i}" title="${q(c.id + ': ' + c.part + ', ' + c.what + '. ' + c.range + '.')}"><i class="dot"></i><b>${esc(lab)}</b><span>${esc(sub)}</span>${n ? `<span class="nf">${n} fault${n === 1 ? '' : 's'}</span>` : ''}</button>`; };
+  $('mcTiles').innerHTML = groups.map(([title, idx]) => `<div><h3>${esc(title)}</h3><div class="grp">${idx.map(tile).join('')}</div></div>`).join('');
+}
+$('mcTiles').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; mcSel = +b.dataset.i; mcClosePop(); mcDraw(); render(); });
+$('mcClear').onclick = () => { const c = MC.m.chips[mcSel]; for (const k of Object.keys(c.f)) mcSetFault(c.id, k, null); render(); };
+$('mcClearAll').onclick = () => { memClearFaults(MC.m); disDirty = true; render(); };
+function renderMemChips() {
+  const ch = MC.m.chips; if (mcSel >= ch.length) mcSel = 0;
+  if (mcDrawn !== ch[mcSel].id + '/' + ch[mcSel].part) mcDraw();
+  mcTiles();
+  // a tile's dot stays lit for half a second after its chip was last accessed
+  const acc = MC.m.acc, now = performance.now(); if (!mcPrevAcc || mcPrevAcc.length !== acc.length) { mcPrevAcc = new Uint32Array(acc.length); mcSeen = new Float64Array(acc.length).fill(-1e9); }
+  for (let k = 0; k < acc.length; k++) if (acc[k] !== mcPrevAcc[k]) { mcSeen[k] = now; mcPrevAcc[k] = acc[k]; }
+  for (const t of $('mcTiles').querySelectorAll('.mctile')) { const k = MC.acc(+t.dataset.i); t.classList.toggle('act', k >= 0 && now - mcSeen[k] < 500); }
+  const c = ch[mcSel], B = MC.bus();
+  for (const [, name, kind] of MEM_PINOUTS[c.part]) {
+    const el = mcEls[name], f = name in c.f;
+    const v = kind === 'p' ? 'p' : kind === 'g' ? 'g' : f ? c.f[name] : MC.net(c, mcSel, name, B);
+    const cls = v === 'z' ? 'vz' : v === 'p' ? 'vp' : v === 'g' ? 'vg' : v ? 'v1' : 'v0';
+    const changed = el.prev !== null && el.prev !== v && v !== 'p' && v !== 'g';
+    el.g.classList.remove('v1', 'v0', 'vz', 'vp', 'vg', 'changed'); el.g.classList.add(cls);
+    if (changed && !running) el.g.classList.add('changed');
+    el.g.classList.toggle('forced', f); el.g.classList.toggle('fz', f && c.f[name] === 'z');
+    el.sv.textContent = v === 'z' ? 'Z' : v === 'p' ? '+' : v === 'g' ? '⏚' : v; el.prev = v;
+  }
+  const fl = Object.entries(c.f), total = memFaultList(MC.m).length;
+  $('mcFaults').textContent = fl.length ? fl.map(([k, v]) => `${k} ${mcFaultText(v)}`).join(' · ') : '';
+  $('mcClear').disabled = !fl.length; $('mcClearAll').disabled = !total;
+  $('mcInfo').textContent = total ? `${total} pin fault${total === 1 ? '' : 's'} set` : 'live pins · click a pin to disconnect it or hold it high or low';
+}
+mcDraw();
+var mcReady = true;      // (var: render can run before this point)
 
 // ---------- collapsible side panels ----------
 for (const sec of document.querySelectorAll('.side .panel')) {

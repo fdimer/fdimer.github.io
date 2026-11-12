@@ -302,6 +302,36 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
 .zxstate .hd { font-weight: 600; margin-bottom: 3px; }
 .zxstate .kv { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); line-height: 1.55; }
 .zxstate .kv b { color: var(--ink); font-weight: 500; }
+/* memory chips panel */
+.mcwrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 330px); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .mcwrap { grid-template-columns: minmax(0, 1fr); } }
+.mctiles { display: grid; gap: 10px; }
+.mctiles h3 { margin: 0 0 4px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.mctiles .grp { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 700px) { .mctiles .grp { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.mctile { position: relative; display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 8px 4px 6px; text-align: center; background: #26282c; color: #e9e9ea; border: 2px solid #26282c; border-radius: 4px; font-family: var(--font-mono); cursor: pointer; }
+.mctile b { font-size: 12.5px; }
+.mctile span { font-size: 9.5px; opacity: 0.75; line-height: 1.2; overflow-wrap: anywhere; }
+.mctile .dot { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: #4a4d52; }
+.mctile.act .dot { background: #5fd97a; }
+.mctile.sel { border-color: var(--sel); }
+.mctile.fault { background: #5a2a22; border-color: #5a2a22; }
+.mctile.fault.sel { border-color: var(--sel); }
+.mctile .nf { font-size: 9.5px; color: #ffb4a6; opacity: 1; }
+.mcfig { margin: 0; min-width: 0; position: relative; }
+.mcfig svg.chip { display: block; width: 100%; max-width: 330px; margin: 0 auto; height: auto; }
+.mcfig figcaption { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+.mcfig figcaption b { color: var(--ink); font-weight: 600; }
+.mcfaults { font-size: 11.5px; color: var(--warn); margin-top: 6px; text-align: center; line-height: 1.5; }
+.mcbtns { justify-content: center; margin-top: 6px; }
+#mcChip .pin.forced .ring { stroke: var(--warn); stroke-width: 2.6; stroke-dasharray: 4 2; }
+#mcChip .pin.forced .nm { fill: var(--warn); }
+#mcChip .pin.forced.fz .ring { stroke-dasharray: 2 3; }
+.mcpop { position: absolute; z-index: 30; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2); padding: 8px 10px; font-size: 12.5px; width: max-content; max-width: 250px; }
+.mcpop .ttl { font-weight: 600; margin-bottom: 2px; }
+.mcpop .sub { color: var(--muted); margin-bottom: 6px; font-family: var(--font-mono); font-size: 11.5px; }
+.mcpop .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.mcpop button { padding: 4px 10px; font-size: 12.5px; }
 </style>
 
 <div class="wrap">
@@ -366,6 +396,20 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
         <div class="msg" id="mxMsg"></div>
         <div class="mxkb" id="mxKb" aria-label="Keyboard"></div>
         <p class="hint" id="mxHint">Click the picture and type: the PC keyboard is mapped by key position to the MSX international layout. F1–F5 are the function keys, F8 (or End) is STOP, F7 is SELECT, left Alt is GRAPH and right Alt is CODE; CTRL+STOP breaks into a running BASIC program. On the keyboard above, SHIFT, CTRL, GRAPH and CODE stay down for the next key. Load ROM takes the 32 KB BIOS (hb-55p_basicbios1.rom) and, if you want Sony's built-in Personal Data Bank, the 16 KB firmware (hb-55p_firmware.rom); you can pick both files at once. Untick Built-in software to start in MSX BASIC. Cartridge ROMs go in slot 1; plain ROMs and the four common mega-ROM mappers are supported. Listing gives the system variables, the BASIC program as text, the screen and hex dumps. Cassette: insert a .cas tape file and type the command shown (CLOAD for BASIC programs, BLOAD"CAS:",R for machine code, RUN"CAS:" for ASCII files); loading is instant and the tape moves on to the next file each time. CSAVE, BSAVE and SAVE"CAS:" record to a new tape that Save recording downloads as a .cas file. Many tape programs need more than 16K: choose the HB-75P for those. Sound plays while the machine runs in real time (it starts with your first click or key press, as browsers require); the sound chip's registers are also shown in the MSX hardware panel. The ROMs are not included; your browser keeps the BIOS and firmware once loaded.</p>
+      </section>
+      <section class="panel" id="pMemChips">
+        <h2>Memory chips <span class="aside" id="mcInfo">live pins · click a pin to disconnect it or hold it high or low</span></h2>
+        <div class="mcwrap">
+          <div class="mctiles" id="mcTiles"></div>
+          <figure class="mcfig" id="mcFig">
+            <svg class="chip" id="mcChip" role="group" aria-label="Selected memory chip pinout"></svg>
+            <figcaption id="mcCap"></figcaption>
+            <div class="mcfaults mono" id="mcFaults"></div>
+            <div class="row mcbtns"><button id="mcClear" type="button">Clear this chip's faults</button><button id="mcClearAll" type="button">Clear all memory faults</button></div>
+          </figure>
+        </div>
+        <p class="hint">The machine's memory chips, from the Sony service manual's schematic: the system ROM (IC42 BIOS and IC43 BASIC) and the firmware ROM (IC44); the main RAM, IC58–IC65, one chip per data bit (4116s in the HB-55P, 64K chips in the HB-75P); and the eight 4116s of the video RAM (IC3–IC6 and IC9–IC12). A tile's dot lights while its chip is being accessed. Click a tile to see that chip's pins, which follow the bus on every clock. The video RAM belongs to the video processor: its pins are shown for the CPU's reads and writes through port 98h, not for the picture being drawn. Assumed: IC62–IC65 continue the pattern of IC58–IC61 (data bits 4–7). Cartridges are not included.</p>
+        <p class="hint">To simulate a fault, click a pin: Disconnected lifts the pin from the board (an input then floats high, an output no longer reaches the bus), Stuck high and Stuck low hold it at that level. An address pin fault makes the chip use the wrong cell; a data pin fault changes that bit on reads and writes; chip select held high (or a fault on RAS or CAS of a dynamic RAM) takes the chip out of circuit; write enable held high loses writes, held low turns every access into a write. Faults are listed in the Debug panel and cleared there, here, or by Master reset. The memory view and the disassembly show what the CPU reads through the faults.</p>
       </section>
   </div>
 
@@ -1268,6 +1312,104 @@ function assemble(source, base = 0) {
 
 if (typeof module !== 'undefined') module.exports = { assemble, ASM_TABLE };
 
+// Memory chips as objects with pins, for the live pin display and for fault simulation.
+// A MemChip stores some of the bits (dmask) of every byte in part of a machine's memory array: all eight for a
+// byte-wide ROM or RAM, four for a 2114, one for a 4116 or 4164 dynamic RAM. The chips that together make up the
+// bytes of one area form a bank (an array of MemChips); memBankRead and memBankWrite go through the bank.
+// Each pin can be given a fault: 'z' (disconnected), 0 (stuck low) or 1 (stuck high).
+//   address pin: that address bit is forced (a disconnected input floats high); on a multiplexed dynamic RAM the
+//     pin carries a row bit and a column bit, so two CPU address lines are affected
+//   data pin: the bit reads as the forced level and is stored as the forced level (disconnected: reads and stores 1)
+//   chip select stuck high or disconnected (or a fault on RAS or CAS): the chip is out of circuit; its bits read 1
+//     and writes to it are lost
+//   chip select stuck low: the chip is selected all the time (chip.always; the machine decides what that does)
+//   output enable stuck high or disconnected: the chip never drives the bus
+//   write enable stuck high or disconnected: writes are lost; stuck low: every access is a write, so the cell is
+//     overwritten with 1s and reads float to 1s
+const MEM_PINOUTS = {
+  '2764': [[1, 'VPP', 'p'], [2, 'A12', 'i'], [3, 'A7', 'i'], [4, 'A6', 'i'], [5, 'A5', 'i'], [6, 'A4', 'i'], [7, 'A3', 'i'], [8, 'A2', 'i'], [9, 'A1', 'i'], [10, 'A0', 'i'], [11, 'O0', 'i'], [12, 'O1', 'i'], [13, 'O2', 'i'], [14, 'GND', 'g'],
+    [15, 'O3', 'i'], [16, 'O4', 'i'], [17, 'O5', 'i'], [18, 'O6', 'i'], [19, 'O7', 'i'], [20, 'CE', 'i'], [21, 'A10', 'i'], [22, 'OE', 'i'], [23, 'A11', 'i'], [24, 'A9', 'i'], [25, 'A8', 'i'], [26, 'NC', 'c'], [27, 'PGM', 'p'], [28, 'VCC', 'p']],
+  '27128': [[1, 'VPP', 'p'], [2, 'A12', 'i'], [3, 'A7', 'i'], [4, 'A6', 'i'], [5, 'A5', 'i'], [6, 'A4', 'i'], [7, 'A3', 'i'], [8, 'A2', 'i'], [9, 'A1', 'i'], [10, 'A0', 'i'], [11, 'O0', 'i'], [12, 'O1', 'i'], [13, 'O2', 'i'], [14, 'GND', 'g'],
+    [15, 'O3', 'i'], [16, 'O4', 'i'], [17, 'O5', 'i'], [18, 'O6', 'i'], [19, 'O7', 'i'], [20, 'CE', 'i'], [21, 'A10', 'i'], [22, 'OE', 'i'], [23, 'A11', 'i'], [24, 'A9', 'i'], [25, 'A8', 'i'], [26, 'A13', 'i'], [27, 'PGM', 'p'], [28, 'VCC', 'p']],
+  '27256': [[1, 'VPP', 'p'], [2, 'A12', 'i'], [3, 'A7', 'i'], [4, 'A6', 'i'], [5, 'A5', 'i'], [6, 'A4', 'i'], [7, 'A3', 'i'], [8, 'A2', 'i'], [9, 'A1', 'i'], [10, 'A0', 'i'], [11, 'O0', 'i'], [12, 'O1', 'i'], [13, 'O2', 'i'], [14, 'GND', 'g'],
+    [15, 'O3', 'i'], [16, 'O4', 'i'], [17, 'O5', 'i'], [18, 'O6', 'i'], [19, 'O7', 'i'], [20, 'CE', 'i'], [21, 'A10', 'i'], [22, 'OE', 'i'], [23, 'A11', 'i'], [24, 'A9', 'i'], [25, 'A8', 'i'], [26, 'A13', 'i'], [27, 'A14', 'i'], [28, 'VCC', 'p']],
+  // 24-pin mask ROMs: 2316 (2K), 2332 (4K) and 2364 (8K) share one layout; the upper address pins differ
+  '2316': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
+    [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'CS3', 'c'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'CS2', 'c'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
+  '2332': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
+    [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'A11', 'i'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'CS2', 'c'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
+  '2364': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
+    [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'A11', 'i'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'A12', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
+  '6116': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
+    [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'CE', 'i'], [19, 'A10', 'i'], [20, 'OE', 'i'], [21, 'WE', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
+  '2114': [[1, 'A6', 'i'], [2, 'A5', 'i'], [3, 'A4', 'i'], [4, 'A3', 'i'], [5, 'A0', 'i'], [6, 'A1', 'i'], [7, 'A2', 'i'], [8, 'CS', 'i'], [9, 'GND', 'g'],
+    [10, 'WE', 'i'], [11, 'I/O4', 'i'], [12, 'I/O3', 'i'], [13, 'I/O2', 'i'], [14, 'I/O1', 'i'], [15, 'A9', 'i'], [16, 'A8', 'i'], [17, 'A7', 'i'], [18, 'VCC', 'p']],
+  '4116': [[1, 'VBB', 'p'], [2, 'DIN', 'i'], [3, 'WE', 'i'], [4, 'RAS', 'i'], [5, 'A0', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'VDD', 'p'],
+    [9, 'VCC', 'p'], [10, 'A5', 'i'], [11, 'A4', 'i'], [12, 'A3', 'i'], [13, 'A6', 'i'], [14, 'DOUT', 'i'], [15, 'CAS', 'i'], [16, 'GND', 'g']],
+  '4164': [[1, 'NC', 'c'], [2, 'DIN', 'i'], [3, 'WE', 'i'], [4, 'RAS', 'i'], [5, 'A0', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'VCC', 'p'],
+    [9, 'A7', 'i'], [10, 'A5', 'i'], [11, 'A4', 'i'], [12, 'A3', 'i'], [13, 'A6', 'i'], [14, 'DOUT', 'i'], [15, 'CAS', 'i'], [16, 'GND', 'g']],
+  // 16K x 4 dynamic RAM (TMS4416 and equivalents): 8 row and 6 column address bits on A0-A7
+  '4416': [[1, 'OE', 'i'], [2, 'DQ1', 'i'], [3, 'DQ2', 'i'], [4, 'WE', 'i'], [5, 'RAS', 'i'], [6, 'A6', 'i'], [7, 'A5', 'i'], [8, 'A4', 'i'], [9, 'VCC', 'p'],
+    [10, 'A7', 'i'], [11, 'A3', 'i'], [12, 'A2', 'i'], [13, 'A1', 'i'], [14, 'A0', 'i'], [15, 'DQ3', 'i'], [16, 'CAS', 'i'], [17, 'DQ4', 'i'], [18, 'GND', 'g']]
+};
+const MEM_ACTIVE_LOW = new Set(['CE', 'CS', 'OE', 'WE', 'RAS', 'CAS', 'PGM']);
+class MemChip {
+  // arr/base/abits: where the chip's cells are (arr[base + address], address 0 .. 2^abits - 1)
+  // extra: rom, dram (1-bit dynamic RAM: bit, mux = address pins), nib (2114 or 4416: 0 = low nibble, 4 = high),
+  //        mux (multiplexed address pins: pin n carries bits n and n + mux), amap (instead: the address bits each pin carries, as a mask per pin),
+  //        en (name of the chip-select pin), plus anything the machine wants
+  constructor(id, part, what, range, arr, base, abits, extra) {
+    Object.assign(this, { id, part, what, range, arr, base, abits, mask: (1 << abits) - 1, f: {}, en: 'CE', mux: 0, nib: -1 }, extra || {});
+    this.dmask = this.dram ? 1 << this.bit : this.nib >= 0 ? 0x0F << this.nib : 0xFF;
+    this.recalc();
+  }
+  setFault(pin, v) { if (v === null || v === undefined) delete this.f[pin]; else this.f[pin] = v; this.recalc(); }
+  recalc() {
+    const f = this.f, lvl = k => f[k] === 'z' ? 1 : f[k], high = k => k in f && lvl(k) === 1;
+    let aAnd = 0xFFFF, aOr = 0, dAnd = 0xFF, dOr = 0, n = 0;
+    for (const k in f) {
+      n++; let m;
+      if ((m = /^A(\d+)$/.exec(k))) { const b = +m[1], bits = this.amap ? this.amap[b] : this.mux ? (1 << b) | (1 << (b + this.mux)) : 1 << b; if (lvl(k)) aOr |= bits; else aAnd &= ~bits; }
+      else if ((m = /^[DO](\d)$/.exec(k)) || (m = /^(?:I\/O|DQ)(\d)$/.exec(k))) { const b = /^[DO]\d$/.test(k) ? +m[1] : +m[1] - 1 + this.nib; if (lvl(k)) dOr |= 1 << b; else dAnd &= ~(1 << b); }
+    }
+    Object.assign(this, { aAnd, aOr, dAnd, dOr, faulty: n > 0 });
+    const strobed = this.mux > 0, off = strobed ? 'RAS' in f || 'CAS' in f : high(this.en);
+    this.weLow = !off && f.WE === 0;
+    this.noRead = off || high('OE') || this.weLow; this.noWrite = off || high('WE') || !!this.rom;
+    this.always = !strobed && f[this.en] === 0;
+    this.dout = 'DOUT' in f ? lvl('DOUT') : -1; this.din = 'DIN' in f ? lvl('DIN') : -1;
+  }
+  cell(off) { return this.base + ((off & this.aAnd | this.aOr) & this.mask); }
+}
+// a bank's faulty flag, to be refreshed whenever a fault changes
+function memBankFlag(bank) { bank.faulty = bank.some(c => c.faulty); return bank.faulty; }
+function memBankRead(bank, off, quiet) {
+  const c0 = bank[0]; let v = c0.arr[c0.base + (off & c0.mask)];
+  for (const c of bank) {
+    if (!c.faulty) continue;
+    const o = c.cell(off); let bits;
+    if (c.noRead) { bits = c.dmask; if (c.weLow && !quiet) c.arr[o] |= c.dmask; }
+    else bits = c.dout >= 0 ? (c.dout ? c.dmask : 0) : c.arr[o] & c.dAnd | c.dOr;
+    v = v & ~c.dmask | bits & c.dmask;
+  }
+  return v;
+}
+function memBankWrite(bank, off, v) {
+  const c0 = bank[0]; let keep = 0;
+  for (const c of bank) {
+    if (!c.faulty) continue;
+    keep |= c.dmask; if (c.noWrite) continue;
+    const o = c.cell(off), bits = c.din >= 0 ? (c.din ? c.dmask : 0) : v & c.dAnd | c.dOr;
+    c.arr[o] = c.arr[o] & ~c.dmask | bits & c.dmask;
+  }
+  if (!c0.rom) { const o0 = c0.base + (off & c0.mask); c0.arr[o0] = c0.arr[o0] & keep | v & ~keep; }
+}
+// fault bookkeeping shared by the machines: chips is the machine's full list, banks every bank to re-flag
+function memSetFault(m, id, pin, v) { m.chipById[id].setFault(pin, v); for (const b of m.banks) memBankFlag(b); m.faulty = m.chips.some(c => c.faulty); }
+function memClearFaults(m) { for (const c of m.chips) { c.f = {}; c.recalc(); } for (const b of m.banks) memBankFlag(b); m.faulty = false; }
+function memFaultList(m) { const out = []; for (const c of m.chips) for (const k in c.f) out.push([c.id, k, c.f[k]]); return out; }
+if (typeof module !== 'undefined') module.exports = { MemChip, MEM_PINOUTS, MEM_ACTIVE_LOW, memBankFlag, memBankRead, memBankWrite, memSetFault, memClearFaults, memFaultList };
+
 // MSX1 machine model for Z80 Bench, set up as the Sony HB-55P (16K RAM) or HB-75P (64K RAM).
 // An MSX is a Z80A at 3.58 MHz with three support chips:
 //   TMS9929A video processor (ports 98h data, 99h control/status): 16K of its own video RAM, four screen
@@ -1281,6 +1423,14 @@ if (typeof module !== 'undefined') module.exports = { assemble, ASM_TABLE };
 // (bits 1-0 page 0 ... bits 7-6 page 3). Slot 0 holds the 32K BIOS + BASIC ROM, on these Sonys also the 16K
 // Personal Data Bank firmware at 8000h, and on the HB-55P its 16K of RAM at C000h. Slots 1 and 3 are the
 // cartridge slots. The HB-75P has 64K of RAM in slot 2.
+// Memory chips (src/memchips.js), for the pin display and fault simulation, from the Sony service manual's
+// schematic (MAIN 1/2): IC42 (BIOS) and IC43 (BASIC) are the two 16K halves of the system ROM (one 32K mask ROM in
+// IC42 on some boards), IC44 is the firmware ROM; IC58-IC65 are the main RAM, one chip per data bit D0-D7 (4116s
+// for the HB-55P's 16K, 64K chips for the HB-75P); IC3-IC6 and IC9-IC12 are the eight 4116s of the video RAM,
+// IC3 holding the video processor's RD0 (the most significant bit) and IC12 its RD7.
+// Address multiplexing as drawn: main RAM pins A0-A6 carry AB0-AB6 then AB7-AB13, and A7 carries AB14 then AB15;
+// video RAM pin An is the video processor's AD(n+1), which carries address bit 6-n (row) then 13-n (column).
+// IC62-IC65 are taken to continue the pattern of IC58-IC61 (D4-D7).
 // Cassette: .cas tape images are handled by trapping the BIOS tape routines (TAPION 00E1h, TAPIN 00E4h, TAPIOF
 // 00E7h, TAPOON 00EAh, TAPOUT 00EDh, TAPOOF 00F0h) instead of modelling the audio signal, so loading and saving
 // are instant. A .cas file is the bytes of each tape block, every block preceded by an 8-byte marker.
@@ -1396,9 +1546,19 @@ class MSXMachine {
     this.bios = new Uint8Array(0x8000); this.hasBios = false;
     this.fw = new Uint8Array(0x4000); this.hasFw = false; this.fwOn = true;
     this.ram = new Uint8Array(0x10000);
+    this.vram = new Uint8Array(0x4000);
+    const C = (id, part, what, range, arr, base, abits, extra) => new MemChip(id, part, what, range, arr, base, abits, extra);
+    this.romChips = [C('IC42', '27128', 'system ROM: BIOS', '0000h-3FFFh in slot 0', this.bios, 0, 14, { rom: true }), C('IC43', '27128', 'system ROM: BASIC', '4000h-7FFFh in slot 0', this.bios, 0x4000, 14, { rom: true }),
+      C('IC44', '27128', 'firmware ROM: Personal Data Bank', '8000h-BFFFh in slot 0', this.fw, 0, 14, { rom: true })];
+    const amap16 = [0, 1, 2, 3, 4, 5, 6].map(n => (1 << n) | (1 << (n + 7))), amap64 = [...amap16, 0xC000];
+    this.ram16 = [0, 1, 2, 3, 4, 5, 6, 7].map(bit => C('IC' + (58 + bit), '4116', `main RAM, data bit ${bit}`, 'C000h-FFFFh in slot 0', this.ram, 0xC000, 14, { dram: true, bit, mux: 7, amap: amap16 }));
+    this.ram64 = [0, 1, 2, 3, 4, 5, 6, 7].map(bit => C('IC' + (58 + bit), '4164', `main RAM, data bit ${bit}`, '0000h-FFFFh in slot 2', this.ram, 0, 16, { dram: true, bit, mux: 8, amap: amap64 }));
+    const vmap = [0, 1, 2, 3, 4, 5, 6].map(n => (1 << (6 - n)) | (1 << (13 - n)));
+    this.vBank = [3, 4, 5, 6, 9, 10, 11, 12].map((ic, k) => C('IC' + ic, '4116', `video RAM, data bit ${7 - k} (RD${k})`, 'video RAM 0000h-3FFFh, reached through the video processor', this.vram, 0, 14, { dram: true, bit: 7 - k, mux: 7, amap: vmap }));
+    this.acc = new Uint32Array(5);                  // accesses: 0 BIOS, 1 BASIC, 2 firmware, 3 main RAM, 4 video RAM
+    this.faulty = false; this.vview = null;
     this.setMachine('hb55p');
     this.carts = [null, null, null, null];          // by primary slot; 1 and 3 are the cartridge slots
-    this.vram = new Uint8Array(0x4000);
     this.vreg = new Uint8Array(8);
     this.psg = new Uint8Array(16);
     this.keys = new Uint8Array(11);                 // bit set = key down
@@ -1414,7 +1574,15 @@ class MSXMachine {
     this.reset();
   }
   // HB-55P: 16K of RAM at C000h in slot 0. HB-75P: 64K of RAM in slot 2.
-  setMachine(m) { this.machine = m; this.ramSlot = m === 'hb75p' ? 2 : 0; this.ramBase = m === 'hb75p' ? 0 : 0xC000; this.ramSize = 0x10000 - this.ramBase; }
+  setMachine(m) {
+    this.machine = m; this.ramSlot = m === 'hb75p' ? 2 : 0; this.ramBase = m === 'hb75p' ? 0 : 0xC000; this.ramSize = 0x10000 - this.ramBase;
+    if (this.chips) memClearFaults(this);           // the RAM chips change with the machine
+    this.ramBank = m === 'hb75p' ? this.ram64 : this.ram16;
+    this.chips = [...this.romChips, ...this.ramBank, ...this.vBank];
+    this.banks = [[this.romChips[0]], [this.romChips[1]], [this.romChips[2]], this.ramBank, this.vBank];
+    this.chipById = {}; for (const c of this.chips) this.chipById[c.id] = c;
+    this.vview = null;
+  }
   reset() {
     this.cpu.reset();
     this.t = 0; this.nextLine = MSX.LINE_T; this.line = 0; this.frames = 0;
@@ -1434,26 +1602,29 @@ class MSXMachine {
     if (slot === 0) { if (a < 0x8000) return 'bios'; if (a < 0xC000 && this.hasFw && this.fwOn) return 'fw'; return null; }
     return this.carts[slot] ? 'cart' : null;
   }
-  readSlot(slot, a) {
+  readSlot(slot, a, quiet) {
+    const f = this.faulty; let v = 0xFF, sel = -1;
     switch (this.device(slot, a)) {
-      case 'ram': return this.ram[a];
-      case 'bios': return this.bios[a];
-      case 'fw': return this.fw[a - 0x8000];
-      case 'cart': return this.carts[slot].read(a);
+      case 'ram': if (!quiet) this.acc[3]++; v = f && this.ramBank.faulty ? memBankRead(this.ramBank, a - this.ramBase, quiet) : this.ram[a]; break;
+      case 'bios': sel = a >> 14; if (!quiet) this.acc[sel]++; v = f && this.romChips[sel].faulty ? memBankRead(this.banks[sel], a & 0x3FFF, quiet) : this.bios[a]; break;
+      case 'fw': sel = 2; if (!quiet) this.acc[2]++; v = f && this.romChips[2].faulty ? memBankRead(this.banks[2], a - 0x8000, quiet) : this.fw[a - 0x8000]; break;
+      case 'cart': v = this.carts[slot].read(a); break;
     }
-    return 0xFF;
+    // a ROM whose chip enable is stuck low drives the bus during every memory read: the lines carry the AND of the two
+    if (f) for (let i = 0; i < 3; i++) { const c = this.romChips[i]; if (c.always && i !== sel && (i < 2 ? this.hasBios : this.hasFw)) v &= memBankRead(this.banks[i], a & 0x3FFF, true); }
+    return v;
   }
   read(a) { return this.readSlot((this.ppiA >> ((a >> 14) * 2)) & 3, a); }
-  peek(a) { return this.read(a); }
+  peek(a) { return this.readSlot((this.ppiA >> ((a >> 14) * 2)) & 3, a, true); }
   peekW(a) { return this.read(a) | this.read((a + 1) & 0xFFFF) << 8; }
   write(a, v) {
     const slot = (this.ppiA >> ((a >> 14) * 2)) & 3, d = this.device(slot, a);
-    if (d === 'ram') this.ram[a] = v; else if (d === 'cart') this.carts[slot].write(a, v);
+    if (d === 'ram') { this.acc[3]++; if (this.faulty && this.ramBank.faulty) memBankWrite(this.ramBank, a - this.ramBase, v); else this.ram[a] = v; } else if (d === 'cart') this.carts[slot].write(a, v);
   }
   // ---- I/O ports ----
   input(p) {
     switch (p & 0xFF) {
-      case 0x98: { const v = this.vbuf; this.vbuf = this.vram[this.vaddr]; this.vaddr = (this.vaddr + 1) & 0x3FFF; this.vlatch = -1; return v; }
+      case 0x98: { const v = this.vbuf; this.vbuf = this.vget(this.vaddr); this.vaddr = (this.vaddr + 1) & 0x3FFF; this.vlatch = -1; return v; }
       case 0x99: { const v = this.vstat; this.vstat &= 0x1F; this.vlatch = -1; return v; }
       case 0xA2: return this.psgAddr === 14 ? (this.joy & 0x3F) | 0x40 | 0x80 : this.psg[this.psgAddr & 15];   // bit 6: ANSI keyboard; bit 7: cassette input
       case 0xA8: return this.ppiA;
@@ -1465,11 +1636,11 @@ class MSXMachine {
   }
   output(p, v) {
     switch (p & 0xFF) {
-      case 0x98: this.vram[this.vaddr] = v; this.vbuf = v; this.vaddr = (this.vaddr + 1) & 0x3FFF; this.vlatch = -1; this.vdpWrites++; break;
+      case 0x98: this.vput(this.vaddr, v); this.vbuf = v; this.vaddr = (this.vaddr + 1) & 0x3FFF; this.vlatch = -1; this.vdpWrites++; break;
       case 0x99:
         if (this.vlatch < 0) { this.vlatch = v; break; }
         if (v & 0x80) this.vreg[v & 7] = this.vlatch;
-        else { this.vaddr = ((v & 0x3F) << 8) | this.vlatch; if (!(v & 0x40)) { this.vbuf = this.vram[this.vaddr]; this.vaddr = (this.vaddr + 1) & 0x3FFF; } }
+        else { this.vaddr = ((v & 0x3F) << 8) | this.vlatch; if (!(v & 0x40)) { this.vbuf = this.vget(this.vaddr); this.vaddr = (this.vaddr + 1) & 0x3FFF; } }
         this.vlatch = -1; break;
       case 0xA0: this.psgAddr = v & 15; break;
       case 0xA1: this.psg[this.psgAddr] = v; if (this.psgAddr === 13) { this.envPos = 0; this.envCnt = 0; } break;      // writing the shape restarts the envelope
@@ -1480,6 +1651,15 @@ class MSXMachine {
         else { const b = 1 << ((v >> 1) & 7); this.ppiC = v & 1 ? this.ppiC | b : this.ppiC & ~b; }   // set or clear one bit of port C
         break;
     }
+  }
+  // the video processor's own reads and writes of its RAM
+  vget(a) { this.acc[4]++; return this.faulty && this.vBank.faulty ? memBankRead(this.vBank, a, false) : this.vram[a]; }
+  vput(a, v) { this.acc[4]++; if (this.faulty && this.vBank.faulty) memBankWrite(this.vBank, a, v); else this.vram[a] = v; }
+  // with a video RAM fault, the display reads a copy of the RAM as seen through the faulty chips, refreshed every frame
+  videoView() {
+    if (!(this.faulty && this.vBank.faulty)) { this.vview = null; return; }
+    if (!this.vview) this.vview = new Uint8Array(0x4000);
+    for (let a = 0; a < 0x4000; a++) this.vview[a] = memBankRead(this.vBank, a, true);
   }
   key(name, down) { const p = MSX_KEYPOS[name]; if (!p) return; if (down) this.keys[p[0]] |= 1 << p[1]; else this.keys[p[0]] &= ~(1 << p[1]); }
   // ---- video ----
@@ -1496,7 +1676,7 @@ class MSXMachine {
     };
   }
   renderLine(y) {
-    const r = this.vreg, vr = this.vram, fb = this.fb, B = MSX.BORDER, FW = MSX.FW;
+    const r = this.vreg, vr = this.vview || this.vram, fb = this.fb, B = MSX.BORDER, FW = MSX.FW;
     const bd = r[7] & 15 || 1, row = (y + B) * FW;
     for (let x = 0; x < B; x++) { fb[row + x] = bd; fb[row + B + 256 + x] = bd; }
     const out = row + B;
@@ -1556,7 +1736,7 @@ class MSXMachine {
     const bd = this.vreg[7] & 15 || 1, B = MSX.BORDER, FW = MSX.FW;
     this.fb.fill(bd, 0, B * FW); this.fb.fill(bd, (B + 192) * FW);
     const f = this.front; this.front = this.fb; this.fb = f;
-    this.frames++;
+    this.frames++; this.videoView();
   }
   // ---- per instruction ----
   // ---- sound ----
@@ -2264,7 +2444,7 @@ function renderIO() {
 function render() {
   const pcNow = regsView().pc, focus = pcNow !== lastFocusPc || tTotal !== lastFocusT;
   lastFocusPc = pcNow; lastFocusT = tTotal;
-  renderPins(); renderRegs(); renderStops(); renderDebug(); renderMx(); mmDraw(); renderTiming(); renderDis(focus); renderMem(focus); renderIO();
+  renderPins(); renderRegs(); renderStops(); renderDebug(); renderMx(); mmDraw(); if (mcReady) renderMemChips(); renderTiming(); renderDis(focus); renderMem(focus); renderIO();
   $('cntPC').textContent = h4(pcNow) + 'h';
   $('cntT').textContent = tTotal.toLocaleString('en-AU');
   $('cntI').textContent = instrCount.toLocaleString('en-AU');
@@ -2751,7 +2931,7 @@ function dbgRemove(k) {
   const i = k.indexOf(':'), t = k.slice(0, i), v = k.slice(i + 1);
   if (t === 'at') breakpoints.delete(+v); else if (t === 'after') afterBps.delete(+v);
   else if (t === 'reg') { watches.delete(v); if (hitReg === v) hitReg = null; }
-  else if (t === 'mem') memWatches.delete(+v); else if (t === 'pin') pinWatches.delete(v); else if (t === 'bus') busWatches.delete(v);
+  else if (t === 'mem') memWatches.delete(+v); else if (t === 'pin') pinWatches.delete(v); else if (t === 'bus') busWatches.delete(v); else if (t === 'mfault') mcDebugRemove(t, v);
   if (dbgHit === k) dbgHit = null;
   render();
 }
@@ -2774,6 +2954,7 @@ function renderDebug() {
   for (const a of sorted(memWatches.keys())) { const w = memWatches.get(a); items.push(['mem:' + a, 'memory', h4(a) + 'h ' + (w.to === null ? 'changes' : 'becomes ' + h2(w.to) + 'h') + (now ? ', now ' + h2(peekMem(a)) + 'h' : '')]); }
   for (const [n, w] of pinWatches) items.push(['pin:' + n, 'pin', pinLabel(n) + ' ' + { any: 'changes', rise: 'goes high', fall: 'goes low' }[w.edge] + (now ? ', now ' + pv(pinValue(n)) : '')]);
   for (const w of [...busWatches.values()].sort((x, y) => (x.bus > y.bus) - (x.bus < y.bus) || x.v - y.v)) { const cur = busVal(w.bus); items.push(['bus:' + w.bus + ':' + w.v, w.bus === 'a' ? 'address bus' : 'data bus', 'becomes ' + (w.bus === 'a' ? h4(w.v) : h2(w.v)) + 'h' + (now ? ', now ' + (cur === null ? 'floating' : (w.bus === 'a' ? h4(cur) : h2(cur)) + 'h') : '')]); }
+  if (mcReady) for (const it of mcDebugItems()) items.push(it);
   $('dbgCount').textContent = items.length ? items.length + ' active' : '';
   const sig = JSON.stringify(items) + dbgHit;
   if (sig === dbgSig) return;
@@ -2786,7 +2967,7 @@ $('dbgType').onchange = dbgFields; $('dbgMemCond').onchange = dbgFields;
 $('dbgAdd').onclick = dbgAdd;
 for (const id of ['dbgAddr', 'dbgMemVal', 'dbgBusVal']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); dbgAdd(); } });
 $('dbgList').addEventListener('click', e => { const b = e.target.closest('button[data-key]'); if (!b) return; b.classList.contains('x') ? dbgRemove(b.dataset.key) : dbgGo(b.dataset.key); });
-$('dbgClear').onclick = () => { breakpoints.clear(); afterBps.clear(); watches.clear(); memWatches.clear(); pinWatches.clear(); busWatches.clear(); hitReg = null; dbgHit = null; render(); };
+$('dbgClear').onclick = () => { if (mcReady) { memClearFaults(MC.m); disDirty = true; } breakpoints.clear(); afterBps.clear(); watches.clear(); memWatches.clear(); pinWatches.clear(); busWatches.clear(); hitReg = null; dbgHit = null; render(); };
 // ---------- master reset: memory, ROMs, every debug point and the input pins ----------
 function masterReset() {
   if (running) stopRun();
@@ -3163,6 +3344,130 @@ for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, mxAudio
 $('mxSound').onchange = () => { try { localStorage.setItem('msx.sound', mxSoundOn() ? '1' : '0'); } catch (e) {} if (mxSoundOn()) mxAudioStart(); else if (mxAudio) mxAudio.suspend().catch(() => {}); };
 try { if (localStorage.getItem('msx.sound') === '0') $('mxSound').checked = false; } catch (e) {}
 
+// ---------- memory chips: what this machine has, and what each pin's board net is doing ----------
+const MC = {
+  m: msx,
+  groups() { return [['System ROM and firmware', [0, 1, 2]], [`Main RAM · ${msx.machine === 'hb75p' ? '64K' : '16K'} · one chip per data bit`, [10, 9, 8, 7, 6, 5, 4, 3]], ['Video RAM · 16K · one 4116 per data bit (IC3 is the most significant)', [11, 12, 13, 14, 15, 16, 17, 18]]]; },
+  tile(c, i) { return i < 3 ? [c.id, (i === 0 ? 'BIOS' : i === 1 ? 'BASIC' : 'firmware') + ((i < 2 ? msx.hasBios : msx.hasFw && msx.fwOn) ? '' : ' · empty')] : i < 11 ? [c.id, c.part + ' · D' + c.bit] : [c.id, '4116 · RD' + (7 - c.bit)]; },
+  acc(i) { return i < 3 ? i : i < 11 ? 3 : 4; },
+  bus() {
+    const T = curT, A = T.a === null || T.a === 'z' ? null : T.a, mem = T.mreq === 0 && T.rfsh !== 0 && A !== null;
+    const dev = mem ? msx.device(msx.slotOf(A >> 14), A) : null, vio = T.iorq === 0 && T.m1 !== 0 && A !== null && (A & 0xFF) === 0x98;
+    return { T, A, mem, rd: mem && T.rd === 0, wr: mem && T.wr === 0, dev, vio, vrd: vio && T.rd === 0, vwr: vio && T.wr === 0 };
+  },
+  net(c, i, name, B) {
+    const A = B.A, D = n => pinValue('D' + n); let m = /^A(\d+)$/.exec(name), d;
+    // a multiplexed address pin: the lower of its two address bits first (row), the higher once the column is strobed
+    const mux = (addr, n, col) => { const bits = c.amap[n]; let lo = 0; while (!(bits & (1 << lo))) lo++; let hi = 15; while (!(bits & (1 << hi))) hi--; return (addr >> (col ? hi : lo)) & 1; };
+    if (i < 3) {                        // the ROMs
+      const sel = i < 2 ? B.dev === 'bios' && (A >> 14) === i : B.dev === 'fw';
+      if (m) return A === null ? 'z' : (A >> +m[1]) & 1;
+      if ((d = /^O(\d)$/.exec(name))) return sel && B.rd ? D(+d[1]) : 'z';
+      return name === 'CE' ? (sel ? 0 : 1) : name === 'OE' ? (B.rd ? 0 : 1) : 1;
+    }
+    if (i < 11) {                       // main RAM
+      const sel = B.dev === 'ram';
+      if (m) return A === null ? 'z' : mux(A, +m[1], sel && (B.rd || B.wr));
+      switch (name) { case 'RAS': return B.T.mreq === 0 ? 0 : 1; case 'CAS': return sel && (B.rd || B.wr) ? 0 : 1; case 'WE': return sel && B.wr ? 0 : 1; case 'DIN': return D(c.bit); case 'DOUT': return sel && B.rd ? D(c.bit) : 'z'; }
+      return 'z';
+    }
+    {                                   // video RAM: wired to the video processor, not to the CPU bus
+      if (m) return mux(msx.vaddr, +m[1], B.vio);
+      switch (name) { case 'RAS': case 'CAS': return B.vio ? 0 : 1; case 'WE': return B.vwr ? 0 : 1; case 'DIN': return B.vwr ? D(c.bit) : 'z'; case 'DOUT': return B.vrd ? (msx.vram[msx.vaddr] >> c.bit) & 1 : 'z'; }
+      return 'z';
+    }
+  }
+};
+// ---------- memory chips: tiles, a live pinout of the selected chip, and pin faults ----------
+// The page supplies MC: { m (the machine: chips, acc, faulty), groups(), tile(c, i), acc(i), bus(), net(c, i, name, B) }.
+let mcSel = 0, mcEls = {}, mcDrawn = '', mcPrevAcc = null, mcSeen = null, mcTileSig = '', mcPop = null;
+const mcFaultText = v => v === 'z' ? 'disconnected' : v ? 'stuck high' : 'stuck low';
+function mcSetFault(id, pin, v) { memSetFault(MC.m, id, pin, v); disDirty = true; }
+function mcClosePop() { if (mcPop) { mcPop.remove(); mcPop = null; } }
+document.addEventListener('click', e => { if (mcPop && !mcPop.contains(e.target) && !e.target.closest('#mcChip .pin.input')) mcClosePop(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') mcClosePop(); });
+// debug-pane entries for the faults
+function mcDebugItems() { return memFaultList(MC.m).map(([id, pin, v]) => ['mfault:' + id + ':' + pin, 'chip fault', `${id} (${MC.m.chipById[id].part}) pin ${pin} ${mcFaultText(v)}`]); }
+function mcDebugRemove(t, v) { if (t !== 'mfault') return false; const i = v.lastIndexOf(':'); mcSetFault(v.slice(0, i), v.slice(i + 1), null); return true; }
+// a DIP of any size, drawn the same way as the CPU
+function mcDraw() {
+  const ch = MC.m.chips; if (mcSel >= ch.length) mcSel = 0;
+  const c = ch[mcSel], list = MEM_PINOUTS[c.part], half = list.length / 2, s = $('mcChip');
+  const top = 26, pitch = 24, bx = 128, bw = 124, bh = half * pitch + 12;
+  s.innerHTML = ''; s.setAttribute('viewBox', `0 0 380 ${bh + 34}`); mcEls = {}; mcDrawn = c.id + '/' + c.part;
+  svg('rect', { class: 'body-rect', x: bx, y: top - 6, width: bw, height: bh, rx: 5 }, s);
+  svg('path', { d: `M ${bx + bw / 2 - 12} ${top - 6} a 12 12 0 0 0 24 0`, fill: 'var(--bg)' }, s);
+  const t1 = svg('text', { class: 'chiptitle', x: bx + bw / 2, y: top + bh / 2 - 8, 'text-anchor': 'middle', 'font-size': 24 }, s); t1.textContent = c.part;
+  const t2 = svg('text', { class: 'chipsub', x: bx + bw / 2, y: top + bh / 2 + 12, 'text-anchor': 'middle' }, s); t2.textContent = c.id;
+  for (const [n, name, kind] of list) {
+    const left = n <= half, idx = left ? n - 1 : list.length - n, y = top + idx * pitch + 6, sx = left ? bx - 30 : bx + bw + 4;
+    const g = svg('g', { class: 'pin' + (kind === 'i' ? ' input' : ''), 'data-pin': name }, s);
+    if (kind === 'i') { svg('rect', { x: left ? sx - 70 : sx - 4, y: y - 11, width: 104, height: 22, fill: 'transparent' }, g); svg('rect', { class: 'ring', x: sx - 3, y: y - 9, width: 32, height: 18, rx: 3 }, g); }
+    svg('rect', { class: 'stub', x: sx, y: y - 6, width: 26, height: 12, rx: 2 }, g);
+    const sv = svg('text', { class: 'sv', x: sx + 13, y: y + 0.5 }, g);
+    const num = svg('text', { class: 'num', x: left ? bx + 7 : bx + bw - 7, y, 'text-anchor': left ? 'start' : 'end' }, g); num.textContent = n;
+    const nm = svg('text', { class: 'nm', x: left ? sx - 8 : sx + 34, y, 'text-anchor': left ? 'end' : 'start' }, g);
+    if (MEM_ACTIVE_LOW.has(name)) { const ov = svg('tspan', { class: 'ov' }, nm); ov.textContent = name; } else nm.textContent = name;
+    const title = svg('title', {}, g); title.textContent = kind === 'i' ? `${c.id} pin ${n}, ${name}: click to disconnect it or hold it high or low` : `${c.id} pin ${n}, ${name}`;
+    if (kind === 'i') {
+      g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button');
+      g.addEventListener('click', ev => mcMenu(name, ev));
+      g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const r = g.getBoundingClientRect(); mcMenu(name, { clientX: r.left, clientY: r.top }); } });
+    }
+    mcEls[name] = { g, sv, prev: null, kind };
+  }
+  $('mcCap').innerHTML = `<b>${esc(c.id)} · ${esc(c.part)}</b><br>${esc(c.what)}<br>${esc(c.range)}`;
+}
+function mcMenu(name, ev) {
+  mcClosePop();
+  const c = MC.m.chips[mcSel], f = name in c.f ? c.f[name] : null, fig = $('mcFig'), r = fig.getBoundingClientRect();
+  const el = document.createElement('div'); el.className = 'mcpop';
+  el.innerHTML = `<div class="ttl">${esc(c.id)} · ${esc(name)}</div><div class="sub">${f === null ? 'normal: connected to the board' : mcFaultText(f)}</div><div class="btns">` +
+    `<button type="button" data-a="z"${f === 'z' ? ' disabled' : ''}>Disconnected</button><button type="button" data-a="1"${f === 1 ? ' disabled' : ''}>Stuck high</button><button type="button" data-a="0"${f === 0 ? ' disabled' : ''}>Stuck low</button>` +
+    (f !== null ? '<button type="button" class="primary" data-a="r">Normal</button>' : '') + '</div>';
+  fig.appendChild(el); mcPop = el;
+  el.style.left = Math.max(4, Math.min(ev.clientX - r.left, r.width - el.offsetWidth - 4)) + 'px'; el.style.top = (ev.clientY - r.top + 10) + 'px';
+  el.addEventListener('click', e2 => { e2.stopPropagation(); const a = e2.target.dataset.a; if (!a) return; mcSetFault(c.id, name, a === 'r' ? null : a === 'z' ? 'z' : +a); mcClosePop(); render(); });
+  const b0 = el.querySelector('button:not([disabled])'); if (b0) b0.focus();
+}
+function mcTiles() {
+  const ch = MC.m.chips, groups = MC.groups();
+  const sig = mcSel + '|' + groups.map(g => g[0] + g[1].join(',')).join(';') + '|' + ch.map(c => c.id + Object.keys(c.f).length).join('');
+  if (sig === mcTileSig) return; mcTileSig = sig;
+  const q = t => esc(t).replace(/"/g, '&quot;');
+  const tile = i => { const c = ch[i], n = Object.keys(c.f).length, [lab, sub] = MC.tile(c, i); return `<button type="button" class="mctile${i === mcSel ? ' sel' : ''}${n ? ' fault' : ''}" data-i="${i}" title="${q(c.id + ': ' + c.part + ', ' + c.what + '. ' + c.range + '.')}"><i class="dot"></i><b>${esc(lab)}</b><span>${esc(sub)}</span>${n ? `<span class="nf">${n} fault${n === 1 ? '' : 's'}</span>` : ''}</button>`; };
+  $('mcTiles').innerHTML = groups.map(([title, idx]) => `<div><h3>${esc(title)}</h3><div class="grp">${idx.map(tile).join('')}</div></div>`).join('');
+}
+$('mcTiles').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; mcSel = +b.dataset.i; mcClosePop(); mcDraw(); render(); });
+$('mcClear').onclick = () => { const c = MC.m.chips[mcSel]; for (const k of Object.keys(c.f)) mcSetFault(c.id, k, null); render(); };
+$('mcClearAll').onclick = () => { memClearFaults(MC.m); disDirty = true; render(); };
+function renderMemChips() {
+  const ch = MC.m.chips; if (mcSel >= ch.length) mcSel = 0;
+  if (mcDrawn !== ch[mcSel].id + '/' + ch[mcSel].part) mcDraw();
+  mcTiles();
+  // a tile's dot stays lit for half a second after its chip was last accessed
+  const acc = MC.m.acc, now = performance.now(); if (!mcPrevAcc || mcPrevAcc.length !== acc.length) { mcPrevAcc = new Uint32Array(acc.length); mcSeen = new Float64Array(acc.length).fill(-1e9); }
+  for (let k = 0; k < acc.length; k++) if (acc[k] !== mcPrevAcc[k]) { mcSeen[k] = now; mcPrevAcc[k] = acc[k]; }
+  for (const t of $('mcTiles').querySelectorAll('.mctile')) { const k = MC.acc(+t.dataset.i); t.classList.toggle('act', k >= 0 && now - mcSeen[k] < 500); }
+  const c = ch[mcSel], B = MC.bus();
+  for (const [, name, kind] of MEM_PINOUTS[c.part]) {
+    const el = mcEls[name], f = name in c.f;
+    const v = kind === 'p' ? 'p' : kind === 'g' ? 'g' : f ? c.f[name] : MC.net(c, mcSel, name, B);
+    const cls = v === 'z' ? 'vz' : v === 'p' ? 'vp' : v === 'g' ? 'vg' : v ? 'v1' : 'v0';
+    const changed = el.prev !== null && el.prev !== v && v !== 'p' && v !== 'g';
+    el.g.classList.remove('v1', 'v0', 'vz', 'vp', 'vg', 'changed'); el.g.classList.add(cls);
+    if (changed && !running) el.g.classList.add('changed');
+    el.g.classList.toggle('forced', f); el.g.classList.toggle('fz', f && c.f[name] === 'z');
+    el.sv.textContent = v === 'z' ? 'Z' : v === 'p' ? '+' : v === 'g' ? '⏚' : v; el.prev = v;
+  }
+  const fl = Object.entries(c.f), total = memFaultList(MC.m).length;
+  $('mcFaults').textContent = fl.length ? fl.map(([k, v]) => `${k} ${mcFaultText(v)}`).join(' · ') : '';
+  $('mcClear').disabled = !fl.length; $('mcClearAll').disabled = !total;
+  $('mcInfo').textContent = total ? `${total} pin fault${total === 1 ? '' : 's'} set` : 'live pins · click a pin to disconnect it or hold it high or low';
+}
+mcDraw();
+var mcReady = true;      // (var: render can run before this point)
+
 // ---------- collapsible side panels ----------
 for (const sec of document.querySelectorAll('.side .panel')) {
   const btn = sec.querySelector('.fold'), key = document.title.replace(/\W/g, '') + '.fold.' + sec.id;
@@ -3187,7 +3492,7 @@ setMode(savedMode === 'hex' ? 'hex' : 'asm');
   mxSetMachine(MX_NAMES[m] ? m : 'hb55p', true);
   const fw = get(MX_ROM_KEYS.fw), bios = get(MX_ROM_KEYS.bios);
   if (fw) mxUseRom(fw, true); if (bios) mxUseRom(bios, true);
-  mxCartShow();
+  mxCartShow(); window.msxBench = { msx };      // for testing from the browser console
   if (mxOn()) { $('mxMsg').textContent = `${MX_NAMES[msx.machine]}: BIOS${msx.hasFw ? ' and firmware' : ''} ROM loaded from this browser.`; mxPowerOn(); }
   else { resetCPU(); mxNoRom(); render(); } }
 })();
