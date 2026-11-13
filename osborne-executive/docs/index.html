@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Osborne Executive documentation</title>
+  <meta name="description" content="User guide and hardware reference for the Osborne Executive emulator built on Z80 Bench.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; Osborne Executive</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; HELP "OSBEXEC"</p>
+      <h1>Osborne Executive documentation</h1>
+      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it.</p>
+    </header>
+
+    <a class="button" href="../app/">Open the emulator</a>
+
+    <nav class="toc" aria-label="Contents" style="margin-top:24px">
+      <b>Contents</b>
+      <ol>
+        <li><a href="#guide">User guide</a>
+          <ol>
+            <li><a href="#start">Quick start</a></li>
+            <li><a href="#screen">The screen</a></li>
+            <li><a href="#rom">The ROM, the display and the keyboard</a></li>
+            <li><a href="#toolbar">Running and stepping</a></li>
+            <li><a href="#chips">Chips</a></li>
+            <li><a href="#memchips">Memory chips and fault simulation</a></li>
+            <li><a href="#machine">Machine panel</a></li>
+            <li><a href="#bitmap">Memory bitmap</a></li>
+            <li><a href="#tools">The debugging tools</a></li>
+          </ol>
+        </li>
+        <li><a href="#hardware">Hardware reference</a>
+          <ol>
+            <li><a href="#hw-overview">The machine</a></li>
+            <li><a href="#hw-mem">Memory map and banking</a></li>
+            <li><a href="#hw-io">I/O ports</a></li>
+            <li><a href="#hw-video">Video</a></li>
+            <li><a href="#hw-kbd">Keyboard</a></li>
+            <li><a href="#hw-int">Interrupts and timing</a></li>
+            <li><a href="#hw-chips">Memory chips</a></li>
+            <li><a href="#hw-ramboard">The RAM board</a></li>
+            <li><a href="#hw-limits">What is not emulated</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+
+    <h2 id="guide">User guide</h2>
+    <p>The emulator is <a href="../../z80-bench/">Z80 Bench</a> with an Osborne Executive built around the CPU. Everything Z80 Bench does still works here; this guide covers what the machine adds, and points to the <a href="../../z80-bench/docs/">Z80 Bench documentation</a> for the shared debugging tools.</p>
+
+    <h3 id="start">Quick start</h3>
+    <ol>
+      <li>Press <b>Load ROM…</b> under the screen and choose your own 8 KB Executive ROM image (version 1.2, CRC <code>70798C2F</code>). The ROM is copyrighted and is not included. Your browser keeps it, so you only load it once.</li>
+      <li>The machine powers on and runs in real time. The ROM tests the hardware, loads its character set and shows its sign-on screen.</li>
+      <li>Click the screen and type: your keyboard drives the Executive's key matrix.</li>
+      <li>Press <b>Pause</b> (or <kbd>R</kbd>) to stop the machine, then step it one instruction (<kbd>S</kbd>) or one clock (<kbd>C</kbd>) at a time and watch every chip's pins.</li>
+    </ol>
+    <p class="note">The floppy disk controller is not emulated yet, so the ROM stops at "insert disk in drive A": the machine cannot boot CP/M.</p>
+
+    <h3 id="screen">The screen</h3>
+    <figure class="fig">
+      <a href="img/overview.png"><img src="img/overview.png" width="720" alt="The whole emulator page with its thirteen areas numbered"></a>
+      <figcaption>The whole page. Select the picture to see it full size. The boot ROM's contents are hidden in the pictures on this page.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
+      <li><b>Chips:</b> live pinouts of the Z80A, the two PIAs and the SIO.</li>
+      <li><b>Memory chips:</b> every memory chip in the machine, with live pins and fault simulation.</li>
+      <li><b>Screen:</b> the Executive's display, the ROM loader and the keyboard.</li>
+      <li><b>Program:</b> the assembler and hex loader.</li>
+      <li><b>I/O ports:</b> the last value written to each port, and a log of port reads and writes.</li>
+      <li><b>Disassembly:</b> what the CPU sees, as instructions.</li>
+      <li><b>Memory:</b> what the CPU sees, in hex.</li>
+      <li><b>Memory bitmap:</b> all the memory as a picture, tinted by what is switched in.</li>
+      <li><b>Registers</b></li>
+      <li><b>Debug:</b> breakpoints, stops, forced pins and faults.</li>
+      <li><b>Bus timing</b></li>
+      <li><b>Machine:</b> the state of the bank switching, video, interrupts and PIAs.</li>
+    </ol>
+
+    <h3 id="rom">The ROM, the display and the keyboard</h3>
+    <figure class="fig wide">
+      <a href="img/screen.png"><img src="img/screen.png" width="1080" alt="The Screen panel showing the Executive's sign-on screen"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Display:</b> 80 columns by 24 rows in amber, drawn from the character set the ROM loads into the font RAM, with half intensity, underline, blink, reverse video and the graphics characters. Click it to give it the keyboard. While you step, a blue marker shows where the electron beam is.</li>
+      <li><b>Load ROM…:</b> choose the ROM image. The message under the buttons confirms the version and CRC.</li>
+      <li><b>Power on / restart:</b> resets the machine and runs it in real time.</li>
+      <li><b>Alpha Lock:</b> the Executive's caps lock key. Caps Lock on your keyboard toggles it too.</li>
+      <li><b>Video state:</b> whether video is on, and the scan line and frame being drawn.</li>
+    </ol>
+    <p>Your keys go through the ROM's own keyboard scan, 60 times a second, so typing behaves as on the real machine. Backspace acts as the &larr; key.</p>
+
+    <h3 id="toolbar">Running and stepping</h3>
+    <figure class="fig">
+      <img src="img/toolbar.png" width="720" alt="The toolbar with its controls numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Reset CPU:</b> pulses the reset line: the CPU restarts at <code>0000h</code> and the PIAs are reset, which switches the ROM back in.</li>
+      <li><b>Master reset:</b> also clears memory, breakpoints, stops, forced pins and faults. It asks for a second click.</li>
+      <li><b>Clock 1 T-state</b> (<kbd>C</kbd>): one clock period.</li>
+      <li><b>Step instruction</b> (<kbd>S</kbd>): one instruction.</li>
+      <li><b>Run / Pause</b> (<kbd>R</kbd>)</li>
+      <li><b>Speed:</b> <b>Real time (3.99 MHz)</b> runs at the Executive's own speed with 60 Hz video. <b>Full speed</b> runs as fast as your computer allows. The slow clock rates (5 Hz to 10 kHz) let you watch the pins change.</li>
+      <li><b>Status:</b> what the machine is doing, or what halted it.</li>
+    </ol>
+
+    <h3 id="chips">Chips</h3>
+    <figure class="fig wide">
+      <a href="img/chips.png"><img src="img/chips.png" width="1080" alt="The Chips panel with four 40-pin chips and a pin menu open"></a>
+    </figure>
+    <p>The four large chips are drawn with every pin live, wired as on the OCC2 schematic. Amber is high, dark is low and a dashed outline is floating.</p>
+    <ol class="keyed">
+      <li><b>UC9, Z80A CPU:</b> the same pinout as in Z80 Bench. Click CLK, /INT, /NMI, /WAIT, /BUSREQ or /RESET to drive it.</li>
+      <li><b>UD12, MC6821 system PIA</b> (ports <code>00h</code>–<code>03h</code>): port A drives the bank select lines, CB1 receives VBLANK, and the chip also handles the speaker and disk select.</li>
+      <li><b>UD8, MC6821 IEEE-488 PIA</b> (ports <code>10h</code>–<code>13h</code>): nothing is attached to it.</li>
+      <li><b>UD4, Z80A SIO/2</b> (ports <code>0Ch</code>–<code>0Fh</code>): the modem (A) and printer (B) serial ports.</li>
+      <li><b>Pin menu:</b> click a highlighted input pin to toggle it, force it high or low, or release it. A forced pin ignores whatever drives it and is shown with a dashed red ring.</li>
+      <li><b>Connected to bus:</b> untick it to pull a chip off the CPU bus. Its reads return <code>FFh</code>, writes to it are ignored and its interrupt no longer reaches /INT.</li>
+      <li><b>Bus readout:</b> the machine cycle, the address bus and the data bus for the current clock.</li>
+    </ol>
+    <p>Forced pins and disconnected chips are listed in the Debug pane, where you can release them.</p>
+
+    <h3 id="memchips">Memory chips and fault simulation</h3>
+    <figure class="fig wide">
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a fault set on chip U10 and a pin menu open"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Main logic board:</b> the boot ROM, the scratch RAM, four video RAMs and two font RAMs.</li>
+      <li><b>RAM board, bank 0:</b> U8–U15, one chip for each data bit D0–D7. These chips also hold <code>F000h</code>–<code>FFFFh</code> for both banks.</li>
+      <li><b>RAM board, bank 1:</b> U17–U24, laid out as on the board.</li>
+      <li><b>Selected chip:</b> click a tile to see that chip. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red and shows the count.</li>
+      <li><b>Pinout:</b> the selected chip's pins, which follow the bus on every clock. The video and font RAMs also show the display circuit's own reads between CPU accesses.</li>
+      <li><b>Pin menu:</b> click a pin and choose <b>Disconnected</b>, <b>Stuck high</b> or <b>Stuck low</b>.</li>
+      <li><b>Faults on this chip</b></li>
+      <li><b>Clear this chip's faults</b> and <b>Clear all memory faults</b></li>
+    </ol>
+    <p>The machine then runs with the fault, and the memory view and the disassembly show what the CPU reads through it:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pin</th><th>Fault</th><th>Effect</th></tr>
+      <tr><td>Address</td><td>Any</td><td>The chip uses the wrong cell. A disconnected input floats high</td></tr>
+      <tr><td>Data</td><td>Any</td><td>That bit reads as the forced level, and is stored as it</td></tr>
+      <tr><td>Chip enable (RAS or CAS on a dynamic RAM)</td><td>Stuck high or disconnected</td><td>The chip is out of circuit: reads float to 1s and writes are lost</td></tr>
+      <tr><td>Chip enable</td><td>Stuck low</td><td>The chip drives the data bus on every memory read and fights the chip that should answer; the bus carries the AND of the two</td></tr>
+      <tr><td>Output enable</td><td>Stuck high or disconnected</td><td>The chip never drives the bus</td></tr>
+      <tr><td>Write enable</td><td>Stuck high or disconnected</td><td>Writes are lost</td></tr>
+      <tr><td>Write enable</td><td>Stuck low</td><td>Every access becomes a write</td></tr>
+    </table></div>
+    <figure class="fig">
+      <img src="img/debug.png" width="308" alt="The Debug pane listing a memory chip fault">
+    </figure>
+    <ol class="keyed">
+      <li><b>Debug pane:</b> memory faults are listed with the breakpoints and stops. Remove one with its ×, or everything with <b>Clear all</b> or Master reset.</li>
+    </ol>
+
+    <h3 id="machine">Machine panel</h3>
+    <figure class="fig">
+      <img src="img/machine.png" width="308" alt="The Machine panel with its five blocks numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Memory banks:</b> the value on the system PIA's port A and what it has switched in.</li>
+      <li><b>Video and interrupts:</b> whether video is enabled, the beam line and frame, the RTC counter, the /INT line, the vector an interrupt acknowledge would read, and the keys held down.</li>
+      <li><b>System PIA UD12:</b> for each half, the control register (CR), data direction register (DDR), output register (OR), the levels on the pins, the control lines and the interrupt output.</li>
+      <li><b>IEEE-488 PIA UD8:</b> the same for the second PIA.</li>
+      <li><b>Stubs:</b> the devices that are present only so that the ROM can run.</li>
+    </ol>
+
+    <h3 id="bitmap">Memory bitmap</h3>
+    <figure class="fig">
+      <img src="img/bitmap.png" width="378" alt="The Memory bitmap panel with tinted bands and its legend">
+    </figure>
+    <ol class="keyed">
+      <li><b>Bands:</b> the first eight bands are the 64K the CPU sees at this moment, one pixel per bit. The video RAM and the character generator RAM follow as their own bands, so they stay visible when they are switched out. The red mark is the program counter and the blue mark the stack pointer.</li>
+      <li><b>Tints:</b> the background colour shows which memory port A has switched in at each address. No tint is DRAM bank 0.</li>
+      <li><b>Readout:</b> point at the bitmap to read a byte; click to show it in the Memory panel.</li>
+    </ol>
+
+    <h3 id="tools">The debugging tools</h3>
+    <p>The remaining panels are Z80 Bench's own and work the same way here. The Memory and Disassembly panels show what the CPU sees through the current bank switching.</p>
+    <ul class="features">
+      <li><a href="../../z80-bench/docs/#program">Loading a program</a>: you can assemble your own code into the Executive's memory</li>
+      <li><a href="../../z80-bench/docs/#dis">Disassembly and breakpoints</a></li>
+      <li><a href="../../z80-bench/docs/#memory">Memory</a></li>
+      <li><a href="../../z80-bench/docs/#regs">Registers and register stops</a></li>
+      <li><a href="../../z80-bench/docs/#debug">Debug pane</a>: memory, pin and bus stops</li>
+      <li><a href="../../z80-bench/docs/#timing">Bus timing</a></li>
+    </ul>
+
+    <h2 id="hardware">Hardware reference</h2>
+    <p>The model follows the OCC2 main logic board schematic (1K00035 rev 10) and the Osborne Executive Technical Manual. The RAM board was traced from a real board.</p>
+
+    <h3 id="hw-overview">The machine</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Part</th><th>Details</th></tr>
+      <tr><td>CPU</td><td>Z80A (UC9) at 3.9936 MHz: the 23.9616 MHz crystal divided by 6</td></tr>
+      <tr><td>RAM</td><td>128K of dynamic RAM in two 64K banks, on a separate RAM board</td></tr>
+      <tr><td>ROM</td><td>8K boot ROM (a 2764), switched out once the system is loaded</td></tr>
+      <tr><td>Display</td><td>80 × 24 characters, with a character set held in RAM</td></tr>
+      <tr><td>Parallel I/O</td><td>Two MC6821 PIAs: UD12 for the system, UD8 for the IEEE-488 port</td></tr>
+      <tr><td>Serial I/O</td><td>Z80A SIO/2 (UD4), clocked by an 8253 timer</td></tr>
+      <tr><td>Disks</td><td>MB8877 floppy disk controller</td></tr>
+    </table></div>
+
+    <h3 id="hw-mem">Memory map and banking</h3>
+    <p>Port A of the system PIA (written with <code>OUT 00h</code>) switches memory. After reset the PIA's lines are inputs and the bank lines float high, so the machine starts with the ROM switched in.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Port A bit</th><th>When high</th></tr>
+      <tr><td class="mono">PA7</td><td>The ROM, the font RAM and the scratch RAM replace the DRAM at <code>0000h</code>–<code>3FFFh</code></td></tr>
+      <tr><td class="mono">PA6</td><td>The video RAM replaces the DRAM at <code>C000h</code>–<code>DFFFh</code></td></tr>
+      <tr><td class="mono">PA0</td><td>DRAM bank 1 is selected; low selects bank 0</td></tr>
+    </table></div>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Address</th><th>With PA7 or PA6 high</th><th>Otherwise</th></tr>
+      <tr><td class="mono">0000h–1FFFh</td><td>Reads: boot ROM. Writes: font RAM (4K, repeated)</td><td>DRAM, bank 0 or 1</td></tr>
+      <tr><td class="mono">2000h–3FFFh</td><td>Scratch RAM (2K, repeated)</td><td>DRAM, bank 0 or 1</td></tr>
+      <tr><td class="mono">4000h–BFFFh</td><td colspan="2">DRAM, bank 0 or 1</td></tr>
+      <tr><td class="mono">C000h–CFFFh</td><td>Video RAM: characters</td><td>DRAM, bank 0 or 1</td></tr>
+      <tr><td class="mono">D000h–DFFFh</td><td>Video RAM: attributes (upper four bits)</td><td>DRAM, bank 0 or 1</td></tr>
+      <tr><td class="mono">E000h–EFFFh</td><td colspan="2">DRAM, bank 0 or 1</td></tr>
+      <tr><td class="mono">F000h–FFFFh</td><td colspan="2">Always DRAM bank 0</td></tr>
+    </table></div>
+    <p>Reading a character from the video RAM also loads its attribute into a latch, and writing a character stores the latched attribute beside it.</p>
+
+    <h3 id="hw-io">I/O ports</h3>
+    <p>A 74LS138 decodes address lines A2–A4 when A7 is low. A5 and A6 are not decoded, so each group repeats through <code>00h</code>–<code>7Fh</code>.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Ports</th><th>Device</th><th>In the emulator</th></tr>
+      <tr><td class="mono">00h–03h</td><td>System PIA UD12 (register select on A0, A1)</td><td>Emulated</td></tr>
+      <tr><td class="mono">04h–07h</td><td>8253 timer (baud rates)</td><td>Stub: reads return <code>FFh</code></td></tr>
+      <tr><td class="mono">08h–0Bh</td><td>MB8877 floppy disk controller</td><td>Stub: reports not ready</td></tr>
+      <tr><td class="mono">0Ch–0Fh</td><td>Z80A SIO/2 UD4 (A0 selects data or control, A1 channel A or B)</td><td>Registers only: no data moves</td></tr>
+      <tr><td class="mono">10h–13h</td><td>IEEE-488 PIA UD8</td><td>Emulated, with nothing attached</td></tr>
+      <tr><td class="mono">14h–17h</td><td>Keyboard (read)</td><td>Emulated</td></tr>
+      <tr><td class="mono">18h–1Bh</td><td>RTC counter (read)</td><td>Emulated</td></tr>
+      <tr><td class="mono">1Ch–1Fh</td><td>Video enable (write)</td><td>Emulated</td></tr>
+    </table></div>
+
+    <h3 id="hw-video">Video</h3>
+    <ul class="features">
+      <li><b>Text:</b> 80 columns by 24 rows. Each row of the video RAM is 128 bytes long, of which the first 80 are shown.</li>
+      <li><b>Character cell:</b> 8 dots wide and 10 scan lines high. The shapes come from the font RAM, 16 bytes per character, which the ROM fills at power on.</li>
+      <li><b>Raster:</b> 260 lines per frame (the last 20 are vertical blanking) and 256 CPU T-states per line, which gives 60 frames a second.</li>
+      <li><b>Video enable:</b> the display stays blank after reset until the ROM writes to port <code>1Ch</code>.</li>
+    </ul>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Bit</th><th>Meaning</th></tr>
+      <tr><td>Attribute D7</td><td>Full intensity (half intensity when low)</td></tr>
+      <tr><td>Attribute D6</td><td>Underline</td></tr>
+      <tr><td>Attribute D5</td><td>Blink</td></tr>
+      <tr><td>Attribute D4</td><td>Second character set (the graphics characters)</td></tr>
+      <tr><td>Character D7</td><td>Reverse video, in the first character set</td></tr>
+    </table></div>
+
+    <h3 id="hw-kbd">Keyboard</h3>
+    <p>The keyboard is an 8 × 8 matrix read with <code>IN A,(14h)</code>. The upper half of the address bus (A8–A15) selects the rows, one bit per row, and a pressed key reads as a 0 in its column.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Row</th><th>D7</th><th>D6</th><th>D5</th><th>D4</th><th>D3</th><th>D2</th><th>D1</th><th>D0</th></tr>
+      <tr><td class="mono">A8</td><td>[</td><td>'</td><td>Return</td><td>Shift</td><td></td><td>Ctrl</td><td>Tab</td><td>Esc</td></tr>
+      <tr><td class="mono">A9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td></tr>
+      <tr><td class="mono">A10</td><td>I</td><td>U</td><td>Y</td><td>T</td><td>R</td><td>E</td><td>W</td><td>Q</td></tr>
+      <tr><td class="mono">A11</td><td>K</td><td>J</td><td>H</td><td>G</td><td>F</td><td>D</td><td>S</td><td>A</td></tr>
+      <tr><td class="mono">A12</td><td>,</td><td>M</td><td>N</td><td>B</td><td>V</td><td>C</td><td>X</td><td>Z</td></tr>
+      <tr><td class="mono">A13</td><td>9</td><td>O</td><td>P</td><td>.</td><td>Space</td><td>0</td><td>&larr;</td><td>&uarr;</td></tr>
+      <tr><td class="mono">A14</td><td>=</td><td>L</td><td>\</td><td>;</td><td>/</td><td>-</td><td>&darr;</td><td>&rarr;</td></tr>
+      <tr><td class="mono">A15</td><td></td><td></td><td></td><td></td><td>Alpha Lock</td><td></td><td></td><td></td></tr>
+    </table></div>
+
+    <h3 id="hw-int">Interrupts and timing</h3>
+    <ul class="features">
+      <li><b>Sources:</b> the two PIAs and the SIO share the /INT line. The CPU runs in interrupt mode 2.</li>
+      <li><b>Vector:</b> the SIO supplies its own vector. For the PIAs nothing drives the bus during the acknowledge, so the pull-ups give <code>FEh</code>.</li>
+      <li><b>VBLANK:</b> vertical blanking goes to CB1 of the system PIA, which raises the 60 Hz interrupt the ROM uses to scan the keyboard.</li>
+      <li><b>RTC counter:</b> a 74LS393 counts vertical blanking periods; the ROM reads it at port <code>18h</code>. It also times the blink.</li>
+    </ul>
+
+    <h3 id="hw-chips">Memory chips</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Position</th><th>Chip</th><th>Use</th></tr>
+      <tr><td class="mono">UD18</td><td>2764</td><td>Boot ROM (ROM 0), <code>0000h</code>–<code>1FFFh</code></td></tr>
+      <tr><td class="mono">UD15</td><td>6116</td><td>Scratch RAM, fitted in the ROM 1 socket</td></tr>
+      <tr><td class="mono">UC3, UC6</td><td>6116</td><td>Video RAM, characters: <code>C000h</code>–<code>C7FFh</code> and <code>C800h</code>–<code>CFFFh</code></td></tr>
+      <tr><td class="mono">UA3, UA4</td><td>6116</td><td>Video RAM, attributes: <code>D000h</code>–<code>D7FFh</code> and <code>D800h</code>–<code>DFFFh</code></td></tr>
+      <tr><td class="mono">UB12, UA11</td><td>6116</td><td>Font RAM, first and second character sets</td></tr>
+      <tr><td class="mono">U8–U15</td><td>OKI M3764 (4164 type)</td><td>RAM board: D0–D7 of bank 0, and of <code>F000h</code>–<code>FFFFh</code> always</td></tr>
+      <tr><td class="mono">U17–U24</td><td>OKI M3764</td><td>RAM board: D0–D7 of bank 1</td></tr>
+    </table></div>
+
+    <h3 id="hw-ramboard">The RAM board</h3>
+    <p>The 128K of dynamic RAM is on a separate board (RD1140) that the main board schematic does not show. Its circuit was reverse engineered from a real board by continuity measurement.</p>
+    <ul class="features">
+      <li><b>Bank select:</b> PA0 of the system PIA (the board's PRI1 line) chooses which row of eight chips gets RAS and CAS.</li>
+      <li><b>Top 4K:</b> a 74LS20 detects A15–A12 all high and keeps <code>F000h</code>–<code>FFFFh</code> in U8–U15 whatever the bank.</li>
+      <li><b>ROM and video accesses:</b> neither row gets CAS while the ROM or the video RAM is answering.</li>
+      <li><b>Addresses:</b> two 74LS244 buffers put the low address byte on the RAM address pins as the row, then the high byte as the column.</li>
+    </ul>
+    <p>The RAM address pins are not wired in straight order, which matters when you follow a stuck address pin:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>RAM pin</th><th>A0</th><th>A1</th><th>A2</th><th>A3</th><th>A4</th><th>A5</th><th>A6</th><th>A7</th></tr>
+      <tr><td>Row (CPU line)</td><td>A0</td><td>A2</td><td>A1</td><td>A5</td><td>A4</td><td>A3</td><td>A6</td><td>A7</td></tr>
+      <tr><td>Column (CPU line)</td><td>A8</td><td>A10</td><td>A9</td><td>A13</td><td>A12</td><td>A11</td><td>A14</td><td>A15</td></tr>
+    </table></div>
+
+    <h3 id="hw-limits">What is not emulated</h3>
+    <ul class="features">
+      <li><b>Floppy disks:</b> the MB8877 always reports not ready, so the machine cannot boot from disk.</li>
+      <li><b>8253 timer:</b> not emulated, so the SIO's transmit and receive clocks stay idle and no serial data moves.</li>
+      <li><b>IEEE-488 port:</b> the PIA is there, with nothing attached.</li>
+      <li><b>Speaker</b></li>
+    </ul>
+
+    <footer><a href="../">&larr; Back to Osborne Executive</a> · <a href="../../emulators/">Emulators</a> · <a href="../../">All projects</a></footer>
+  </main>
+</body>
+</html>

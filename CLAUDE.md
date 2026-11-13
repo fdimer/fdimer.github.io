@@ -83,6 +83,11 @@ hardware reference), linked by a "Documentation" button (`class="button secondar
 - The machine emulators (Osborne, ZX80/ZX81, MSX, PET) describe what the machine adds
   and link to the Z80 Bench or 6502 Bench documentation for the shared debugging tools.
 - Check every claim against the app's code before writing it.
+- **ROMs are copyrighted and must not leak into the pictures.** The memory bitmap draws
+  ROM bits as pixels, so a screenshot of it is a copy of the ROM: cover every ROM band
+  with `S.cover(...)` before taking any shot that includes the bitmap (the overview
+  too), and point the hex view at RAM. The scripts for the machines take the ROM path
+  from an environment variable; never copy a ROM into the repo.
 
 ## Related
 

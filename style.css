@@ -199,3 +199,7 @@ table.ref th { font-weight: 600; color: var(--muted); }
 table.ref td.mono, table.ref th.mono { font-family: var(--mono); font-size: 14px; white-space: nowrap; }
 kbd { font-family: var(--mono); font-size: 0.85em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 6px; background: var(--surface); }
 .note { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+/* wide screenshots break out of the text column on large screens */
+@media (min-width: 900px) {
+  figure.fig.wide { width: min(1080px, calc(100vw - 48px)); margin-left: 50%; transform: translateX(-50%); }
+}
