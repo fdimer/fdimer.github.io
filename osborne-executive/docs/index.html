@@ -32,6 +32,7 @@
             <li><a href="#toolbar">Running and stepping</a></li>
             <li><a href="#chips">Chips</a></li>
             <li><a href="#memchips">Memory chips and fault simulation</a></li>
+            <li><a href="#p1">The RAM board connector</a></li>
             <li><a href="#machine">Machine panel</a></li>
             <li><a href="#bitmap">Memory bitmap</a></li>
             <li><a href="#tools">The debugging tools</a></li>
@@ -137,6 +138,7 @@
       <li><b>Main logic board:</b> the boot ROM, the scratch RAM, four video RAMs and two font RAMs.</li>
       <li><b>RAM board, bank 0:</b> U8–U15, one chip for each data bit D0–D7. These chips also hold <code>F000h</code>–<code>FFFFh</code> for both banks.</li>
       <li><b>RAM board, bank 1:</b> U17–U24, laid out as on the board.</li>
+      <li><b>RAM board connector P1:</b> the 72-way connector between the RAM board and the main logic board, which can be faulted in the same way. See <a href="#p1">below</a>.</li>
       <li><b>Selected chip:</b> click a tile to see that chip. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red and shows the count.</li>
       <li><b>Pinout:</b> the selected chip's pins, which follow the bus on every clock. The video and font RAMs also show the display circuit's own reads between CPU accesses.</li>
       <li><b>Pin menu:</b> click a pin and choose <b>Disconnected</b>, <b>Stuck high</b> or <b>Stuck low</b>.</li>
@@ -158,8 +160,36 @@
       <img src="img/debug.png" width="308" alt="The Debug pane listing a memory chip fault">
     </figure>
     <ol class="keyed">
-      <li><b>Debug pane:</b> memory faults are listed with the breakpoints and stops. Remove one with its ×, or everything with <b>Clear all</b> or Master reset.</li>
+      <li><b>Debug pane:</b> memory chip and connector faults are listed with the breakpoints and stops. Remove one with its ×, or everything with <b>Clear all</b> or Master reset.</li>
     </ol>
+
+    <h3 id="p1">The RAM board connector</h3>
+    <figure class="fig">
+      <img src="img/p1.png" width="348" alt="The RAM board connector P1 drawn with 72 pins, one of them faulted and a pin menu open">
+    </figure>
+    <p>P1 carries every signal between the main logic board and the RAM board. It is drawn with its odd pins down the left and its even pins down the right, and each pin shows its live level.</p>
+    <ol class="keyed">
+      <li><b>Control signals:</b> the decodes, strobes and enables the main board sends. An overline marks a signal that is active when low.</li>
+      <li><b>Address pins:</b> A0–A15.</li>
+      <li><b>Data pins:</b> D0–D7.</li>
+      <li><b>A faulted pin:</b> shown with a red ring, dashed when disconnected.</li>
+      <li><b>Pin menu:</b> click a signal pin and choose <b>Disconnected</b>, <b>Stuck high</b> or <b>Stuck low</b>. Power, ground, spare and unused pins cannot be faulted.</li>
+    </ol>
+    <p>A fault here is a bad contact seen from the RAM board: the board gets a floating input, which reads as high, or a level held high or low, while the rest of the machine still sees the true signal.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pin</th><th>Effect of a fault</th></tr>
+      <tr><td class="mono">A0–A15</td><td>Every access goes to the wrong cell in all sixteen RAMs at once. A12–A15 also feed the board's F000h decoder</td></tr>
+      <tr><td class="mono">D0–D7</td><td>That bit reads and is stored as the forced level, in both banks</td></tr>
+      <tr><td class="mono">PRI1</td><td>The bank is fixed. Disconnected, bank 1 answers everywhere below F000h</td></tr>
+      <tr><td class="mono">ROMDEC*, VRAMDEC*</td><td>High or disconnected: the board no longer stands aside, so it answers at the same time as the ROM or the video RAM; reads carry the AND of the two and writes go to both. Low: the board never answers</td></tr>
+      <tr><td class="mono">RAS, CAS*</td><td>Any fault stops the strobe, so no cell is read or written. Without RAS the RAMs are not refreshed either</td></tr>
+      <tr><td class="mono">RD*</td><td>The board makes write enable from RD*. High or disconnected: every access becomes a write, so cells are overwritten with 1s. Low: writes are lost</td></tr>
+      <tr><td class="mono">RAE*</td><td>High or disconnected: the row address floats to FFh. Low: the column becomes the AND of the two address bytes. Either way writes are lost</td></tr>
+      <tr><td class="mono">CAE*</td><td>High or disconnected: the column address floats to FFh. Low: the row becomes the AND of the two address bytes</td></tr>
+      <tr><td class="mono">RFSH*</td><td>High or disconnected: a refresh cycle only reaches the row of chips its address happens to select, so the bank that is not in use is not refreshed. Low: row address bit 7 is replaced by the board's refresh bit, and half the cells can no longer be reached</td></tr>
+      <tr><td class="mono">MREQ*</td><td>No effect: it only clocks a refresh bit the board does not use</td></tr>
+    </table></div>
+    <p class="note">Rows of RAM that go without refresh lose their data after about two seconds of machine time and then read as <code>FFh</code>. A real chip holds its data for a different and irregular time; the figure is a stand-in.</p>
 
     <h3 id="machine">Machine panel</h3>
     <figure class="fig">
@@ -300,6 +330,8 @@
       <li><b>Top 4K:</b> a 74LS20 detects A15–A12 all high and keeps <code>F000h</code>–<code>FFFFh</code> in U8–U15 whatever the bank.</li>
       <li><b>ROM and video accesses:</b> neither row gets CAS while the ROM or the video RAM is answering.</li>
       <li><b>Addresses:</b> two 74LS244 buffers put the low address byte on the RAM address pins as the row, then the high byte as the column.</li>
+      <li><b>Write enable:</b> a flip-flop samples RD* as the row address ends; its inverted output is write enable, so it goes low early in any cycle that is not a read. WR* is not used.</li>
+      <li><b>Connector:</b> P1 has 72 ways. The emulator can <a href="#p1">fault each signal pin</a>.</li>
     </ul>
     <p>The RAM address pins are not wired in straight order, which matters when you follow a stuck address pin:</p>
     <div class="tablewrap"><table class="ref">
