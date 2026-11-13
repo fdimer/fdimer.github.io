@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>6502 Bench documentation</title>
+  <meta name="description" content="User guide and hardware reference for 6502 Bench, the browser 6502 emulator for debugging programs and designing hardware.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; 6502 Bench</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; HELP "6502BENCH"</p>
+      <h1>6502 Bench documentation</h1>
+      <p class="lead">How to use the bench, panel by panel, and what the emulated 6502 does at its pins. The numbers in each list match the numbered markers on the screenshot above it.</p>
+    </header>
+
+    <a class="button" href="../app/">Open the emulator</a>
+
+    <nav class="toc" aria-label="Contents" style="margin-top:24px">
+      <b>Contents</b>
+      <ol>
+        <li><a href="#guide">User guide</a>
+          <ol>
+            <li><a href="#start">Quick start</a></li>
+            <li><a href="#screen">The screen</a></li>
+            <li><a href="#toolbar">Running and stepping</a></li>
+            <li><a href="#program">Loading a program</a></li>
+            <li><a href="#pinout">Pinout</a></li>
+            <li><a href="#dis">Disassembly and breakpoints</a></li>
+            <li><a href="#memory">Memory and the memory bitmap</a></li>
+            <li><a href="#regs">Registers and register stops</a></li>
+            <li><a href="#debug">Debug pane</a></li>
+            <li><a href="#timing">Bus timing</a></li>
+            <li><a href="#system">System and I/O registers</a></li>
+          </ol>
+        </li>
+        <li><a href="#hardware">Hardware reference</a>
+          <ol>
+            <li><a href="#hw-pins">Pins</a></li>
+            <li><a href="#hw-cycles">Bus cycles</a></li>
+            <li><a href="#hw-int">Reset and interrupts</a></li>
+            <li><a href="#hw-mem">Memory map</a></li>
+            <li><a href="#hw-verify">Verification and limits</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+
+    <h2 id="guide">User guide</h2>
+    <p>6502 Bench is the sister of <a href="../../z80-bench/">Z80 Bench</a> and is laid out the same way, so if you know one you know the other.</p>
+
+    <h3 id="start">Quick start</h3>
+    <p>The bench opens with a short sample program assembled into ROM at <code>8000h</code>, with the reset vector pointing at it. To see it work:</p>
+    <ol>
+      <li>Press <b>Step instruction</b> (or the <kbd>S</kbd> key) a few times. The highlighted line in the disassembly moves, the registers that changed turn orange, and the bus timing panel draws the instruction that just ran.</li>
+      <li>Press <b>Clock 1 cycle</b> (<kbd>C</kbd>) to go one clock at a time. Every 6502 clock is a bus cycle, so the address bus, data bus and R/W pin change on each one.</li>
+      <li>Press <b>Run</b> (<kbd>R</kbd>) to let it go, and again to stop. The sample counts on the first I/O register at <code>6000h</code>, so the LEDs in the I/O registers panel count up.</li>
+      <li>Edit the source in the Program panel and press <b>Assemble and load</b> to run your own code.</li>
+    </ol>
+    <p>The keyboard shortcuts work whenever you are not typing in a field.</p>
+
+    <h3 id="screen">The screen</h3>
+    <figure class="fig">
+      <a href="img/overview.png"><img src="img/overview.png" width="720" alt="The whole 6502 Bench screen with its eleven areas numbered"></a>
+      <figcaption>The whole bench. Select the picture to see it full size.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>Toolbar:</b> reset, clock, step and run controls, with the status message beside the title and the cycle, PC and instruction counters at the top right.</li>
+      <li><b>Pinout:</b> the 40 pins of the 6502, live.</li>
+      <li><b>Program:</b> the assembler and hex editor, and the loader.</li>
+      <li><b>I/O registers:</b> what the program has written to the I/O block.</li>
+      <li><b>Disassembly:</b> memory shown as instructions; breakpoints are set here.</li>
+      <li><b>Memory:</b> the hex view of all 64 KB.</li>
+      <li><b>Memory bitmap:</b> all of memory as a picture, one pixel per bit.</li>
+      <li><b>Registers:</b> every register and flag, editable.</li>
+      <li><b>Debug:</b> the list of every breakpoint and stop.</li>
+      <li><b>Bus timing:</b> every bus cycle of the current instruction.</li>
+      <li><b>System:</b> the memory map and the I/O input settings.</li>
+    </ol>
+    <p>On a narrow screen the columns stack one under another. The Registers, Debug, Bus timing and System panels each have a <b>»</b> button that folds the panel away to give Memory and Disassembly more room.</p>
+
+    <h3 id="toolbar">Running and stepping</h3>
+    <figure class="fig">
+      <img src="img/toolbar.png" width="720" alt="The toolbar with its controls numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Reset CPU:</b> runs the reset sequence, which loads the program counter from the reset vector at <code>FFFCh</code>. Memory, breakpoints and stops are kept.</li>
+      <li><b>Master reset:</b> clears ROM and RAM, removes every breakpoint and stop, returns the input pins to their normal level and resets the CPU. Your source in the editor is kept. It asks for a second click to confirm.</li>
+      <li><b>Clock 1 cycle</b> (<kbd>C</kbd>): advances one clock, which is one bus cycle. This is the finest step.</li>
+      <li><b>Step instruction</b> (<kbd>S</kbd>): runs to the end of the current instruction.</li>
+      <li><b>Run</b> (<kbd>R</kbd>): runs until you press it again or a breakpoint or stop halts it.</li>
+      <li><b>Speed:</b> the clock rate used by Run: 5 Hz, 50 Hz, 1 kHz, 5 kHz, 10 kHz or full speed. The slow rates let you watch the pins and LEDs change.</li>
+      <li><b>Status:</b> what just happened: a load, a reset, or the breakpoint or stop that halted the run.</li>
+      <li><b>Counters:</b> cycles and instructions executed since the last reset, and the program counter.</li>
+    </ol>
+
+    <h3 id="program">Loading a program</h3>
+    <figure class="fig">
+      <img src="img/program.png" width="468" alt="The Program panel with its controls numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Assembly or Hex:</b> choose how you enter the program.</li>
+      <li><b>Editor:</b> type or paste here, or drop a file on it.</li>
+      <li><b>Load at:</b> the address where the code goes, for example the start of ROM. In Assembly it applies until the first <code>.org</code>; Intel HEX keeps its own addresses.</li>
+      <li><b>Clear memory first</b> and <b>Reset CPU after loading:</b> untick the first to load several pieces into memory one after another; untick the second to patch memory without restarting the program.</li>
+      <li><b>Assemble and load:</b> assembles (or reads the hex) and writes the bytes into memory, ROM included.</li>
+      <li><b>Import file…:</b> <code>.asm</code>, <code>.s</code> and <code>.a65</code> files open in Assembly; <code>.hex</code>, <code>.ihx</code> and plain hex text open in Hex; raw <code>.bin</code> and <code>.rom</code> images are converted to hex.</li>
+      <li><b>Copy bytes to Hex tab:</b> turns the assembled code into an annotated hex listing.</li>
+      <li><b>Result:</b> how many bytes were loaded and where, or what went wrong.</li>
+    </ol>
+    <p>After loading, the CPU is reset through the reset vector at <code>FFFCh</code> if the program sets one; otherwise the program counter is set to the load address.</p>
+    <p><b>Assembly</b> uses standard 6502 syntax, one instruction per line. Labels start in the first column or end with <code>:</code>, and comments start with <code>;</code>.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Item</th><th>Accepted</th></tr>
+      <tr><td>Directives (the dot is optional)</td><td><code>.org</code> or <code>* =</code>, <code>=</code> or <code>EQU</code>, <code>.byte</code>, <code>.word</code>, <code>.res</code>, <code>.end</code></td></tr>
+      <tr><td>Numbers</td><td><code>$1F</code>, <code>%1010</code>, <code>42</code>, <code>'A'</code>, and <code>*</code> for the current address; expressions are allowed</td></tr>
+      <tr><td>Low and high byte</td><td><code>&lt;label</code> and <code>&gt;label</code></td></tr>
+      <tr><td>Zero page</td><td>Used automatically when the address is known to be below <code>0100h</code>. Write the address with four digits (<code>$0012</code>) to force absolute addressing</td></tr>
+    </table></div>
+    <p><b>Hex</b> takes bytes separated by spaces or new lines. Text after <code>;</code> is ignored, and a line such as <code>FFFA:</code> continues loading at that address. Intel HEX (lines starting with <code>:</code>) is also accepted.</p>
+    <p>When you load hex or a ROM image, the disassembly turns it into labelled source that you can edit and assemble again.</p>
+
+    <h3 id="pinout">Pinout</h3>
+    <figure class="fig">
+      <img src="img/pinout.png" width="468" alt="The Pinout panel with a 40-pin 6502 and numbered markers">
+    </figure>
+    <p>Every pin shows its level on each clock: amber for high, dark for low and a dashed outline when the pin is floating. The pins outlined in blue are inputs that you drive by clicking them.</p>
+    <ol class="keyed">
+      <li><b>&phi;0:</b> click to pulse one clock, the same as <b>Clock 1 cycle</b>.</li>
+      <li><b>/IRQ and /NMI:</b> click /IRQ to hold the interrupt request low; it is level-sensitive and masked by the I flag. Click /NMI to make a falling edge, which is what triggers it.</li>
+      <li><b>/RES and /SO:</b> /RES low holds the CPU in reset; releasing it runs the 7-cycle reset sequence and loads the program counter from <code>FFFCh</code>. A falling edge on /SO sets the V flag.</li>
+      <li><b>RDY:</b> held low, it stops the CPU on its next read cycle. Writes still complete, as on the NMOS part.</li>
+      <li><b>SYNC:</b> high during the cycle that fetches an opcode.</li>
+      <li><b>Data bus pins:</b> show the byte being read or written in the current cycle.</li>
+      <li><b>Bus readout:</b> the kind of bus cycle and its number within the instruction, the address on the bus with a note of what lives there, and the data bus value in hex and binary with what is driving it.</li>
+    </ol>
+
+    <h3 id="dis">Disassembly and breakpoints</h3>
+    <figure class="fig">
+      <img src="img/disassembly.png" width="308" alt="The Disassembly panel with the current instruction and two breakpoints marked">
+    </figure>
+    <p>The list scrolls through all of memory and keeps the current instruction in view as you step. Click a line to cycle through its three states: break at, break after, off. Bytes that are not a documented opcode show as <code>???</code>.</p>
+    <ol class="keyed">
+      <li><b>Current instruction:</b> the highlighted line is where the program counter is.</li>
+      <li><b>Break at</b> (filled dot): the run stops before this instruction executes.</li>
+      <li><b>Break after</b> (ring): the run stops when the PC leaves this address. On a branch to itself, the run continues until the branch falls through.</li>
+    </ol>
+
+    <h3 id="memory">Memory and the memory bitmap</h3>
+    <figure class="fig">
+      <img src="img/memory.png" width="378" alt="The Memory panel with its controls numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Go to, Show PC and Show stack:</b> type a hex address to jump there, or jump to the program counter or to the stack in page 1.</li>
+      <li><b>Zero page:</b> jumps to <code>0000h</code>, where 6502 programs keep their fast variables and pointers.</li>
+      <li><b>Follow PC:</b> when ticked, each step brings the current instruction back into view. Untick it to keep watching another area while the program runs.</li>
+      <li><b>Hex view:</b> click any byte to edit it, ROM included. Blue marks the instruction being executed, amber marks bytes written by the last instruction, and an underline marks the top of the stack. ROM is tinted, and I/O registers show the value a read would return.</li>
+      <li><b>Dump memory (.bin)</b> and <b>Memory listing (.txt):</b> save memory as a raw image or as a hex listing.</li>
+    </ol>
+    <figure class="fig">
+      <img src="img/bitmap.png" width="378" alt="The top of the Memory bitmap panel">
+    </figure>
+    <p>The bitmap draws every bit of memory as one pixel. Each byte is a row of 8 pixels with bit 7 on the left, each strip is one 256-byte page read top to bottom, and each band holds 8K. Empty memory is blank, machine code looks like noise, and tables and text show regular patterns, so you can see where a program and its data sit and watch memory change as it runs.</p>
+    <ol class="keyed">
+      <li><b>Bands:</b> the red mark is the program counter and the blue mark is the stack pointer.</li>
+      <li><b>Readout:</b> point at the bitmap to read the byte under the pointer; click to show that address in the Memory panel.</li>
+    </ol>
+
+    <h3 id="regs">Registers and register stops</h3>
+    <figure class="fig">
+      <img src="img/registers.png" width="458" alt="The Registers panel with a register stop being set on X">
+    </figure>
+    <ol class="keyed">
+      <li><b>Register values:</b> A, X, Y, the status register P, the stack pointer S and the program counter, all in hex. Click a value to edit it. Values that changed in the last step are shown in orange.</li>
+      <li><b>stop:</b> click it beside any register and enter a hex value. The run halts at the end of the instruction that changes the register to that value, in every run mode. <b>Clear</b> removes the stop.</li>
+      <li><b>Flags:</b> the bits of P: N, V, B, D, I, Z and C; a lit button is a set flag. Click one to toggle it.</li>
+      <li><b>/IRQ line and NMI pending:</b> the level on the interrupt request pin, and whether an NMI edge is waiting to be taken.</li>
+      <li><b>State:</b> running, reset (while /RES is low), stopped by RDY, or jammed (after an undocumented opcode; reset to recover).</li>
+      <li><b>Fold:</b> collapses the panel.</li>
+    </ol>
+
+    <h3 id="debug">Debug pane</h3>
+    <figure class="fig">
+      <img src="img/debug.png" width="308" alt="The Debug panel listing a break at, a break after and a memory stop">
+    </figure>
+    <ol class="keyed">
+      <li><b>Kind of debug point:</b> choose what to add; the fields beside it change to suit.</li>
+      <li><b>Add:</b> adds it to the list.</li>
+      <li><b>The list:</b> every breakpoint and stop, including those set from the disassembly and the registers. Click one to jump to it, or the × to remove it. <b>Clear all</b> removes everything. The one that halted the run is highlighted.</li>
+    </ol>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Kind</th><th>Halts</th></tr>
+      <tr><td>Memory stop</td><td>After the instruction that changes the byte at an address, or changes it to a given value</td></tr>
+      <tr><td>Pin stop</td><td>On the clock where a pin changes, goes high or goes low</td></tr>
+      <tr><td>Address bus value</td><td>On the clock where the address bus takes the value</td></tr>
+      <tr><td>Data bus value</td><td>On the clock where the data bus takes the value</td></tr>
+      <tr><td>Break at address</td><td>Before the instruction at the address runs</td></tr>
+      <tr><td>Break after address</td><td>When the PC leaves the address</td></tr>
+    </table></div>
+    <p class="note">While a pin or bus stop is set, full speed runs clock by clock so that it can check every cycle, which makes it slower.</p>
+
+    <h3 id="timing">Bus timing</h3>
+    <figure class="fig">
+      <img src="img/timing.png" width="308" alt="The Bus timing panel showing the three cycles of a STA instruction">
+    </figure>
+    <ol class="keyed">
+      <li><b>Instruction:</b> the address and mnemonic being drawn, and which of its cycles the CPU has reached.</li>
+      <li><b>Cycles:</b> one column per bus cycle, with &phi;2, SYNC and R/W drawn as waveforms and the address (A) and data (D) underneath.</li>
+    </ol>
+    <p>Starred cycles (<code>rd*</code>, <code>wr*</code>) are dummy accesses the 6502 makes while it works out an address or modifies memory. Real hardware sees them, so they matter when the address is an I/O register.</p>
+
+    <h3 id="system">System and I/O registers</h3>
+    <figure class="fig">
+      <img src="img/system.png" width="308" alt="The System panel with its settings numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>RAM from 0000h:</b> 1, 2, 4, 8, 16, 32, 48 or 64 KB.</li>
+      <li><b>ROM (write-protected):</b> none, or 4, 8, 16 or 32 KB ending at <code>FFFFh</code>, so that it holds the vectors.</li>
+      <li><b>I/O block:</b> the address of a block of 16 memory-mapped registers.</li>
+      <li><b>Unmapped reads return:</b> <code>FFh</code>, or the last value on the data bus, as on a real board with nothing driving the bus.</li>
+      <li><b>I/O reads return:</b> the value read from any I/O register you have not set.</li>
+      <li><b>Set I/O input:</b> enter a register number and the value it returns when read. Set it with an empty value to remove it.</li>
+    </ol>
+    <p>The defaults follow a common hobby layout: 16 KB of RAM at <code>0000h</code>, a peripheral such as a 6522 VIA at <code>6000h</code> and ROM from <code>8000h</code> to <code>FFFFh</code>.</p>
+    <figure class="fig">
+      <img src="img/io.png" width="468" alt="The I/O registers panel showing register 6000h as eight LEDs and a log of writes">
+    </figure>
+    <ol class="keyed">
+      <li><b>Output latches:</b> each I/O register the program has written appears as eight LEDs (bit 7 on the left) with the value in hex and binary.</li>
+      <li><b>Log:</b> the most recent accesses, with the register number and the cycle count when each happened.</li>
+    </ol>
+
+    <h2 id="hardware">Hardware reference</h2>
+    <p>6502 Bench emulates the CPU alone: an NMOS 6502 in its 40-pin package, with RAM, ROM and a block of I/O registers attached straight to its buses. This section describes what it does at the pins.</p>
+
+    <h3 id="hw-pins">Pins</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pin</th><th>Signal</th><th>Direction</th><th>What it does</th></tr>
+      <tr><td class="mono">9–20, 22–25</td><td class="mono">A0–A15</td><td>Output</td><td>Address bus, driven on every cycle</td></tr>
+      <tr><td class="mono">33–26</td><td class="mono">D0–D7</td><td>Both</td><td>Data bus</td></tr>
+      <tr><td class="mono">37</td><td class="mono">&phi;0</td><td>Input</td><td>Clock in. One pulse is one bus cycle</td></tr>
+      <tr><td class="mono">3, 39</td><td class="mono">&phi;1, &phi;2</td><td>Output</td><td>The two clock phases the CPU makes from &phi;0. Memory is accessed while &phi;2 is high</td></tr>
+      <tr><td class="mono">34</td><td class="mono">R/W</td><td>Output</td><td>High for a read cycle, low for a write cycle</td></tr>
+      <tr><td class="mono">7</td><td class="mono">SYNC</td><td>Output</td><td>High during an opcode fetch</td></tr>
+      <tr><td class="mono">2</td><td class="mono">RDY</td><td>Input</td><td>Low stops the CPU on its next read cycle</td></tr>
+      <tr><td class="mono">4</td><td class="mono">/IRQ</td><td>Input</td><td>Interrupt request, level-sensitive, masked by the I flag</td></tr>
+      <tr><td class="mono">6</td><td class="mono">/NMI</td><td>Input</td><td>Non-maskable interrupt, triggered by a falling edge</td></tr>
+      <tr><td class="mono">40</td><td class="mono">/RES</td><td>Input</td><td>Low holds the CPU in reset</td></tr>
+      <tr><td class="mono">38</td><td class="mono">/SO</td><td>Input</td><td>A falling edge sets the overflow (V) flag</td></tr>
+      <tr><td class="mono">8; 1, 21</td><td class="mono">VCC; VSS</td><td>Power</td><td></td></tr>
+      <tr><td class="mono">5, 35, 36</td><td class="mono">NC</td><td></td><td>Not connected</td></tr>
+    </table></div>
+
+    <h3 id="hw-cycles">Bus cycles</h3>
+    <p>The 6502 reads or writes memory on every clock cycle, without exception. An instruction takes from 2 to 7 cycles, and when the CPU has nothing useful to fetch it still performs an access: a dummy read or write.</p>
+    <ul class="features">
+      <li><b>Opcode fetch:</b> the first cycle of every instruction, marked by SYNC high.</li>
+      <li><b>Reads and writes:</b> operands, data and the stack, one byte per cycle.</li>
+      <li><b>Dummy accesses:</b> made during indexed addressing, page crossings, branches and read-modify-write instructions (which write the old value back before the new one). The bench performs every one of them on the bus, as the real chip does.</li>
+    </ul>
+
+    <h3 id="hw-int">Reset and interrupts</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Event</th><th>Vector</th><th>Behaviour</th></tr>
+      <tr><td>/NMI</td><td class="mono">FFFAh</td><td>A falling edge is remembered and taken at the end of the current instruction</td></tr>
+      <tr><td>Reset</td><td class="mono">FFFCh</td><td>Releasing /RES runs the 7-cycle reset sequence</td></tr>
+      <tr><td>/IRQ and BRK</td><td class="mono">FFFEh</td><td>/IRQ is taken at the end of an instruction while the pin is low and the I flag is clear</td></tr>
+    </table></div>
+    <p>Each vector is two bytes holding the address of its routine, low byte first. On an interrupt the CPU pushes the program counter and the status register onto the stack and sets the I flag. A change to the I flag by <code>CLI</code>, <code>SEI</code> or <code>PLP</code> takes effect one instruction late, as on the real chip.</p>
+
+    <h3 id="hw-mem">Memory map</h3>
+    <ul class="features">
+      <li><b>RAM:</b> from <code>0000h</code> up to the size chosen. Page 0 is the zero page and page 1 (<code>0100h</code>–<code>01FFh</code>) is the stack.</li>
+      <li><b>ROM:</b> at the top of memory, ending at <code>FFFFh</code>. Programs cannot write to it; the loader and the memory editor can.</li>
+      <li><b>I/O block:</b> 16 registers. The 6502 has no separate I/O space, so peripherals sit in the memory map. Each register remembers the last byte written and returns the value you set for reads.</li>
+      <li><b>Everything else:</b> unmapped. Reads return <code>FFh</code> or the last value on the data bus.</li>
+    </ul>
+    <p>The <a href="../../pet/">Commodore PET</a> emulator replaces this simple model with the real memory map and peripherals of that computer.</p>
+
+    <h3 id="hw-verify">Verification and limits</h3>
+    <ul class="features">
+      <li><b>Klaus Dormann's functional test</b> passes, decimal mode included, in the published number of cycles.</li>
+      <li><b>SingleStepTests:</b> all 1,510,000 cases for the 151 documented opcodes match the real chip, including the address, data and read/write of every bus cycle.</li>
+      <li><b>Assembler:</b> all 151 documented opcodes assemble to the expected bytes.</li>
+    </ul>
+    <p>Known limits:</p>
+    <ul class="features">
+      <li>Undocumented opcodes are not emulated: the CPU stops, the state shows jammed and the disassembly shows <code>???</code>. Reset to recover.</li>
+      <li>During clock stepping, registers and memory update together at the end of each instruction, not partway through it. Bus activity on the pins is exact for every cycle.</li>
+      <li>RDY holds the read cycle in place, but the value read is the one present when the instruction started.</li>
+      <li>Interrupts are taken at instruction boundaries. Rare hardware quirks, such as an NMI hijacking a BRK, are not modelled.</li>
+      <li>The CMOS 65C02 is not modelled.</li>
+    </ul>
+
+    <footer><a href="../">&larr; Back to 6502 Bench</a> · <a href="../../emulators/">Emulators</a> · <a href="../../">All projects</a></footer>
+  </main>
+</body>
+</html>
