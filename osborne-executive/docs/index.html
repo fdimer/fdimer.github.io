@@ -28,7 +28,8 @@
           <ol>
             <li><a href="#start">Quick start</a></li>
             <li><a href="#screen">The screen</a></li>
-            <li><a href="#rom">The ROM, the display and the keyboard</a></li>
+            <li><a href="#rom">The ROM, the display, the drives and the keyboard</a></li>
+            <li><a href="#disks">Floppy disks</a></li>
             <li><a href="#toolbar">Running and stepping</a></li>
             <li><a href="#chips">Chips</a></li>
             <li><a href="#memchips">Memory chips and fault simulation</a></li>
@@ -45,6 +46,7 @@
             <li><a href="#hw-io">I/O ports</a></li>
             <li><a href="#hw-video">Video</a></li>
             <li><a href="#hw-kbd">Keyboard</a></li>
+            <li><a href="#hw-fdc">Floppy disk controller</a></li>
             <li><a href="#hw-int">Interrupts and timing</a></li>
             <li><a href="#hw-chips">Memory chips</a></li>
             <li><a href="#hw-ramboard">The RAM board</a></li>
@@ -60,11 +62,11 @@
     <h3 id="start">Quick start</h3>
     <ol>
       <li>Press <b>Load ROM…</b> under the screen and choose your own 8 KB Executive ROM image (version 1.2, CRC <code>70798C2F</code>). The ROM is copyrighted and is not included. Your browser keeps it, so you only load it once.</li>
-      <li>The machine powers on and runs in real time. The ROM tests the hardware, loads its character set and shows its sign-on screen.</li>
-      <li>Click the screen and type: your keyboard drives the Executive's key matrix.</li>
+      <li>The machine powers on and runs in real time. The ROM tests the hardware, loads its character set and shows its sign-on screen, ending with "INSERT DISK IN DRIVE A AND PRESS RETURN".</li>
+      <li>Press <b>Insert disk…</b> beside Drive A and choose your own CP/M Plus system disk as an ImageDisk (<code>.imd</code>) file. Disk images are copyrighted and are not included.</li>
+      <li>Click the screen and press <kbd>Enter</kbd>. The drive lamp lights, and about 14 seconds later CP/M Plus shows <code>A&gt;</code>. Type <code>DIR</code>.</li>
       <li>Press <b>Pause</b> (or <kbd>R</kbd>) to stop the machine, then step it one instruction (<kbd>S</kbd>) or one clock (<kbd>C</kbd>) at a time and watch every chip's pins.</li>
     </ol>
-    <p class="note">The floppy disk controller is not emulated yet, so the ROM stops at "insert disk in drive A": the machine cannot boot CP/M.</p>
 
     <h3 id="screen">The screen</h3>
     <figure class="fig">
@@ -75,7 +77,7 @@
       <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
       <li><b>Chips:</b> live pinouts of the Z80A, the two PIAs and the SIO.</li>
       <li><b>Memory chips:</b> every memory chip in the machine, with live pins and fault simulation.</li>
-      <li><b>Screen:</b> the Executive's display, the ROM loader and the keyboard.</li>
+      <li><b>Screen:</b> the Executive's display, the ROM loader, the two disk drives and the keyboard.</li>
       <li><b>Program:</b> the assembler and hex loader.</li>
       <li><b>I/O ports:</b> the last value written to each port, and a log of port reads and writes.</li>
       <li><b>Disassembly:</b> what the CPU sees, as instructions.</li>
@@ -84,21 +86,36 @@
       <li><b>Registers</b></li>
       <li><b>Debug:</b> breakpoints, stops, forced pins and faults.</li>
       <li><b>Bus timing</b></li>
-      <li><b>Machine:</b> the state of the bank switching, video, interrupts and PIAs.</li>
+      <li><b>Machine:</b> the state of the bank switching, video, interrupts, PIAs and disk controller.</li>
     </ol>
 
-    <h3 id="rom">The ROM, the display and the keyboard</h3>
+    <h3 id="rom">The ROM, the display, the drives and the keyboard</h3>
     <figure class="fig wide">
-      <a href="img/screen.png"><img src="img/screen.png" width="1080" alt="The Screen panel showing the Executive's sign-on screen"></a>
+      <a href="img/screen.png"><img src="img/screen.png" width="1080" alt="The Screen panel after booting CP/M Plus, with the drive controls under the screen"></a>
     </figure>
     <ol class="keyed">
       <li><b>Display:</b> 80 columns by 24 rows in amber, drawn from the character set the ROM loads into the font RAM, with half intensity, underline, blink, reverse video and the graphics characters. Click it to give it the keyboard. While you step, a blue marker shows where the electron beam is.</li>
       <li><b>Load ROM…:</b> choose the ROM image. The message under the buttons confirms the version and CRC.</li>
       <li><b>Power on / restart:</b> resets the machine and runs it in real time.</li>
       <li><b>Alpha Lock:</b> the Executive's caps lock key. Caps Lock on your keyboard toggles it too.</li>
-      <li><b>Video state:</b> whether video is on, and the scan line and frame being drawn.</li>
+      <li><b>Drive lamp:</b> lit while the machine has that drive selected, which is also when its motor runs; brighter while the disk controller is busy.</li>
+      <li><b>Eject:</b> takes the disk out. If a program has written to it, the button asks once more before throwing the changes away.</li>
+      <li><b>Save (.imd):</b> downloads the disk as it is now, as a new ImageDisk file.</li>
+      <li><b>Disk details:</b> the file name, the format, whether it has been changed, and the track the head is on.</li>
+      <li><b>Insert disk…:</b> puts an ImageDisk file in an empty drive.</li>
+      <li><b>Messages:</b> what was just loaded, inserted or saved.</li>
     </ol>
-    <p>Your keys go through the ROM's own keyboard scan, 60 times a second, so typing behaves as on the real machine. Backspace acts as the &larr; key.</p>
+    <p>Your keys go through the ROM's own keyboard scan, 60 times a second, so typing behaves as on the real machine. Backspace acts as the &larr; key. The header of the panel shows whether video is on, and the scan line and frame being drawn.</p>
+
+    <h3 id="disks">Floppy disks</h3>
+    <p>The Executive has two single-sided 5.25-inch drives, A and B. The emulator runs them through the real disk controller chip at real speed: the head steps, the disk turns five times a second and the ROM and CP/M read the bytes as they pass, so loading takes as long as it did in 1983.</p>
+    <ul class="features">
+      <li><b>Files:</b> ImageDisk (<code>.imd</code>) images. The usual Executive format is 40 tracks of five 1024-byte sectors in double density (about 185K for files); single-density and other formats recorded in the image work too.</li>
+      <li><b>Booting:</b> with a system disk in drive A, press <kbd>Enter</kbd> at the ROM's prompt. With no disk the ROM keeps waiting; with a disk that has no system on it, it says so.</li>
+      <li><b>Changing disks:</b> eject and insert at any time, as on the real machine.</li>
+      <li><b>Writing:</b> programs can write to a disk, and CP/M's own tools can copy files between drives. Disks are held in memory only, so use <b>Save (.imd)</b> to keep the result. Master reset ejects both disks.</li>
+      <li><b>Stepping:</b> pause the machine during a disk read to follow it in the Machine panel: the controller's status bits, its track, sector and data registers, and what is under the head.</li>
+    </ul>
 
     <h3 id="toolbar">Running and stepping</h3>
     <figure class="fig">
@@ -193,13 +210,14 @@
 
     <h3 id="machine">Machine panel</h3>
     <figure class="fig">
-      <img src="img/machine.png" width="308" alt="The Machine panel with its five blocks numbered">
+      <img src="img/machine.png" width="308" alt="The Machine panel with its six blocks numbered">
     </figure>
     <ol class="keyed">
       <li><b>Memory banks:</b> the value on the system PIA's port A and what it has switched in.</li>
       <li><b>Video and interrupts:</b> whether video is enabled, the beam line and frame, the RTC counter, the /INT line, the vector an interrupt acknowledge would read, and the keys held down.</li>
       <li><b>System PIA UD12:</b> for each half, the control register (CR), data direction register (DDR), output register (OR), the levels on the pins, the control lines and the interrupt output.</li>
       <li><b>IEEE-488 PIA UD8:</b> the same for the second PIA.</li>
+      <li><b>Disk controller UB17:</b> the FD1793's status register with its bits named, the last command, the track, sector and data registers, INTRQ and DRQ, the drive selected and the density, and the head position with what is on that track.</li>
       <li><b>Stubs:</b> the devices that are present only so that the ROM can run.</li>
     </ol>
 
@@ -236,7 +254,7 @@
       <tr><td>Display</td><td>80 × 24 characters, with a character set held in RAM</td></tr>
       <tr><td>Parallel I/O</td><td>Two MC6821 PIAs: UD12 for the system, UD8 for the IEEE-488 port</td></tr>
       <tr><td>Serial I/O</td><td>Z80A SIO/2 (UD4), clocked by an 8253 timer</td></tr>
-      <tr><td>Disks</td><td>MB8877 floppy disk controller</td></tr>
+      <tr><td>Disks</td><td>FD1793 floppy disk controller (UB17) and two single-sided 5.25-inch drives</td></tr>
     </table></div>
 
     <h3 id="hw-mem">Memory map and banking</h3>
@@ -265,7 +283,7 @@
       <tr><th>Ports</th><th>Device</th><th>In the emulator</th></tr>
       <tr><td class="mono">00h–03h</td><td>System PIA UD12 (register select on A0, A1)</td><td>Emulated</td></tr>
       <tr><td class="mono">04h–07h</td><td>8253 timer (baud rates)</td><td>Stub: reads return <code>FFh</code></td></tr>
-      <tr><td class="mono">08h–0Bh</td><td>MB8877 floppy disk controller</td><td>Stub: reports not ready</td></tr>
+      <tr><td class="mono">08h–0Bh</td><td>FD1793 floppy disk controller UB17: status and command, track, sector, data</td><td>Emulated</td></tr>
       <tr><td class="mono">0Ch–0Fh</td><td>Z80A SIO/2 UD4 (A0 selects data or control, A1 channel A or B)</td><td>Registers only: no data moves</td></tr>
       <tr><td class="mono">10h–13h</td><td>IEEE-488 PIA UD8</td><td>Emulated, with nothing attached</td></tr>
       <tr><td class="mono">14h–17h</td><td>Keyboard (read)</td><td>Emulated</td></tr>
@@ -302,6 +320,34 @@
       <tr><td class="mono">A14</td><td>=</td><td>L</td><td>\</td><td>;</td><td>/</td><td>-</td><td>&darr;</td><td>&rarr;</td></tr>
       <tr><td class="mono">A15</td><td></td><td></td><td></td><td></td><td>Alpha Lock</td><td></td><td></td><td></td></tr>
     </table></div>
+
+    <h3 id="hw-fdc">Floppy disk controller</h3>
+    <p>The controller is an FD1793 (UB17) on schematic sheet 13, clocked at 1 MHz for 5.25-inch drives, which doubles every time in its data sheet: the head steps every 12 to 60 ms and settles for 30 ms.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Line</th><th>Where it goes</th></tr>
+      <tr><td>Drive select 1 (drive A)</td><td>System PIA port B bit 1, low to select</td></tr>
+      <tr><td>Drive select 2 (drive B)</td><td>System PIA port B bit 2, low to select</td></tr>
+      <tr><td>Motor on</td><td>Both motors run while either drive is selected</td></tr>
+      <tr><td>DDEN* (density)</td><td>System PIA port B bit 0: low for double density (MFM), high for single (FM)</td></tr>
+      <tr><td>INTRQ</td><td>CB1 of the IEEE-488 PIA (UD8)</td></tr>
+      <tr><td>DRQ</td><td>Not connected: the software polls the status register for each byte</td></tr>
+      <tr><td>READY</td><td>Tied high, so the controller always believes the drive is ready</td></tr>
+      <tr><td>Side select</td><td>None on an FD1793: the drives are single-sided</td></tr>
+    </table></div>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Port</th><th>Read</th><th>Write</th></tr>
+      <tr><td class="mono">08h</td><td>Status</td><td>Command</td></tr>
+      <tr><td class="mono">09h</td><td colspan="2">Track register</td></tr>
+      <tr><td class="mono">0Ah</td><td colspan="2">Sector register</td></tr>
+      <tr><td class="mono">0Bh</td><td colspan="2">Data register</td></tr>
+    </table></div>
+    <ul class="features">
+      <li><b>Commands emulated:</b> Restore, Seek, Step, Step in and Step out (with the verify flag); Read Sector and Write Sector (with the multiple-record flag); Read Address; Write Track, which formats; and Force Interrupt.</li>
+      <li><b>Data rate:</b> a byte every 32 µs in double density and every 64 µs in single. A program that does not take a byte before the next arrives gets the Lost Data bit, as on the chip.</li>
+      <li><b>Finding a sector:</b> sectors are spaced evenly round the track, and a command waits for the right one to come under the head. A sector that is not there gives Record Not Found after five turns of the disk.</li>
+      <li><b>No disk:</b> there are no index pulses, so a command that needs the disk stays busy until the software gives up and sends Force Interrupt. Because READY is tied high, this is how the real machine notices an empty drive.</li>
+      <li><b>How the ROM boots:</b> it restores the head to track 0, steps in and out, reads two address marks to find the density and sector size, then reads track 0 sector 1.</li>
+    </ul>
 
     <h3 id="hw-int">Interrupts and timing</h3>
     <ul class="features">
@@ -342,7 +388,7 @@
 
     <h3 id="hw-limits">What is not emulated</h3>
     <ul class="features">
-      <li><b>Floppy disks:</b> the MB8877 always reports not ready, so the machine cannot boot from disk.</li>
+      <li><b>Disk controller:</b> the Read Track command, write precompensation and the analogue side of reading. Disk images hold sectors, not flux, so copy-protection tricks are not reproduced.</li>
       <li><b>8253 timer:</b> not emulated, so the SIO's transmit and receive clocks stay idle and no serial data moves.</li>
       <li><b>IEEE-488 port:</b> the PIA is there, with nothing attached.</li>
       <li><b>Speaker</b></li>

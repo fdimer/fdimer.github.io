@@ -16,7 +16,7 @@
     <header class="site" style="margin-top:20px">
       <p class="prompt">&gt; LOAD "OSBEXEC"</p>
       <h1>Osborne Executive</h1>
-      <p class="lead">An emulator of Osborne's 1983 portable, built on <a href="../z80-bench/">Z80 Bench</a> and modelled from the OCC2 main logic board schematics. It boots the real ROM to its sign-on screen, with a working keyboard and amber display, and every chip's pins can be watched clock by clock.</p>
+      <p class="lead">An emulator of Osborne's 1983 portable, built on <a href="../z80-bench/">Z80 Bench</a> and modelled from the OCC2 main logic board schematics. It runs the real ROM and boots CP/M Plus from a disk image, with a working keyboard and amber display, and every chip's pins can be watched clock by clock.</p>
     </header>
 
     <a class="button" href="app/">Open the emulator</a>
@@ -25,6 +25,7 @@
     <h2>Features</h2>
     <ul class="features">
       <li><b>The real ROM:</b> load your own 8 KB Executive v1.2 ROM image (it isn't included); your browser remembers it. The ROM runs its self-test and shows its sign-on screen</li>
+      <li><b>Floppy disks:</b> two drives and the FD1793 disk controller, running at real speed. Put your own CP/M Plus system disk (an ImageDisk <code>.imd</code> file, not included) in drive A and the Executive boots to <code>A&gt;</code>; programs can write to disks, and a changed disk can be saved as a new file</li>
       <li><b>Screen:</b> the 80 × 24 amber display, drawn from the font the ROM loads, with half intensity, underline, blink, reverse video and the graphics character set</li>
       <li><b>Keyboard:</b> your keys drive the Executive's key matrix, scanned by the ROM 60 times a second</li>
       <li><b>Memory banks:</b> 128K of DRAM, the boot ROM, font RAM and video RAM switched by the system PIA, with memory and disassembly views that follow the active bank</li>
@@ -37,7 +38,7 @@
     </ul>
 
     <h2>Coming next</h2>
-    <p>The MB8877 floppy disk controller and disk images, so the Executive can boot CP/M Plus.</p>
+    <p>More disk image formats, starting with Teledisk.</p>
 
     <h2>Source</h2>
     <a class="button secondary" href="https://github.com/fdimer/z80-bench/tree/osborne">View on GitHub (osborne branch)</a>
