@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Commodore PET documentation</title>
+  <meta name="description" content="User guide and hardware reference for the Commodore PET 2001-N emulator built on 6502 Bench.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; Commodore PET 2001-N</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LIST</p>
+      <h1>Commodore PET documentation</h1>
+      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it.</p>
+    </header>
+
+    <a class="button" href="../app/">Open the emulator</a>
+
+    <nav class="toc" aria-label="Contents" style="margin-top:24px">
+      <b>Contents</b>
+      <ol>
+        <li><a href="#guide">User guide</a>
+          <ol>
+            <li><a href="#start">Quick start</a></li>
+            <li><a href="#screen">The screen</a></li>
+            <li><a href="#machine">The machine, the display and the keyboard</a></li>
+            <li><a href="#roms">ROMs and sockets</a></li>
+            <li><a href="#programs">Programs and listings</a></li>
+            <li><a href="#toolbar">Running and stepping</a></li>
+            <li><a href="#memchips">Memory chips and fault simulation</a></li>
+            <li><a href="#hwpanel">PET hardware panel</a></li>
+            <li><a href="#bitmap">Memory bitmap</a></li>
+            <li><a href="#tools">The debugging tools</a></li>
+          </ol>
+        </li>
+        <li><a href="#hardware">Hardware reference</a>
+          <ol>
+            <li><a href="#hw-overview">The machine</a></li>
+            <li><a href="#hw-mem">Memory map</a></li>
+            <li><a href="#hw-io">Interface chips</a></li>
+            <li><a href="#hw-video">Video and the 60 Hz interrupt</a></li>
+            <li><a href="#hw-kbd">Keyboard</a></li>
+            <li><a href="#hw-chips">Memory chips</a></li>
+            <li><a href="#hw-limits">What is not emulated</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+
+    <h2 id="guide">User guide</h2>
+    <p>The emulator is <a href="../../6502-bench/">6502 Bench</a> with a Commodore PET 2001-N built around the CPU. Everything 6502 Bench does still works here; this guide covers what the machine adds, and points to the <a href="../../6502-bench/docs/">6502 Bench documentation</a> for the shared debugging tools.</p>
+
+    <h3 id="start">Quick start</h3>
+    <ol>
+      <li>Choose <b>BASIC 2</b> or <b>BASIC 4</b>.</li>
+      <li>Press <b>Load ROM folder…</b> and choose the folder that holds your own PET ROM files. The emulator fits the ones the chosen BASIC needs. The ROMs are copyrighted and are not included. Your browser keeps them, so you only load them once.</li>
+      <li>The machine switches on and shows <code>READY.</code></li>
+      <li>Click the picture and type, or click the keys drawn under it.</li>
+    </ol>
+
+    <h3 id="screen">The screen</h3>
+    <figure class="fig">
+      <a href="img/overview.png"><img src="img/overview.png" width="720" alt="The whole emulator page with its thirteen areas numbered"></a>
+      <figcaption>The whole page. Select the picture to see it full size.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
+      <li><b>Screen:</b> the picture, the BASIC and RAM choices, programs, the ROM sockets and the keyboard.</li>
+      <li><b>Memory chips:</b> every memory chip on the board, with live pins and fault simulation.</li>
+      <li><b>Pinout:</b> the 6502, live.</li>
+      <li><b>Program:</b> the assembler and hex loader.</li>
+      <li><b>I/O registers:</b> the last value written to the interface chips, and a log.</li>
+      <li><b>Disassembly</b></li>
+      <li><b>Memory</b></li>
+      <li><b>Memory bitmap:</b> the RAM, the screen and the ROMs as a picture, tinted by use.</li>
+      <li><b>Registers</b></li>
+      <li><b>Debug:</b> breakpoints, stops and faults.</li>
+      <li><b>Bus timing</b></li>
+      <li><b>PET hardware:</b> the two PIAs, the VIA, and the video and interrupt state.</li>
+    </ol>
+
+    <h3 id="machine">The machine, the display and the keyboard</h3>
+    <figure class="fig wide">
+      <a href="img/screen.png"><img src="img/screen.png" width="900" alt="The Screen panel showing a PET running a short BASIC program, with its controls numbered"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Picture:</b> 40 columns by 25 rows in green. Click it to give it the keyboard. The line above the picture names the character set in use, and the line and frame being drawn.</li>
+      <li><b>Load ROM folder…:</b> see <a href="#roms">ROMs and sockets</a>.</li>
+      <li><b>Power on / restart:</b> resets the machine and runs it in real time.</li>
+      <li><b>BASIC:</b> BASIC 2 or BASIC 4, each with its own set of ROMs.</li>
+      <li><b>RAM:</b> 8K, 16K or 32K.</li>
+      <li><b>Sound:</b> plays the sound that programs make on the VIA's CB2 line. Browsers only allow sound after your first click or key press.</li>
+      <li><b>Load program (.prg)…:</b> see <a href="#programs">Programs and listings</a>.</li>
+      <li><b>Save BASIC program (.prg)</b> and <b>Listing (.txt)</b></li>
+      <li><b>ROM sockets:</b> which file sits in each ROM socket on the board.</li>
+      <li><b>Keyboard:</b> laid out like the PET's own graphics keyboard. The graphics character each key gives with SHIFT is drawn on its front face. SHIFT stays down for the next key.</li>
+    </ol>
+    <p>On your own keyboard, letters, digits and symbols go to the PET key with that character, whatever your keyboard layout. Hold Shift with a letter for its graphics character.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Your key</th><th>PET key</th></tr>
+      <tr><td><kbd>Enter</kbd></td><td>RETURN</td></tr>
+      <tr><td><kbd>Backspace</kbd></td><td>DEL</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>STOP</td></tr>
+      <tr><td><kbd>Home</kbd></td><td>HOME (with Shift, clear the screen)</td></tr>
+      <tr><td><kbd>Insert</kbd></td><td>INST</td></tr>
+      <tr><td><kbd>Tab</kbd></td><td>RVS</td></tr>
+      <tr><td>Arrow keys</td><td>Cursor movement</td></tr>
+      <tr><td><kbd>^</kbd> and <kbd>_</kbd></td><td>The up-arrow and left-arrow keys</td></tr>
+    </table></div>
+
+    <h3 id="roms">ROMs and sockets</h3>
+    <p><b>Load ROM folder…</b> looks in the folder you choose for files with the standard names, and fits them:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>For</th><th>File names begin with</th></tr>
+      <tr><td>BASIC 2</td><td><code>basic-2-c000</code>, <code>basic-2-d000</code>, <code>edit-2-n</code>, <code>kernal-2</code></td></tr>
+      <tr><td>BASIC 4</td><td><code>basic-4-b000</code>, <code>basic-4-c000</code>, <code>basic-4-d000</code>, <code>edit-4-n</code>, <code>kernal-4</code></td></tr>
+      <tr><td>Both</td><td><code>characters-2</code> (the character generator)</td></tr>
+    </table></div>
+    <p>The line under the sockets says which standard sets are complete and which files are missing.</p>
+    <p>Click a socket to fit a ROM of your own there instead, whatever it is called: a different editor, a patched kernal, or an option ROM in the spare sockets UD3 and UD4.</p>
+
+    <h3 id="programs">Programs and listings</h3>
+    <ul class="features">
+      <li><b>Load program (.prg)…:</b> puts a <code>.prg</code> file straight into memory. Wait for <code>READY.</code>, load it, then type <code>RUN</code>.</li>
+      <li><b>Save BASIC program (.prg):</b> downloads the BASIC program in memory.</li>
+      <li><b>Listing (.txt):</b> the registers, BASIC's pointers, the interface chips, the BASIC program as text, the screen and a hex dump of RAM.</li>
+      <li><b>Character sets:</b> <code>POKE 59468,14</code> switches to lower case and <code>POKE 59468,12</code> back to graphics.</li>
+    </ul>
+
+    <h3 id="toolbar">Running and stepping</h3>
+    <figure class="fig">
+      <img src="img/toolbar.png" width="720" alt="The toolbar with its controls numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Reset CPU</b></li>
+      <li><b>Master reset:</b> also forgets the ROMs (load them again to switch on) and clears memory, breakpoints, stops and faults. It asks for a second click.</li>
+      <li><b>Clock 1 cycle</b> (<kbd>C</kbd>): one clock, which is one bus cycle.</li>
+      <li><b>Step instruction</b> (<kbd>S</kbd>)</li>
+      <li><b>Run / Pause</b> (<kbd>R</kbd>). The keyboard shortcuts work when the picture does not have the keyboard.</li>
+      <li><b>Speed:</b> <b>Real time (1 MHz)</b> runs at the PET's own speed. <b>Full speed</b> runs as fast as your computer allows. The slow clock rates let you watch the pins change.</li>
+      <li><b>Status:</b> what the machine is doing, or what halted it.</li>
+    </ol>
+
+    <h3 id="memchips">Memory chips and fault simulation</h3>
+    <figure class="fig wide">
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a fault set on RAM chip UI7 and a pin menu open"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>RAM, lower 16K:</b> UI2–UI9, one 4116 for each data bit. Position 9 holds data bit 0 and position 2 holds bit 7.</li>
+      <li><b>RAM, upper 16K:</b> UJ2–UJ9, arranged the same way.</li>
+      <li><b>Screen RAM and character generator:</b> the two 2114s UF7 and UF8, and the character ROM UF10.</li>
+      <li><b>ROM sockets:</b> UD3–UD9.</li>
+      <li><b>Pinout:</b> click a tile to see that chip's pins, which follow the bus on every clock. The screen RAM and the character generator also show the video circuit's own reads between CPU accesses. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
+      <li><b>Pin menu:</b> click a pin and choose <b>Disconnected</b>, <b>Stuck high</b> or <b>Stuck low</b>.</li>
+      <li><b>Faults on this chip</b></li>
+      <li><b>Clear this chip's faults</b> and <b>Clear all memory faults</b></li>
+    </ol>
+    <p>The machine then runs with the fault, and the memory view and the disassembly show what the CPU reads through it:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pin</th><th>Fault</th><th>Effect</th></tr>
+      <tr><td>Address</td><td>Any</td><td>The chip uses the wrong cell. A disconnected input floats high</td></tr>
+      <tr><td>Data</td><td>Any</td><td>That bit is changed on reads and writes</td></tr>
+      <tr><td>Chip select (RAS or CAS on a dynamic RAM)</td><td>Stuck high or disconnected</td><td>The chip is out of circuit</td></tr>
+      <tr><td>Write enable</td><td>Stuck high or disconnected</td><td>Writes are lost</td></tr>
+      <tr><td>Write enable</td><td>Stuck low</td><td>Every access becomes a write</td></tr>
+    </table></div>
+    <p>Faults are listed in the Debug pane and cleared there, here, or by Master reset.</p>
+
+    <h3 id="hwpanel">PET hardware panel</h3>
+    <figure class="fig">
+      <img src="img/hardware.png" width="308" alt="The PET hardware panel with its five blocks numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>PIA 1:</b> both ports in hex and binary with their direction registers, the keyboard row selected, the control registers and control lines, the interrupt outputs, and the keys held down.</li>
+      <li><b>PIA 2:</b> the same for the IEEE-488 data ports.</li>
+      <li><b>VIA:</b> both ports, the two timers, the control and interrupt registers, the character set chosen by CA2, and CB2, where sound comes out.</li>
+      <li><b>Video and interrupt:</b> the VIDEO ON signal, the line and frame, the /IRQ line and the interrupts taken.</li>
+      <li><b>Machine:</b> the board, the RAM size and the ROMs fitted.</li>
+    </ol>
+
+    <h3 id="bitmap">Memory bitmap</h3>
+    <figure class="fig">
+      <img src="img/bitmap.png" width="378" alt="The Memory bitmap panel showing the first RAM bands, tinted by use">
+    </figure>
+    <ol class="keyed">
+      <li><b>Bands:</b> the RAM, the screen RAM, each ROM and the character ROM, one pixel per bit; scroll the box to see them all. In the character ROM every character is 8 bytes, so its shapes are visible. The red mark is the program counter and the blue mark the stack pointer.</li>
+      <li><b>Tints:</b> the background colour shows what each part of RAM is used for, read from BASIC's own pointers: the zero page, the stack, the system variables, the BASIC program and so on. You can watch a program, its variables and its strings grow.</li>
+      <li><b>Readout:</b> point at the bitmap to read a byte; click to show it in the Memory panel.</li>
+    </ol>
+
+    <h3 id="tools">The debugging tools</h3>
+    <p>The remaining panels are 6502 Bench's own and work the same way here.</p>
+    <ul class="features">
+      <li><a href="../../6502-bench/docs/#pinout">Pinout</a></li>
+      <li><a href="../../6502-bench/docs/#program">Loading a program</a>: the sample program loads at <code>033Ah</code>, in the cassette buffer; start it from BASIC with <code>SYS 826</code></li>
+      <li><a href="../../6502-bench/docs/#dis">Disassembly and breakpoints</a></li>
+      <li><a href="../../6502-bench/docs/#memory">Memory</a></li>
+      <li><a href="../../6502-bench/docs/#regs">Registers and register stops</a></li>
+      <li><a href="../../6502-bench/docs/#debug">Debug pane</a>: memory, pin and bus stops</li>
+      <li><a href="../../6502-bench/docs/#timing">Bus timing</a>: including the dummy cycles, which matter when they touch the interface chips</li>
+    </ul>
+
+    <h2 id="hardware">Hardware reference</h2>
+    <p>The model is the Commodore PET 2001-N and CBM 3000 series: the "Dynamic PET" main board, assembly 320351. It follows the 320351 parts list and layout and the 320349 logic diagram.</p>
+
+    <h3 id="hw-overview">The machine</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Part</th><th>Details</th></tr>
+      <tr><td>CPU</td><td>6502 at 1 MHz</td></tr>
+      <tr><td>RAM</td><td>8K, 16K or 32K of dynamic RAM</td></tr>
+      <tr><td>Screen</td><td>40 × 25 characters, from 1K of screen RAM and a character generator ROM</td></tr>
+      <tr><td>Interface chips</td><td>Two 6520 PIAs and one 6522 VIA</td></tr>
+      <tr><td>ROM</td><td>BASIC, the screen editor and the kernal, in 4K sockets</td></tr>
+    </table></div>
+
+    <h3 id="hw-mem">Memory map</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Address</th><th>Contents</th></tr>
+      <tr><td class="mono">0000h–7FFFh</td><td>RAM: 8K, 16K or 32K</td></tr>
+      <tr><td class="mono">8000h–83FFh</td><td>Screen RAM, repeated up to <code>8FFFh</code></td></tr>
+      <tr><td class="mono">9000h–9FFFh</td><td>Socket UD3: option ROM</td></tr>
+      <tr><td class="mono">A000h–AFFFh</td><td>Socket UD4: option ROM</td></tr>
+      <tr><td class="mono">B000h–BFFFh</td><td>Socket UD5: BASIC 4</td></tr>
+      <tr><td class="mono">C000h–CFFFh</td><td>Socket UD6: BASIC</td></tr>
+      <tr><td class="mono">D000h–DFFFh</td><td>Socket UD7: BASIC</td></tr>
+      <tr><td class="mono">E000h–E7FFh</td><td>Socket UD8: the screen editor</td></tr>
+      <tr><td class="mono">E800h–EFFFh</td><td>The interface chips</td></tr>
+      <tr><td class="mono">F000h–FFFFh</td><td>Socket UD9: the kernal, with the 6502's vectors</td></tr>
+    </table></div>
+    <p>The character generator UF10 is not on the CPU's bus. It holds two sets of 128 characters, 8 bytes each.</p>
+
+    <h3 id="hw-io">Interface chips</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Chip</th><th>Address</th><th>Use</th></tr>
+      <tr><td>PIA 1 (6520)</td><td class="mono">E810h</td><td>Port A bits 0–3 select a keyboard row; port B reads its eight keys. Cassette 1. CB1 takes VIDEO ON, which gives the 60 Hz interrupt</td></tr>
+      <tr><td>PIA 2 (6520)</td><td class="mono">E820h</td><td>The IEEE-488 data bus: port A in, port B out</td></tr>
+      <tr><td>VIA (6522)</td><td class="mono">E840h</td><td>IEEE-488 control lines, cassette 2, the user port on port A, VIDEO ON on port B bit 5, character set select on CA2, sound on CB2</td></tr>
+    </table></div>
+
+    <h3 id="hw-video">Video and the 60 Hz interrupt</h3>
+    <ul class="features">
+      <li><b>No video chip:</b> the picture is made by TTL counters that read the screen RAM and the character generator. The emulator draws the picture from the screen RAM once per frame; it does not model the counters themselves.</li>
+      <li><b>Timing:</b> 64 clock cycles per line and 260 lines per frame, about 60 pictures a second. The first 200 lines are the picture.</li>
+      <li><b>VIDEO ON:</b> high while the 200 picture lines are being drawn. It is the one video signal the software sees, and its timing is modelled from the line counter.</li>
+      <li><b>Interrupt:</b> VIDEO ON goes to CB1 of PIA 1. Its falling edge at the end of each picture is the machine's 60 Hz interrupt, which runs the keyboard scan and the clock.</li>
+    </ul>
+
+    <h3 id="hw-kbd">Keyboard</h3>
+    <p>This is the graphics keyboard. PIA 1 port A bits 0–3 go to a decoder that pulls one of ten rows low; port B then reads eight keys, low for a key that is down.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Row</th><th>PB0</th><th>PB1</th><th>PB2</th><th>PB3</th><th>PB4</th><th>PB5</th><th>PB6</th><th>PB7</th></tr>
+      <tr><td class="mono">0</td><td>!</td><td>#</td><td>%</td><td>&amp;</td><td>(</td><td>&larr;</td><td>HOME</td><td>CRSR &rarr;</td></tr>
+      <tr><td class="mono">1</td><td>"</td><td>$</td><td>'</td><td>\</td><td>)</td><td></td><td>CRSR &darr;</td><td>DEL</td></tr>
+      <tr><td class="mono">2</td><td>Q</td><td>E</td><td>T</td><td>U</td><td>O</td><td>&uarr;</td><td>7</td><td>9</td></tr>
+      <tr><td class="mono">3</td><td>W</td><td>R</td><td>Y</td><td>I</td><td>P</td><td></td><td>8</td><td>/</td></tr>
+      <tr><td class="mono">4</td><td>A</td><td>D</td><td>G</td><td>J</td><td>L</td><td></td><td>4</td><td>6</td></tr>
+      <tr><td class="mono">5</td><td>S</td><td>F</td><td>H</td><td>K</td><td>:</td><td></td><td>5</td><td>*</td></tr>
+      <tr><td class="mono">6</td><td>Z</td><td>C</td><td>B</td><td>M</td><td>;</td><td>RETURN</td><td>1</td><td>3</td></tr>
+      <tr><td class="mono">7</td><td>X</td><td>V</td><td>N</td><td>,</td><td>?</td><td></td><td>2</td><td>+</td></tr>
+      <tr><td class="mono">8</td><td>SHIFT (left)</td><td>@</td><td>]</td><td></td><td>&gt;</td><td>SHIFT (right)</td><td>0</td><td>-</td></tr>
+      <tr><td class="mono">9</td><td>RVS</td><td>[</td><td>SPACE</td><td>&lt;</td><td>STOP</td><td></td><td>.</td><td>=</td></tr>
+    </table></div>
+
+    <h3 id="hw-chips">Memory chips</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Position</th><th>Chip</th><th>Use</th></tr>
+      <tr><td class="mono">UI2–UI9</td><td>4116 (4108 in an 8K machine)</td><td>RAM at <code>0000h</code>–<code>3FFFh</code>. UI9 is data bit 0 and UI2 is bit 7</td></tr>
+      <tr><td class="mono">UJ2–UJ9</td><td>4116</td><td>RAM at <code>4000h</code>–<code>7FFFh</code>. UJ9 is data bit 0 and UJ2 is bit 7</td></tr>
+      <tr><td class="mono">UF7, UF8</td><td>2114</td><td>Screen RAM. UF8 holds bits 0–3 and UF7 bits 4–7</td></tr>
+      <tr><td class="mono">UD3–UD7, UD9</td><td>6332 (4K ROM)</td><td>ROM sockets</td></tr>
+      <tr><td class="mono">UD8</td><td>6316 (2K ROM)</td><td>The screen editor</td></tr>
+      <tr><td class="mono">UF10</td><td>6316 (2K ROM)</td><td>Character generator</td></tr>
+    </table></div>
+    <p>Both RAM banks share one RAS line; UI is on CAS0 and UJ on CAS1. Multiplexers put address lines BA0–BA6 on the RAM address pins as the row. As the column, pin A0 carries BA13 and pins A1–A6 carry BA7–BA12.</p>
+    <p>The positions come from Commodore's parts list and logic diagram. They have not been checked against a real board.</p>
+
+    <h3 id="hw-limits">What is not emulated</h3>
+    <ul class="features">
+      <li><b>Cassette and disk drives:</b> programs load and save as <code>.prg</code> files instead. Nothing is attached to the IEEE-488 bus.</li>
+      <li><b>The video counters:</b> see above.</li>
+      <li><b>The business keyboard</b> and the 80-column machines.</li>
+    </ul>
+
+    <footer><a href="../">&larr; Back to Commodore PET 2001-N</a> · <a href="../../emulators/">Emulators</a> · <a href="../../">All projects</a></footer>
+  </main>
+</body>
+</html>
