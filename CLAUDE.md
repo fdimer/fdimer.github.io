@@ -67,6 +67,23 @@ links keep working.
 5. aWkward sn@ail projects: also push the project's code to both
    `fdimer/<repo>` and `AwkwardSnail/<repo>` so the mirrors stay identical.
 
+## Emulator documentation
+
+Each emulator has a documentation page at `<folder>/docs/index.html` (user guide, then
+hardware reference), linked by a "Documentation" button (`class="button secondary"`,
+`href="docs/"`) placed right after "Open the emulator" on the project page.
+
+- Screenshots live in `<folder>/docs/img/` and carry numbered markers; the numbered
+  list under each screenshot (`<ol class="keyed">`) explains the markers in order.
+- The screenshots are generated, not edited by hand: `_tools/docs-shots/<folder>.js`
+  opens the app with Playwright, draws the markers from live element positions and
+  saves the crops; then `python3 _tools/docs-shots/compress.py <folder>/docs/img`
+  shrinks them. Re-run both when the app's layout changes, and keep the lists in step
+  with the markers.
+- The machine emulators (Osborne, ZX80/ZX81, MSX, PET) describe what the machine adds
+  and link to the Z80 Bench or 6502 Bench documentation for the shared debugging tools.
+- Check every claim against the app's code before writing it.
+
 ## Related
 
 - The aWkward sn@ail business website is a separate site:

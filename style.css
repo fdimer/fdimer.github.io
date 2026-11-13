@@ -178,3 +178,24 @@ ol.pubs .cites { display: inline-block; margin-top: 4px; font-family: var(--mono
 
 /* Favourite books */
 ol.pubs .book-title { font-weight: 600; }
+
+/* Documentation pages */
+.toc { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 22px; margin: 0 0 8px; }
+.toc ol { margin: 6px 0; padding-left: 22px; }
+.toc li { margin: 2px 0; }
+.toc ol ol { list-style: lower-alpha; }
+h3 { font-size: 18px; margin: 28px 0 8px; }
+figure.fig { margin: 20px 0 8px; }
+figure.fig img { display: block; max-width: 100%; height: auto; margin: 0 auto; border: 1px solid var(--line); border-radius: 10px; }
+figure.fig figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; text-align: center; }
+ol.keyed { list-style: none; counter-reset: key; padding-left: 0; }
+ol.keyed li { counter-increment: key; position: relative; padding-left: 36px; margin-bottom: 8px; }
+ol.keyed li::before { content: counter(key); position: absolute; left: 0; top: 2px; width: 24px; height: 24px; border-radius: 50%;
+  background: #c2410c; color: #fff; font: 700 13px/24px var(--sans); text-align: center; }
+.tablewrap { overflow-x: auto; }
+table.ref { border-collapse: collapse; width: 100%; font-size: 15px; margin: 12px 0; }
+table.ref th, table.ref td { text-align: left; vertical-align: top; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+table.ref th { font-weight: 600; color: var(--muted); }
+table.ref td.mono, table.ref th.mono { font-family: var(--mono); font-size: 14px; white-space: nowrap; }
+kbd { font-family: var(--mono); font-size: 0.85em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 6px; background: var(--surface); }
+.note { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 16px 0; }

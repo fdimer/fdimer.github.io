@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Z80 Bench documentation</title>
+  <meta name="description" content="User guide and hardware reference for Z80 Bench, the browser Z80 emulator for debugging programs and designing hardware.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; Z80 Bench</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; HELP "Z80BENCH"</p>
+      <h1>Z80 Bench documentation</h1>
+      <p class="lead">How to use the bench, panel by panel, and what the emulated Z80 does at its pins. The numbers in each list match the numbered markers on the screenshot above it.</p>
+    </header>
+
+    <a class="button" href="../app/">Open the emulator</a>
+
+    <nav class="toc" aria-label="Contents" style="margin-top:24px">
+      <b>Contents</b>
+      <ol>
+        <li><a href="#guide">User guide</a>
+          <ol>
+            <li><a href="#start">Quick start</a></li>
+            <li><a href="#screen">The screen</a></li>
+            <li><a href="#toolbar">Running and stepping</a></li>
+            <li><a href="#program">Loading a program</a></li>
+            <li><a href="#pinout">Pinout</a></li>
+            <li><a href="#dis">Disassembly and breakpoints</a></li>
+            <li><a href="#memory">Memory and the memory bitmap</a></li>
+            <li><a href="#regs">Registers and register stops</a></li>
+            <li><a href="#debug">Debug pane</a></li>
+            <li><a href="#timing">Bus timing</a></li>
+            <li><a href="#system">System and I/O ports</a></li>
+          </ol>
+        </li>
+        <li><a href="#hardware">Hardware reference</a>
+          <ol>
+            <li><a href="#hw-pins">Pins</a></li>
+            <li><a href="#hw-cycles">Machine cycles</a></li>
+            <li><a href="#hw-int">Reset and interrupts</a></li>
+            <li><a href="#hw-mem">Memory and I/O model</a></li>
+            <li><a href="#hw-verify">Verification and limits</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+
+    <h2 id="guide">User guide</h2>
+
+    <h3 id="start">Quick start</h3>
+    <p>The bench opens with a short sample program already assembled and loaded at <code>0000h</code>. To see it work:</p>
+    <ol>
+      <li>Press <b>Step instruction</b> (or the <kbd>S</kbd> key) a few times. The highlighted line in the disassembly moves, the registers that changed turn orange, and the bus timing panel draws the instruction that just ran.</li>
+      <li>Press <b>Clock 1 T-state</b> (<kbd>C</kbd>) to go one clock at a time and watch the address bus, data bus and control pins change on the pinout.</li>
+      <li>Press <b>Run</b> (<kbd>R</kbd>) to let it go, and again to stop. The sample counts on output port <code>01h</code>, so the LEDs in the I/O ports panel count up.</li>
+      <li>Edit the source in the Program panel and press <b>Assemble and load</b> to run your own code.</li>
+    </ol>
+    <p>The keyboard shortcuts work whenever you are not typing in a field.</p>
+
+    <h3 id="screen">The screen</h3>
+    <figure class="fig">
+      <a href="img/overview.png"><img src="img/overview.png" width="720" alt="The whole Z80 Bench screen with its eleven areas numbered"></a>
+      <figcaption>The whole bench. Select the picture to see it full size.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>Toolbar:</b> reset, clock, step and run controls, with the status message beside the title and the T-state, PC and instruction counters at the top right.</li>
+      <li><b>Pinout:</b> the 40 pins of the Z80, live.</li>
+      <li><b>Program:</b> the assembler and hex editor, and the loader.</li>
+      <li><b>I/O ports:</b> what the program has written with OUT.</li>
+      <li><b>Disassembly:</b> memory shown as instructions; breakpoints are set here.</li>
+      <li><b>Memory:</b> the hex view of all 64 KB.</li>
+      <li><b>Memory bitmap:</b> all of memory as a picture, one pixel per bit.</li>
+      <li><b>Registers:</b> every register and flag, editable.</li>
+      <li><b>Debug:</b> the list of every breakpoint and stop.</li>
+      <li><b>Bus timing:</b> waveforms for the current instruction.</li>
+      <li><b>System:</b> installed memory, interrupt and input port settings.</li>
+    </ol>
+    <p>On a narrow screen the columns stack one under another. The Registers, Debug, Bus timing and System panels each have a <b>»</b> button that folds the panel away to give Memory and Disassembly more room.</p>
+
+    <h3 id="toolbar">Running and stepping</h3>
+    <figure class="fig">
+      <img src="img/toolbar.png" width="720" alt="The toolbar with its controls numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Reset CPU:</b> restarts the processor at <code>0000h</code>. Memory, breakpoints and stops are kept.</li>
+      <li><b>Master reset:</b> clears all 64K of memory, removes every breakpoint and stop, returns the input pins to their normal level and resets the CPU. Your source in the editor is kept. It asks for a second click to confirm.</li>
+      <li><b>Clock 1 T-state</b> (<kbd>C</kbd>): advances one clock period. This is the finest step: use it to follow a machine cycle on the pins.</li>
+      <li><b>Step instruction</b> (<kbd>S</kbd>): runs to the end of the current instruction.</li>
+      <li><b>Run</b> (<kbd>R</kbd>): runs until you press it again or a breakpoint or stop halts it.</li>
+      <li><b>Speed:</b> the clock rate used by Run: 5 Hz, 50 Hz, 1 kHz, 5 kHz, 10 kHz or full speed. The slow rates let you watch the pins and LEDs change.</li>
+      <li><b>Status:</b> what just happened: a load, a reset, or the breakpoint or stop that halted the run.</li>
+      <li><b>Counters:</b> T-states and instructions executed since the last reset, and the program counter.</li>
+    </ol>
+
+    <h3 id="program">Loading a program</h3>
+    <figure class="fig">
+      <img src="img/program.png" width="468" alt="The Program panel with its controls numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Assembly or Hex:</b> choose how you enter the program. Each tab keeps its own text.</li>
+      <li><b>Editor:</b> type or paste here, or drop a file on it.</li>
+      <li><b>Load at:</b> the address where the code goes, for example the start of ROM in your memory map. In Assembly it applies until the first <code>ORG</code>; Intel HEX keeps its own addresses.</li>
+      <li><b>Clear memory first</b> and <b>Reset CPU after loading:</b> untick the first to load several pieces into memory one after another; untick the second to patch memory without restarting the program.</li>
+      <li><b>Assemble and load:</b> assembles (or reads the hex) and writes the bytes into memory.</li>
+      <li><b>Import file…:</b> <code>.asm</code>, <code>.z80</code> and <code>.s</code> files open in Assembly; <code>.hex</code>, <code>.ihx</code> and plain hex text open in Hex; raw <code>.bin</code> and <code>.rom</code> images are converted to hex.</li>
+      <li><b>Copy bytes to Hex tab:</b> turns the assembled code into an annotated hex listing.</li>
+      <li><b>Result:</b> how many bytes were loaded and where, or what went wrong.</li>
+    </ol>
+    <p><b>Assembly</b> uses standard Zilog syntax, one instruction per line. Labels end with <code>:</code> and comments start with <code>;</code>.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Item</th><th>Accepted</th></tr>
+      <tr><td>Directives</td><td><code>ORG</code>, <code>EQU</code>, <code>DB</code>, <code>DW</code>, <code>DS</code>, <code>END</code></td></tr>
+      <tr><td>Numbers</td><td><code>1Fh</code>, <code>0x1F</code>, <code>$1F</code>, <code>%1010</code>, <code>'A'</code>, and <code>$</code> for the current address; expressions are allowed</td></tr>
+      <tr><td>Undocumented instructions</td><td><code>IXH</code>, <code>IXL</code>, <code>IYH</code>, <code>IYL</code>, <code>SLL</code>, <code>OUT (C),0</code> and the rest</td></tr>
+    </table></div>
+    <p><b>Hex</b> takes bytes separated by spaces or new lines. Text after <code>;</code> is ignored, and a line such as <code>0100:</code> continues loading at that address. Intel HEX (lines starting with <code>:</code>) is also accepted.</p>
+    <p>When you load hex or a ROM image, the disassembly turns it into labelled source that you can edit and assemble again.</p>
+
+    <h3 id="pinout">Pinout</h3>
+    <figure class="fig">
+      <img src="img/pinout.png" width="468" alt="The Pinout panel with a 40-pin Z80 and numbered markers">
+    </figure>
+    <p>Every pin shows its level on each T-state: amber for high, dark for low and a dashed outline when the pin is floating. The pins outlined in blue are inputs that you drive by clicking them.</p>
+    <ol class="keyed">
+      <li><b>CLK:</b> click to pulse one clock, the same as <b>Clock 1 T-state</b>.</li>
+      <li><b>/INT and /NMI:</b> click /INT to hold the interrupt request low (it is level-sensitive, and honours EI, DI and the interrupt mode). Click /NMI to make a falling edge, which is what triggers it.</li>
+      <li><b>/RESET, /BUSREQ and /WAIT:</b> /RESET low holds the CPU in reset; releasing it restarts at <code>0000h</code>. /BUSREQ low floats the buses at the end of the current machine cycle and asserts /BUSACK. /WAIT low inserts wait states for as long as it is held.</li>
+      <li><b>Data bus pins:</b> these float except while a read or write is in progress, so you can see exactly when the bus is driven.</li>
+      <li><b>Bus readout:</b> the machine cycle and T-state the CPU is in, the address on the bus, and the data bus value in hex and binary with where it came from.</li>
+    </ol>
+
+    <h3 id="dis">Disassembly and breakpoints</h3>
+    <figure class="fig">
+      <img src="img/disassembly.png" width="308" alt="The Disassembly panel with the current instruction and two breakpoints marked">
+    </figure>
+    <p>The list scrolls through all of memory and keeps the current instruction in view as you step. Click a line to cycle through its three states: break at, break after, off.</p>
+    <ol class="keyed">
+      <li><b>Current instruction:</b> the highlighted line is where the program counter is.</li>
+      <li><b>Break at</b> (filled dot): the run stops before this instruction executes.</li>
+      <li><b>Break after</b> (ring): the run stops when the PC leaves this address. Use it on an instruction that repeats in place, such as <code>LDIR</code> or a jump to itself, so that it runs to completion first.</li>
+    </ol>
+
+    <h3 id="memory">Memory and the memory bitmap</h3>
+    <figure class="fig">
+      <img src="img/memory.png" width="378" alt="The Memory panel with its controls numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Go to:</b> type a hex address to jump there.</li>
+      <li><b>Show PC</b> and <b>Show SP:</b> jump to the program counter or the stack pointer.</li>
+      <li><b>Follow PC:</b> when ticked, each step brings the current instruction back into view. Untick it to keep watching another area while the program runs.</li>
+      <li><b>Hex view:</b> click any byte to edit it. Blue marks the instruction being executed, amber marks bytes written by the last instruction, and an underline marks the top of the stack.</li>
+      <li><b>Dump memory (.bin)</b> and <b>Memory listing (.txt):</b> save all 64K as a raw image (byte 0 is address <code>0000h</code>) or as a hex listing.</li>
+    </ol>
+    <figure class="fig">
+      <img src="img/bitmap.png" width="378" alt="The top of the Memory bitmap panel">
+    </figure>
+    <p>The bitmap draws every bit of memory as one pixel. Each byte is a row of 8 pixels with bit 7 on the left, each strip is one 256-byte page read top to bottom, and each band holds 8K. Empty memory is blank, machine code looks like noise, and tables and text show regular patterns, so you can see where a program and its data sit and watch memory change as it runs.</p>
+    <ol class="keyed">
+      <li><b>Bands:</b> the red mark is the program counter and the blue mark is the stack pointer.</li>
+      <li><b>Readout:</b> point at the bitmap to read the byte under the pointer; click to show that address in the Memory panel.</li>
+    </ol>
+
+    <h3 id="regs">Registers and register stops</h3>
+    <figure class="fig">
+      <img src="img/registers.png" width="458" alt="The Registers panel with a register stop being set on BC">
+    </figure>
+    <ol class="keyed">
+      <li><b>Register values:</b> all in hex. Click a value to edit it. Values that changed in the last step are shown in orange.</li>
+      <li><b>stop:</b> click it beside any register and enter a hex value. The run halts at the end of the instruction that changes the register to that value, in every run mode. <b>Clear</b> removes the stop.</li>
+      <li><b>Flags:</b> S, Z, Y, H, X, P/V, N and C; a lit button is a set flag. Click one to toggle it. Y and X are the undocumented bits 5 and 3.</li>
+      <li><b>IFF1, IFF2 and IM:</b> the interrupt enable flip-flops and the interrupt mode, which you can change here.</li>
+      <li><b>State:</b> running, halted (after <code>HALT</code>), reset (while /RESET is low) or bus released (while /BUSREQ is low).</li>
+      <li><b>Fold:</b> collapses the panel.</li>
+    </ol>
+
+    <h3 id="debug">Debug pane</h3>
+    <figure class="fig">
+      <img src="img/debug.png" width="308" alt="The Debug panel listing a break at, a break after and a memory stop">
+    </figure>
+    <ol class="keyed">
+      <li><b>Kind of debug point:</b> choose what to add; the fields beside it change to suit.</li>
+      <li><b>Add:</b> adds it to the list.</li>
+      <li><b>The list:</b> every breakpoint and stop, including those set from the disassembly and the registers. Click one to jump to it, or the × to remove it. <b>Clear all</b> removes everything. The one that halted the run is highlighted.</li>
+    </ol>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Kind</th><th>Halts</th></tr>
+      <tr><td>Memory stop</td><td>After the instruction that changes the byte at an address, or changes it to a given value</td></tr>
+      <tr><td>Pin stop</td><td>On the clock where a pin changes, goes high or goes low</td></tr>
+      <tr><td>Address bus value</td><td>On the clock where the address bus takes the value</td></tr>
+      <tr><td>Data bus value</td><td>On the clock where the data bus takes the value</td></tr>
+      <tr><td>Break at address</td><td>Before the instruction at the address runs</td></tr>
+      <tr><td>Break after address</td><td>When the PC leaves the address</td></tr>
+    </table></div>
+    <p class="note">While a pin or bus stop is set, full speed runs clock by clock so that it can check every T-state, which makes it slower.</p>
+
+    <h3 id="timing">Bus timing</h3>
+    <figure class="fig">
+      <img src="img/timing.png" width="308" alt="The Bus timing panel showing the waveforms of a RET instruction">
+    </figure>
+    <ol class="keyed">
+      <li><b>Instruction:</b> the address and mnemonic being drawn, and which of its T-states the CPU has reached.</li>
+      <li><b>Waveforms:</b> /M1, /MREQ, /IORQ, /RD, /WR and /RFSH for each T-state, grouped by machine cycle, with the address (A) and data (D) on the bus underneath.</li>
+    </ol>
+
+    <h3 id="system">System and I/O ports</h3>
+    <figure class="fig">
+      <img src="img/system.png" width="308" alt="The System panel with its settings numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Installed memory:</b> 1, 2, 4, 8, 16, 32, 48 or 64 KB, starting at <code>0000h</code>.</li>
+      <li><b>Above top of memory:</b> either reads return <code>FFh</code> and writes are ignored, or the addresses mirror the installed memory, as on a board with incomplete address decoding.</li>
+      <li><b>Data bus during INT ack:</b> the byte the interrupting device puts on the bus: the instruction in mode 0 or the vector in mode 2.</li>
+      <li><b>IN reads return:</b> the value an <code>IN</code> instruction gets from any port you have not set.</li>
+      <li><b>Set input port:</b> enter a port number and the value it returns. Set it with an empty value to remove it.</li>
+    </ol>
+    <figure class="fig">
+      <img src="img/io.png" width="468" alt="The I/O ports panel showing port 01h as eight LEDs and a log of writes">
+    </figure>
+    <ol class="keyed">
+      <li><b>Output latches:</b> each port the program has written appears as eight LEDs (bit 7 on the left) with the value in hex and binary.</li>
+      <li><b>Log:</b> the most recent writes, with the upper half of the address bus (A15–A8) and the T-state count when each happened.</li>
+    </ol>
+
+    <h2 id="hardware">Hardware reference</h2>
+    <p>Z80 Bench emulates the CPU alone: a Zilog Z80 in its 40-pin package, with memory and I/O ports attached straight to its buses. This section describes what it does at the pins.</p>
+
+    <h3 id="hw-pins">Pins</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pin</th><th>Signal</th><th>Direction</th><th>What it does</th></tr>
+      <tr><td class="mono">30–40, 1–5</td><td class="mono">A0–A15</td><td>Output</td><td>Address bus. Carries the refresh address in the second half of an opcode fetch and the port address during I/O</td></tr>
+      <tr><td class="mono">14, 15, 12, 8, 7, 9, 10, 13</td><td class="mono">D0–D7</td><td>Both</td><td>Data bus. Floats outside reads and writes</td></tr>
+      <tr><td class="mono">6</td><td class="mono">CLK</td><td>Input</td><td>Clock. One pulse is one T-state</td></tr>
+      <tr><td class="mono">27</td><td class="mono">/M1</td><td>Output</td><td>Low during an opcode fetch and an interrupt acknowledge</td></tr>
+      <tr><td class="mono">19</td><td class="mono">/MREQ</td><td>Output</td><td>Low when the address bus holds a memory address</td></tr>
+      <tr><td class="mono">20</td><td class="mono">/IORQ</td><td>Output</td><td>Low during an I/O read or write; low together with /M1 to acknowledge an interrupt</td></tr>
+      <tr><td class="mono">21</td><td class="mono">/RD</td><td>Output</td><td>Low while the CPU reads from memory or a port</td></tr>
+      <tr><td class="mono">22</td><td class="mono">/WR</td><td>Output</td><td>Low while the data bus holds a byte to be written</td></tr>
+      <tr><td class="mono">28</td><td class="mono">/RFSH</td><td>Output</td><td>Low while the address bus holds the refresh address for dynamic RAM</td></tr>
+      <tr><td class="mono">18</td><td class="mono">/HALT</td><td>Output</td><td>Low after a <code>HALT</code> instruction, until an interrupt or reset</td></tr>
+      <tr><td class="mono">24</td><td class="mono">/WAIT</td><td>Input</td><td>Held low, it stretches the current machine cycle with wait states</td></tr>
+      <tr><td class="mono">16</td><td class="mono">/INT</td><td>Input</td><td>Maskable interrupt request, level-sensitive</td></tr>
+      <tr><td class="mono">17</td><td class="mono">/NMI</td><td>Input</td><td>Non-maskable interrupt, triggered by a falling edge</td></tr>
+      <tr><td class="mono">26</td><td class="mono">/RESET</td><td>Input</td><td>Low holds the CPU in reset</td></tr>
+      <tr><td class="mono">25</td><td class="mono">/BUSREQ</td><td>Input</td><td>Asks the CPU to float its buses</td></tr>
+      <tr><td class="mono">23</td><td class="mono">/BUSACK</td><td>Output</td><td>Low once the buses are floating</td></tr>
+      <tr><td class="mono">11, 29</td><td class="mono">+5V, GND</td><td>Power</td><td></td></tr>
+    </table></div>
+
+    <h3 id="hw-cycles">Machine cycles</h3>
+    <p>Every instruction is made of machine cycles, and each machine cycle of T-states (clock periods). The Bus timing panel and the readout under the pinout name the cycle in progress.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Cycle</th><th>Length</th><th>What happens</th></tr>
+      <tr><td>Opcode fetch (M1)</td><td>4 T-states</td><td>/M1, /MREQ and /RD go low and the opcode is read in T1–T2. In T3–T4 the refresh address (I and R) is on the address bus with /RFSH and /MREQ low</td></tr>
+      <tr><td>Memory read</td><td>3 T-states</td><td>/MREQ and /RD low; the byte is read at the end of T3</td></tr>
+      <tr><td>Memory write</td><td>3 T-states</td><td>/MREQ low, the byte on the data bus, then /WR low</td></tr>
+      <tr><td>I/O read or write</td><td>4 T-states</td><td>/IORQ with /RD or /WR; the CPU always inserts one wait state of its own</td></tr>
+      <tr><td>Interrupt acknowledge</td><td>Longer M1</td><td>/M1 and /IORQ low together; the device's byte is read from the data bus</td></tr>
+    </table></div>
+    <p>/WAIT is sampled at the proper point of each cycle, so holding it low adds wait states exactly where a slow memory or device would. /BUSREQ is honoured at the end of the current machine cycle.</p>
+
+    <h3 id="hw-int">Reset and interrupts</h3>
+    <ul class="features">
+      <li><b>Reset:</b> the program counter, I and R go to zero, interrupts are disabled and the interrupt mode is 0. Execution starts at <code>0000h</code> on the first clock after /RESET is released.</li>
+      <li><b>/NMI:</b> a falling edge is remembered and taken at the end of the current instruction; the CPU calls <code>0066h</code>.</li>
+      <li><b>/INT:</b> taken at the end of an instruction while the pin is low and interrupts are enabled (IFF1 set). An <code>EI</code> takes effect after the instruction that follows it.</li>
+      <li><b>Mode 0:</b> the CPU executes the instruction supplied on the data bus. The bench accepts an <code>RST</code> opcode here; the default <code>FFh</code> is <code>RST 38h</code>.</li>
+      <li><b>Mode 1:</b> the CPU calls <code>0038h</code>.</li>
+      <li><b>Mode 2:</b> the byte on the data bus is the low half and the I register the high half of the address of a table entry, which holds the address of the routine.</li>
+    </ul>
+
+    <h3 id="hw-mem">Memory and I/O model</h3>
+    <ul class="features">
+      <li><b>Memory:</b> one block from <code>0000h</code> to the installed size, all of it writable. ROM and RAM are not distinguished, so a program can overwrite itself.</li>
+      <li><b>Above the installed memory:</b> open bus (reads <code>FFh</code>) or mirrored, as set in the System panel.</li>
+      <li><b>Output ports:</b> every port is a latch that remembers the last byte written. The full 16-bit address is on the bus during I/O, and the log shows its upper half.</li>
+      <li><b>Input ports:</b> each port returns the value you set for it, or the default.</li>
+    </ul>
+    <p>The machines built on Z80 Bench replace this simple model with the real memory map and peripherals of each computer: see the <a href="../../emulators/">emulators</a>.</p>
+
+    <h3 id="hw-verify">Verification and limits</h3>
+    <ul class="features">
+      <li><b>Instructions:</b> all 67 groups of the zexdoc exerciser pass, so the documented flags are correct for every instruction.</li>
+      <li><b>Timing:</b> T-state counts match the Zilog datasheet for the instructions and interrupt responses tested.</li>
+      <li><b>Assembler:</b> all 1,136 instruction forms assemble to the expected bytes.</li>
+    </ul>
+    <p>Known limits:</p>
+    <ul class="features">
+      <li>During clock stepping, registers and memory update together at the end of each instruction, not partway through it. The pins are exact on every T-state.</li>
+      <li>In mode 0 the interrupting device can only supply an <code>RST</code> opcode.</li>
+      <li>The undocumented flag bits 3 and 5 are approximate for <code>BIT n,(HL)</code> and the block I/O instructions.</li>
+    </ul>
+
+    <footer><a href="../">&larr; Back to Z80 Bench</a> · <a href="../../emulators/">Emulators</a> · <a href="../../">All projects</a></footer>
+  </main>
+</body>
+</html>
