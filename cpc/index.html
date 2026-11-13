@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Amstrad CPC 464</title>
+  <meta name="description" content="An Amstrad CPC 464 emulator built on Z80 Bench from the circuit diagram, with the gate array, the 6845 and the memory chips laid open for debugging and fault-finding. Runs in your browser with your own ROMs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../emulators/">&larr; Emulators</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; RUN</p>
+      <h1>Amstrad CPC 464</h1>
+      <p class="lead">An emulator of Amstrad's 1984 home computer, built on <a href="../z80-bench/">Z80 Bench</a> and modelled from the CPC 464 circuit diagram. A CPC is a Z80 whose every bus cycle is paced by one custom chip, the gate array, which also makes the picture together with a 6845. The emulator runs the real firmware and Locomotive BASIC, and shows what each chip is doing on every clock. It is work in progress: sound and the cassette are still to come.</p>
+    </header>
+
+    <a class="button" href="app/">Open the emulator</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>The real ROMs:</b> load your own firmware and BASIC 1.0 images, 16 KB each (they aren't included); your browser remembers them</li>
+      <li><b>Real timing:</b> the gate array holds the Z80 in wait states so that every bus cycle lines up with the video circuit, and instructions take whole microseconds as on the real machine. The wait states show in the clock-by-clock bus timing</li>
+      <li><b>Memory:</b> the 32K ROM over 64K of RAM, switched by the gate array, with writes always reaching the RAM underneath</li>
+      <li><b>Video:</b> the 6845 counts characters and lines and the gate array turns the screen memory into dots in modes 0, 1 and 2, with the border, 27 colours and mode changes at the line sync. The monitor follows the sync pulses, so the picture rolls or tears when one is missing</li>
+      <li><b>Interrupts:</b> the gate array's line counter, 300 interrupts a second, resynchronised by the frame sync</li>
+      <li><b>Three chips side by side:</b> the Z80, the gate array (40010 or 40007 pin arrangement) and the 6845 with every pin live</li>
+      <li><b>Memory chips and faults:</b> the ROM and the eight 4164 RAM chips, wired through the address selectors as on the board. Click a pin on a memory chip, the gate array or the 6845 to disconnect it or hold it high or low, and watch what the machine and the picture do with a stuck data bit, a dead address line, a missing sync or a lost colour</li>
+      <li><b>Keyboard:</b> type on your keyboard (characters are translated to the CPC key that gives them) or click the on-screen CPC keyboard</li>
+      <li><b>Memory bitmap:</b> every bit of the ROM and the RAM as a pixel, with the screen memory and the firmware's area tinted</li>
+      <li><b>Debugging:</b> Z80 Bench's tools, including bus timing, disassembler, breakpoints and stepping, plus a panel showing the memory map, the gate array, the 6845's counters, the monitor's beam and the 8255</li>
+      <li><b>Real time:</b> 4 MHz, or full speed</li>
+    </ul>
+
+    <h2>Coming next</h2>
+    <p>Sound, the cassette, the 8255 and the address selectors as live chips, and a documentation page.</p>
+
+    <h2>Source</h2>
+    <a class="button secondary" href="https://github.com/fdimer/z80-bench/tree/cpc">View on GitHub (cpc branch)</a>
+
+    <h2>Licence</h2>
+    <p>The emulator is free for anyone to use non-commercially under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The Amstrad firmware and BASIC ROMs are not part of this project.</p>
+
+    <footer><a href="../emulators/">&larr; Back to emulators</a> · <a href="../">All projects</a></footer>
+  </main>
+</body>
+</html>
