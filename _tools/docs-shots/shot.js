@@ -23,7 +23,12 @@ exports.clip=async(p,sels,pad=14)=>p.evaluate(([sels,pad])=>{
 // The cover is re-placed from the element's live position immediately before every snap, because panels above it
 // change height as the script works (a cover placed once ends up in the wrong place and exposes the ROM).
 const place=p=>p.evaluate(covers=>{document.querySelectorAll('.doccover').forEach(e=>e.remove());let ok=true;
-  for(const [sel,nth,label] of covers){const e=document.querySelectorAll(sel)[nth];if(!e){ok=false;continue}const r=e.getBoundingClientRect();
+  for(let [sel,nth,label] of covers){const e=document.querySelectorAll(sel)[nth];if(!e){ok=false;continue}let r=e.getBoundingClientRect();
+    // inside a scrolling box, cover only the part that shows
+    for(let q=e.parentElement;q&&q!==document.body;q=q.parentElement){const o=getComputedStyle(q).overflowY;if(o==='auto'||o==='scroll'||o==='hidden'){const c=q.getBoundingClientRect();
+      const t=Math.max(r.top,c.top),bt=Math.min(r.bottom,c.bottom),l=Math.max(r.left,c.left),rt=Math.min(r.right,c.right);r={left:l,top:t,width:rt-l,height:bt-t};}}
+    if(r.width<=0||r.height<=0)continue;
+    if(r.height<60)label='';
     const d=document.createElement('div');d.className='doccover';d.textContent=label;
     d.style.cssText=`position:absolute;z-index:99998;left:${r.left+scrollX-1}px;top:${r.top+scrollY-1}px;width:${r.width+2}px;height:${r.height+2}px;background:repeating-linear-gradient(45deg,#d9d4e6,#d9d4e6 8px,#e6e2ef 8px,#e6e2ef 16px);color:#3b3550;font:600 13px/1.4 system-ui,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;box-sizing:border-box`;
     document.body.appendChild(d)}

@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MSX documentation</title>
+  <meta name="description" content="User guide and hardware reference for the MSX (Sony HB-55P and HB-75P) emulator built on Z80 Bench.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; MSX: Sony HB-55P</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LIST</p>
+      <h1>MSX documentation</h1>
+      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it.</p>
+    </header>
+
+    <a class="button" href="../app/">Open the emulator</a>
+
+    <nav class="toc" aria-label="Contents" style="margin-top:24px">
+      <b>Contents</b>
+      <ol>
+        <li><a href="#guide">User guide</a>
+          <ol>
+            <li><a href="#start">Quick start</a></li>
+            <li><a href="#screen">The screen</a></li>
+            <li><a href="#machine">The machine, the display and the keyboard</a></li>
+            <li><a href="#carts">Cartridges, tape and dumps</a></li>
+            <li><a href="#toolbar">Running and stepping</a></li>
+            <li><a href="#memchips">Memory chips and fault simulation</a></li>
+            <li><a href="#hwpanel">MSX hardware panel</a></li>
+            <li><a href="#bitmap">Memory bitmap</a></li>
+            <li><a href="#tools">The debugging tools</a></li>
+          </ol>
+        </li>
+        <li><a href="#hardware">Hardware reference</a>
+          <ol>
+            <li><a href="#hw-overview">The machine</a></li>
+            <li><a href="#hw-mem">Memory and slots</a></li>
+            <li><a href="#hw-io">I/O ports</a></li>
+            <li><a href="#hw-video">Video processor</a></li>
+            <li><a href="#hw-ppi">PPI and keyboard</a></li>
+            <li><a href="#hw-sound">Sound generator</a></li>
+            <li><a href="#hw-chips">Memory chips</a></li>
+            <li><a href="#hw-limits">What is not emulated</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+
+    <h2 id="guide">User guide</h2>
+    <p>The emulator is <a href="../../z80-bench/">Z80 Bench</a> with an MSX computer built around the CPU, set up as Sony's HB-55P or HB-75P. Everything Z80 Bench does still works here; this guide covers what the machine adds, and points to the <a href="../../z80-bench/docs/">Z80 Bench documentation</a> for the shared debugging tools.</p>
+
+    <h3 id="start">Quick start</h3>
+    <ol>
+      <li>Press <b>Load ROM…</b> and choose your own 32 KB BIOS and BASIC ROM image. If you want Sony's built-in Personal Data Bank as well, choose the 16 KB firmware ROM at the same time. The ROMs are copyrighted and are not included. Your browser keeps them, so you only load them once.</li>
+      <li>The machine switches on. With <b>Built-in software</b> unticked it starts in MSX BASIC.</li>
+      <li>Click the picture and type, or click the keys drawn under it.</li>
+    </ol>
+
+    <h3 id="screen">The screen</h3>
+    <figure class="fig">
+      <a href="img/overview.png"><img src="img/overview.png" width="720" alt="The whole emulator page with its thirteen areas numbered"></a>
+      <figcaption>The whole page. Select the picture to see it full size. The ROM's contents are hidden in the pictures on this page.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
+      <li><b>Screen:</b> the picture, the machine choice, cartridges, tape, dumps and the keyboard.</li>
+      <li><b>Memory chips:</b> the ROM, RAM and video RAM chips, with live pins and fault simulation.</li>
+      <li><b>Pinout:</b> the Z80, live.</li>
+      <li><b>Program:</b> the assembler and hex loader.</li>
+      <li><b>I/O ports</b></li>
+      <li><b>Disassembly</b></li>
+      <li><b>Memory:</b> the 64K the CPU sees now, through whichever slots are switched in.</li>
+      <li><b>Memory bitmap:</b> the ROMs, the RAM and the video RAM as a picture, tinted by use.</li>
+      <li><b>Registers</b></li>
+      <li><b>Debug:</b> breakpoints, stops and faults.</li>
+      <li><b>Bus timing</b></li>
+      <li><b>MSX hardware:</b> the slots, the video processor, the PPI and the sound generator.</li>
+    </ol>
+
+    <h3 id="machine">The machine, the display and the keyboard</h3>
+    <figure class="fig wide">
+      <a href="img/screen.png"><img src="img/screen.png" width="900" alt="The Screen panel showing MSX BASIC after running a short program, with its controls numbered"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Picture:</b> the video processor's four screen modes and its sprites, drawn line by line as the CPU runs. Click it to give it the keyboard. The line above the picture names the screen mode, and the line and frame being drawn.</li>
+      <li><b>Load ROM…:</b> takes the BIOS and, optionally, the firmware. The message under the buttons names the ROM it recognised.</li>
+      <li><b>Power on / restart:</b> resets the machine and runs it in real time.</li>
+      <li><b>Machine:</b> the Sony HB-55P with 16K of RAM, or the HB-75P with 64K. Many tape programs need more than 16K.</li>
+      <li><b>Built-in software:</b> when ticked and the firmware ROM is loaded, the machine starts in Sony's Personal Data Bank; untick it to start in BASIC.</li>
+      <li><b>Sound:</b> plays the sound generator and the key click while the machine runs in real time. Browsers only allow sound after your first click or key press.</li>
+      <li><b>Insert cartridge…</b> and <b>Mapper</b>: see <a href="#carts">Cartridges, tape and dumps</a>.</li>
+      <li><b>Insert tape…</b></li>
+      <li><b>Dump RAM (.bin)</b>, <b>Dump video RAM (.bin)</b> and <b>Listing (.txt)</b></li>
+      <li><b>Keyboard:</b> the MSX international layout. SHIFT, CTRL, GRAPH and CODE stay down for the next key.</li>
+    </ol>
+    <p>Your own keyboard is mapped by key position, so each key types what the MSX key in the same place types.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Your key</th><th>MSX key</th></tr>
+      <tr><td><kbd>F1</kbd>–<kbd>F5</kbd></td><td>The function keys (with SHIFT, F6–F10)</td></tr>
+      <tr><td><kbd>F8</kbd> or <kbd>End</kbd></td><td>STOP. CTRL and STOP together break into a running BASIC program</td></tr>
+      <tr><td><kbd>F7</kbd></td><td>SELECT</td></tr>
+      <tr><td>Left <kbd>Alt</kbd></td><td>GRAPH</td></tr>
+      <tr><td>Right <kbd>Alt</kbd></td><td>CODE</td></tr>
+    </table></div>
+
+    <h3 id="carts">Cartridges, tape and dumps</h3>
+    <ul class="features">
+      <li><b>Cartridges:</b> a cartridge ROM goes in slot 1. Plain ROMs and four common mega-ROM mappers are supported: Konami, Konami SCC, ASCII 8K and ASCII 16K. <b>Automatic</b> picks the mapper; choose one yourself if a game does not start.</li>
+      <li><b>Loading from tape:</b> insert a <code>.cas</code> tape file and type the command the emulator shows: <code>CLOAD</code> for a BASIC program, <code>BLOAD"CAS:",R</code> for machine code, <code>RUN"CAS:"</code> for an ASCII file. Loading is instant, and the tape moves on to the next file each time.</li>
+      <li><b>Saving to tape:</b> <code>CSAVE</code>, <code>BSAVE</code> and <code>SAVE"CAS:"</code> record to a new tape, which <b>Save recording</b> downloads as a <code>.cas</code> file.</li>
+      <li><b>Dumps:</b> save the RAM or the video RAM as a raw file.</li>
+      <li><b>Listing (.txt):</b> the system variables, the BASIC program as text, the screen and hex dumps.</li>
+    </ul>
+
+    <h3 id="toolbar">Running and stepping</h3>
+    <figure class="fig">
+      <img src="img/toolbar.png" width="720" alt="The toolbar with its controls numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Reset CPU</b></li>
+      <li><b>Master reset:</b> also clears memory, breakpoints, stops and faults. It asks for a second click.</li>
+      <li><b>Clock 1 T-state</b> (<kbd>C</kbd>)</li>
+      <li><b>Step instruction</b> (<kbd>S</kbd>)</li>
+      <li><b>Run / Pause</b> (<kbd>R</kbd>). The keyboard shortcuts work when the picture does not have the keyboard.</li>
+      <li><b>Speed:</b> <b>Real time (3.58 MHz)</b> runs at the machine's own speed. <b>Full speed</b> runs as fast as your computer allows. The slow clock rates let you watch the pins change.</li>
+      <li><b>Status:</b> what the machine is doing, or what halted it.</li>
+    </ol>
+
+    <h3 id="memchips">Memory chips and fault simulation</h3>
+    <figure class="fig wide">
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a fault set on RAM chip IC58 and a pin menu open"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>System ROM and firmware:</b> IC42 (BIOS), IC43 (BASIC) and IC44 (firmware).</li>
+      <li><b>Main RAM:</b> IC58–IC61 and IC65–IC68, one chip for each data bit.</li>
+      <li><b>Video RAM:</b> IC3–IC6 and IC9–IC12, the eight 4116s that belong to the video processor.</li>
+      <li><b>Pinout:</b> click a tile to see that chip's pins, which follow the bus on every clock. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
+      <li><b>Pin menu:</b> click a pin and choose <b>Disconnected</b>, <b>Stuck high</b> or <b>Stuck low</b>.</li>
+      <li><b>Faults on this chip</b></li>
+      <li><b>Clear this chip's faults</b> and <b>Clear all memory faults</b></li>
+    </ol>
+    <p>The machine then runs with the fault, and the memory view and the disassembly show what the CPU reads through it:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pin</th><th>Fault</th><th>Effect</th></tr>
+      <tr><td>Address</td><td>Any</td><td>The chip uses the wrong cell. A disconnected input floats high</td></tr>
+      <tr><td>Data</td><td>Any</td><td>That bit is changed on reads and writes</td></tr>
+      <tr><td>Chip select (RAS or CAS on a dynamic RAM)</td><td>Stuck high or disconnected</td><td>The chip is out of circuit</td></tr>
+      <tr><td>Write enable</td><td>Stuck high or disconnected</td><td>Writes are lost</td></tr>
+      <tr><td>Write enable</td><td>Stuck low</td><td>Every access becomes a write</td></tr>
+    </table></div>
+    <p>The video RAM's pins are shown for the CPU's reads and writes through port <code>98h</code>, not for the picture being drawn. Cartridge chips are not included. Faults are listed in the Debug pane and cleared there, here, or by Master reset.</p>
+
+    <h3 id="hwpanel">MSX hardware panel</h3>
+    <figure class="fig">
+      <img src="img/hardware.png" width="308" alt="The MSX hardware panel with its five blocks numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Slots:</b> the value on PPI port A, and for each 16K page which slot it shows and what is there.</li>
+      <li><b>Video processor:</b> the screen mode, whether the display and the frame interrupt are on, registers R0–R7 and the status register, the video RAM pointer, where each table is in video RAM, and the text and backdrop colours.</li>
+      <li><b>PPI port C:</b> the keyboard row selected, the cassette motor and output, the CAPS lamp and the key click, with the keys held down.</li>
+      <li><b>Sound generator:</b> for channels A, B and C the tone frequency and note, noise and volume, then the noise and envelope settings.</li>
+      <li><b>Machine:</b> the model, the RAM and its slot, the interrupts taken, and the cartridge with its mapper.</li>
+    </ol>
+
+    <h3 id="bitmap">Memory bitmap</h3>
+    <figure class="fig">
+      <img src="img/bitmap.png" width="378" alt="The Memory bitmap panel scrolled to the RAM bands, tinted by use">
+    </figure>
+    <ol class="keyed">
+      <li><b>Bands:</b> the ROMs, the RAM and the video RAM, one pixel per bit; scroll the box to see them all. The red mark is the program counter and the blue mark the stack pointer, shown on the bands whose slot is switched in.</li>
+      <li><b>Tints:</b> in RAM the background colour shows what BASIC is using each part for, read from its own system variables. In video RAM it shows the video processor's tables, so you can see the screen (the name table), the character shapes and the sprites, and watch them move when a program changes screen mode.</li>
+      <li><b>Readout:</b> point at the bitmap to read a byte; click to show it in the Memory panel.</li>
+    </ol>
+
+    <h3 id="tools">The debugging tools</h3>
+    <p>The remaining panels are Z80 Bench's own and work the same way here. In the Memory panel only RAM can be edited.</p>
+    <ul class="features">
+      <li><a href="../../z80-bench/docs/#pinout">Pinout</a></li>
+      <li><a href="../../z80-bench/docs/#program">Loading a program</a>: the sample program loads into RAM at <code>E000h</code></li>
+      <li><a href="../../z80-bench/docs/#dis">Disassembly and breakpoints</a></li>
+      <li><a href="../../z80-bench/docs/#memory">Memory</a></li>
+      <li><a href="../../z80-bench/docs/#regs">Registers and register stops</a></li>
+      <li><a href="../../z80-bench/docs/#debug">Debug pane</a>: memory, pin and bus stops</li>
+      <li><a href="../../z80-bench/docs/#timing">Bus timing</a></li>
+    </ul>
+
+    <h2 id="hardware">Hardware reference</h2>
+    <p>The model follows the MSX standard and, for the memory chips, the schematic in Sony's service manual.</p>
+
+    <h3 id="hw-overview">The machine</h3>
+    <p>An MSX is a Z80A with three support chips.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Part</th><th>Details</th></tr>
+      <tr><td>CPU</td><td>Z80A at 3.58 MHz. Every opcode fetch gets one wait state, so it takes 5 T-states</td></tr>
+      <tr><td>Video processor</td><td>TMS9929A, with 16K of video RAM of its own</td></tr>
+      <tr><td>PPI</td><td>8255: slot select, keyboard, cassette control</td></tr>
+      <tr><td>Sound generator</td><td>AY-3-8910: three tone channels, noise and envelope</td></tr>
+      <tr><td>ROM</td><td>32K BIOS and MSX BASIC 1.0; on these Sonys also a 16K firmware ROM</td></tr>
+      <tr><td>RAM</td><td>16K (HB-55P) or 64K (HB-75P)</td></tr>
+    </table></div>
+
+    <h3 id="hw-mem">Memory and slots</h3>
+    <p>Memory is four 16K pages. Each page shows one of four slots, chosen by two bits of PPI port A (port <code>A8h</code>): bits 1–0 for page 0, up to bits 7–6 for page 3.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Slot</th><th>Contents</th></tr>
+      <tr><td class="mono">0</td><td>BIOS and BASIC ROM at <code>0000h</code>–<code>7FFFh</code>; the firmware ROM at <code>8000h</code>; on the HB-55P its 16K of RAM at <code>C000h</code></td></tr>
+      <tr><td class="mono">1</td><td>Cartridge slot</td></tr>
+      <tr><td class="mono">2</td><td>On the HB-75P, 64K of RAM</td></tr>
+      <tr><td class="mono">3</td><td>Second cartridge slot (empty in the emulator)</td></tr>
+    </table></div>
+    <p>A page whose slot has nothing at that address reads <code>FFh</code>.</p>
+
+    <h3 id="hw-io">I/O ports</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Port</th><th>Device</th><th>Use</th></tr>
+      <tr><td class="mono">98h</td><td>Video processor</td><td>Video RAM data</td></tr>
+      <tr><td class="mono">99h</td><td>Video processor</td><td>Write: address and registers. Read: status</td></tr>
+      <tr><td class="mono">A0h</td><td>Sound generator</td><td>Register number</td></tr>
+      <tr><td class="mono">A1h</td><td>Sound generator</td><td>Write register</td></tr>
+      <tr><td class="mono">A2h</td><td>Sound generator</td><td>Read register</td></tr>
+      <tr><td class="mono">A8h</td><td>PPI port A</td><td>Slot select</td></tr>
+      <tr><td class="mono">A9h</td><td>PPI port B</td><td>Keyboard columns (read)</td></tr>
+      <tr><td class="mono">AAh</td><td>PPI port C</td><td>Keyboard row, cassette, CAPS lamp, key click</td></tr>
+      <tr><td class="mono">ABh</td><td>PPI control</td><td>Mode, and setting single bits of port C</td></tr>
+    </table></div>
+
+    <h3 id="hw-video">Video processor</h3>
+    <ul class="features">
+      <li><b>Video RAM:</b> 16K that only the video processor can reach. The CPU sets an address through port <code>99h</code> and then reads or writes bytes through port <code>98h</code>.</li>
+      <li><b>Picture:</b> 256 × 192 pixels inside a border, 16 colours, 32 sprites.</li>
+      <li><b>Timing:</b> these are PAL machines: 313 lines per frame and 228 CPU T-states per line, 50 frames a second.</li>
+      <li><b>Interrupt:</b> the video processor raises the machine's only interrupt, at the end of every picture. Reading the status register clears it.</li>
+    </ul>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>BASIC</th><th>Mode</th><th>What it shows</th></tr>
+      <tr><td class="mono">SCREEN 0</td><td>Text</td><td>40 × 24 characters, two colours</td></tr>
+      <tr><td class="mono">SCREEN 1</td><td>Graphics I</td><td>32 × 24 characters with colour groups, and sprites</td></tr>
+      <tr><td class="mono">SCREEN 2</td><td>Graphics II</td><td>256 × 192 with colour for every line of 8 pixels, and sprites</td></tr>
+      <tr><td class="mono">SCREEN 3</td><td>Multicolour</td><td>64 × 48 blocks, and sprites</td></tr>
+    </table></div>
+    <p>Registers 2–6 say where the name table, the pattern table, the colour table and the two sprite tables are in video RAM. The MSX hardware panel and the memory bitmap show them.</p>
+
+    <h3 id="hw-ppi">PPI and keyboard</h3>
+    <p>Port C of the PPI selects a keyboard row with its low four bits; port B then reads that row's eight keys, low for a pressed key. The other bits of port C drive the cassette motor (bit 4), the cassette output (bit 5), the CAPS lamp (bit 6) and the key click (bit 7).</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Row</th><th>D0</th><th>D1</th><th>D2</th><th>D3</th><th>D4</th><th>D5</th><th>D6</th><th>D7</th></tr>
+      <tr><td class="mono">0</td><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+      <tr><td class="mono">1</td><td>8</td><td>9</td><td>-</td><td>=</td><td>\</td><td>[</td><td>]</td><td>;</td></tr>
+      <tr><td class="mono">2</td><td>'</td><td>`</td><td>,</td><td>.</td><td>/</td><td>DEAD</td><td>A</td><td>B</td></tr>
+      <tr><td class="mono">3</td><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td><td>H</td><td>I</td><td>J</td></tr>
+      <tr><td class="mono">4</td><td>K</td><td>L</td><td>M</td><td>N</td><td>O</td><td>P</td><td>Q</td><td>R</td></tr>
+      <tr><td class="mono">5</td><td>S</td><td>T</td><td>U</td><td>V</td><td>W</td><td>X</td><td>Y</td><td>Z</td></tr>
+      <tr><td class="mono">6</td><td>SHIFT</td><td>CTRL</td><td>GRAPH</td><td>CAPS</td><td>CODE</td><td>F1</td><td>F2</td><td>F3</td></tr>
+      <tr><td class="mono">7</td><td>F4</td><td>F5</td><td>ESC</td><td>TAB</td><td>STOP</td><td>BS</td><td>SELECT</td><td>RETURN</td></tr>
+      <tr><td class="mono">8</td><td>SPACE</td><td>HOME</td><td>INS</td><td>DEL</td><td>&larr;</td><td>&uarr;</td><td>&darr;</td><td>&rarr;</td></tr>
+    </table></div>
+
+    <h3 id="hw-sound">Sound generator</h3>
+    <ul class="features">
+      <li><b>Tone:</b> three square-wave channels, A, B and C, each with its own period and volume.</li>
+      <li><b>Noise and envelope:</b> one noise generator that can be mixed into any channel, and one envelope generator that can drive any channel's volume.</li>
+      <li><b>Key click:</b> a one-bit output on PPI port C, mixed with the sound generator.</li>
+      <li><b>I/O port:</b> the chip's own port A reads the joysticks and the cassette input.</li>
+    </ul>
+
+    <h3 id="hw-chips">Memory chips</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Position</th><th>Chip</th><th>Use</th></tr>
+      <tr><td class="mono">IC42, IC43</td><td>Two 16K ROMs (one 32K mask ROM in IC42 on some boards)</td><td>BIOS and BASIC</td></tr>
+      <tr><td class="mono">IC44</td><td>16K ROM</td><td>Firmware: Personal Data Bank</td></tr>
+      <tr><td class="mono">IC58–IC61, IC65–IC68</td><td>4116 (HB-55P) or 64K dynamic RAM (HB-75P)</td><td>Main RAM, one chip for each data bit D0–D7</td></tr>
+      <tr><td class="mono">IC3–IC6, IC9–IC12</td><td>4116</td><td>Video RAM. IC3 holds the video processor's RD0, which is its most significant bit, and IC12 its RD7</td></tr>
+    </table></div>
+    <p>These follow the service manual's schematic. They have not been checked against a real board.</p>
+
+    <h3 id="hw-limits">What is not emulated</h3>
+    <ul class="features">
+      <li><b>Tape signals:</b> tape files are handled by trapping the BIOS tape routines, so loading and saving are instant and the cassette waveform is not modelled.</li>
+      <li><b>Joysticks, printer and disk drives</b></li>
+      <li><b>The second cartridge slot</b></li>
+    </ul>
+
+    <footer><a href="../">&larr; Back to MSX: Sony HB-55P</a> · <a href="../../emulators/">Emulators</a> · <a href="../../">All projects</a></footer>
+  </main>
+</body>
+</html>
