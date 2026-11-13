@@ -94,7 +94,7 @@
       <li><b>Load ROM…:</b> loads the ROM image for the machine chosen. The message under the buttons names the ROM it recognised.</li>
       <li><b>Power on / restart:</b> resets the machine and runs it in real time.</li>
       <li><b>Machine:</b> the ZX80 with its 4K Integer BASIC; the ZX80 with the 8K ROM upgrade, which gives ZX81 BASIC in FAST mode only; or the ZX81.</li>
-      <li><b>RAM:</b> 1K as supplied, or a 16K, 32K or 48K RAM pack.</li>
+      <li><b>RAM:</b> 1K as supplied, 2K as in the Timex Sinclair 1000, or a 16K, 32K or 48K RAM pack.</li>
       <li><b>Hi-res board:</b> adds 8K of RAM at <code>2000h</code> that also answers the Z80's refresh cycles, as the SCRAM and WRX boards did, so programs written for them can draw true high-resolution pictures.</li>
       <li><b>Insert tape…:</b> see <a href="#tape">Tape and RAM dumps</a>.</li>
       <li><b>Dump RAM (.bin)</b> and <b>RAM listing (.txt)</b></li>
@@ -139,7 +139,7 @@
     </figure>
     <ol class="keyed">
       <li><b>ROM:</b> IC2, the 4K 2332 of the ZX80 or the 8K 2364.</li>
-      <li><b>RAM:</b> the two 2114s of the built-in 1K, four data bits each. With a RAM pack fitted, its 4116 dynamic RAMs appear here instead, one for each data bit in each 16K. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
+      <li><b>RAM:</b> the two 2114s of the built-in 1K, four data bits each. With 2K chosen, the single 4016 in position IC4 appears instead. With a RAM pack fitted, its 4116 dynamic RAMs appear here instead, one for each data bit in each 16K. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
       <li><b>Pinout:</b> click a tile to see that chip's pins, which follow the bus on every clock.</li>
       <li><b>Pin menu:</b> click a pin and choose <b>Disconnected</b>, <b>Stuck high</b> or <b>Stuck low</b>.</li>
       <li><b>Faults on this chip</b></li>
@@ -154,7 +154,7 @@
       <tr><td>Write enable</td><td>Stuck high or disconnected</td><td>Writes are lost</td></tr>
       <tr><td>Write enable</td><td>Stuck low</td><td>Every access becomes a write</td></tr>
     </table></div>
-    <p>Faults are listed in the Debug pane and cleared there, here, or by Master reset. Two things are assumed, not measured: that the first 2114 holds data bits 0–3, and that the RAM pack is wired in the usual way.</p>
+    <p>Faults are listed in the Debug pane and cleared there, here, or by Master reset. Three things are assumed, not measured: that the first 2114 holds data bits 0–3, how the 2K chip's enable pins are wired, and that the RAM pack is wired in the usual way.</p>
 
     <h3 id="videologic">Video logic panel</h3>
     <figure class="fig">
@@ -200,7 +200,7 @@
       <tr><td>ROM</td><td>4K Integer BASIC</td><td colspan="2">8K BASIC with floating point</td></tr>
       <tr><td>Video logic</td><td colspan="2">Discrete TTL logic chips</td><td>One ULA, which adds the NMI generator</td></tr>
       <tr><td>Display while computing</td><td colspan="2">Blank</td><td>Kept on in SLOW mode</td></tr>
-      <tr><td>RAM</td><td colspan="3">1K built in, more with a RAM pack</td></tr>
+      <tr><td>RAM</td><td colspan="3">1K built in (2K in the Timex Sinclair 1000), more with a RAM pack</td></tr>
     </table></div>
 
     <h3 id="hw-video">How the picture is made</h3>
@@ -229,7 +229,7 @@
       <tr><th>Address</th><th>Contents</th></tr>
       <tr><td class="mono">0000h–1FFFh</td><td>ROM. The 4K ROM appears twice</td></tr>
       <tr><td class="mono">2000h–3FFFh</td><td>The ROM again, or the hi-res board's 8K of RAM</td></tr>
-      <tr><td class="mono">4000h–7FFFh</td><td>RAM. The built-in 1K repeats through the whole area; a 16K pack fills it</td></tr>
+      <tr><td class="mono">4000h–7FFFh</td><td>RAM. The built-in 1K or 2K repeats through the whole area; a 16K pack fills it</td></tr>
       <tr><td class="mono">8000h–FFFFh</td><td>With up to 16K: a copy of <code>0000h</code>–<code>7FFFh</code>, because A15 is not decoded (it is the video trigger). With a 32K or 48K pack: more RAM</td></tr>
     </table></div>
     <p>With a 32K or 48K pack, opcode fetches from <code>C000h</code> up still see the copy of <code>4000h</code>–<code>7FFFh</code>, because that is where the display file is executed.</p>
@@ -264,15 +264,16 @@
       <tr><th>Position</th><th>Chip</th><th>Use</th></tr>
       <tr><td class="mono">IC2</td><td>2332 (4K) or 2364 (8K)</td><td>ROM</td></tr>
       <tr><td class="mono">IC3, IC4 (ZX80)<br>IC4a, IC4b (ZX81)</td><td>2114 (1K × 4 bits)</td><td>Built-in 1K of RAM, four data bits in each chip</td></tr>
+      <tr><td class="mono">IC4 (Timex Sinclair 1000)</td><td>NEC µPD4016 (2K × 8 bits, 6116 type)</td><td>Built-in 2K of RAM in one chip, fitted in place of the two 2114s</td></tr>
       <tr><td>RAM pack</td><td>4116 (16K × 1 bit)</td><td>Eight chips, one for each data bit, in each 16K</td></tr>
     </table></div>
-    <p>These follow the published schematics. They have not yet been checked against a real board.</p>
+    <p>The ROM, the 2114s and the RAM pack follow the published schematics. The 2K chip was read from a real Timex Sinclair 1000, which is a Sinclair ZX81 issue 3 board built for the American market: a 2364 ROM in IC2, a Z80A in IC3, a Ferranti ULA 2C210E in IC1 and the µPD4016 in IC4, with the two 2114 positions left empty.</p>
 
     <h3 id="hw-limits">What is not emulated</h3>
     <ul class="features">
       <li><b>Tape signals:</b> LOAD and SAVE work on whole files instantly; the cassette waveform is not modelled.</li>
       <li><b>The ZX Printer</b></li>
-      <li><b>60 Hz machines:</b> the keyboard port always reports a 50 Hz machine.</li>
+      <li><b>60 Hz machines:</b> the keyboard port always reports a 50 Hz machine, so the Timex Sinclair 1000's 2K of RAM is emulated but its American 60 Hz picture is not.</li>
       <li><b>The hi-res board's RAM chips</b> are not in the Memory chips panel.</li>
     </ul>
 

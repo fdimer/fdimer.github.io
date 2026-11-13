@@ -363,7 +363,7 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
           <button id="zxLoadRom" class="primary" type="button">Load ROM…</button><input type="file" id="zxRomFile" hidden>
           <button id="zxRestart" type="button">Power on / restart</button>
           <label class="inline" for="zxMachine">Machine <select id="zxMachine"><option value="zx80">ZX80 (4K ROM)</option><option value="zx80-8k">ZX80 with the 8K ROM</option><option value="zx81">ZX81</option></select></label>
-          <label class="inline" for="zxRam">RAM <select id="zxRam"><option value="1024" selected>1K (as supplied)</option><option value="16384">16K RAM pack</option><option value="32768">32K RAM pack</option><option value="49152">48K RAM pack</option></select></label>
+          <label class="inline" for="zxRam">RAM <select id="zxRam"><option value="1024" selected>1K (as supplied)</option><option value="2048">2K (Timex Sinclair 1000)</option><option value="16384">16K RAM pack</option><option value="32768">32K RAM pack</option><option value="49152">48K RAM pack</option></select></label>
           <label class="inline" for="zxHires" title="8K of battery-backed RAM at 2000h-3FFFh that also answers the Z80's refresh cycles (WRX), so programs can show true high-resolution pictures straight from RAM. This is what the SCRAM board and similar hi-res boards did."><input type="checkbox" id="zxHires"> Hi-res board</label>
           <span class="osbkeys mono" id="zxKeysDown"></span>
         </div>
@@ -388,7 +388,7 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
             <div class="row mcbtns"><button id="mcClear" type="button">Clear this chip's faults</button><button id="mcClearAll" type="button">Clear all memory faults</button></div>
           </figure>
         </div>
-        <p class="hint">The machine's memory chips: the ROM (IC2: the 4K 2332 of the ZX80, or the 8K 2364), the two 2114s of the built-in 1K (IC3 and IC4 on the ZX80, IC4a and IC4b on the ZX81) or, with a RAM pack, its 4116 dynamic RAMs, one per data bit in each 16K. A tile's dot lights while its chip is being accessed. Click a tile to see that chip's pins, which follow the bus on every clock. Assumed: the first 2114 holds data bits 0–3, and the RAM pack is wired in the usual way (its chips have no board numbers here). The 8K of the hi-res board is not included.</p>
+        <p class="hint">The machine's memory chips: the ROM (IC2: the 4K 2332 of the ZX80, or the 8K 2364), the two 2114s of the built-in 1K (IC3 and IC4 on the ZX80, IC4a and IC4b on the ZX81), the single 2K 4016 that a Timex Sinclair 1000 has in position IC4 instead (read from a real board) or, with a RAM pack, its 4116 dynamic RAMs, one per data bit in each 16K. A tile's dot lights while its chip is being accessed. Click a tile to see that chip's pins, which follow the bus on every clock. Assumed: the first 2114 holds data bits 0–3, and the RAM pack is wired in the usual way (its chips have no board numbers here). The 8K of the hi-res board is not included.</p>
         <p class="hint">To simulate a fault, click a pin: Disconnected lifts the pin from the board (an input then floats high, an output no longer reaches the bus), Stuck high and Stuck low hold it at that level. An address pin fault makes the chip use the wrong cell; a data pin fault changes that bit on reads and writes; chip select held high (or a fault on RAS or CAS of a dynamic RAM) takes the chip out of circuit; write enable held high loses writes, held low turns every access into a write. Faults are listed in the Debug panel and cleared there, here, or by Master reset. The memory view and the disassembly show what the CPU reads through the faults.</p>
       </section>
   </div>
@@ -1332,6 +1332,8 @@ const MEM_PINOUTS = {
   '4416': [[1, 'OE', 'i'], [2, 'DQ1', 'i'], [3, 'DQ2', 'i'], [4, 'WE', 'i'], [5, 'RAS', 'i'], [6, 'A6', 'i'], [7, 'A5', 'i'], [8, 'A4', 'i'], [9, 'VCC', 'p'],
     [10, 'A7', 'i'], [11, 'A3', 'i'], [12, 'A2', 'i'], [13, 'A1', 'i'], [14, 'A0', 'i'], [15, 'DQ3', 'i'], [16, 'CAS', 'i'], [17, 'DQ4', 'i'], [18, 'GND', 'g']]
 };
+// the NEC uPD4016 is a 2K static RAM with the 6116's pinout
+MEM_PINOUTS['4016'] = MEM_PINOUTS['6116'];
 const MEM_ACTIVE_LOW = new Set(['CE', 'CS', 'OE', 'WE', 'RAS', 'CAS', 'PGM']);
 class MemChip {
   // arr/base/abits: where the chip's cells are (arr[base + address], address 0 .. 2^abits - 1)
@@ -1473,20 +1475,23 @@ class ZX80 {
     this.rom = new Uint8Array(0x2000); if (rom) this.rom.set(rom.subarray(0, 0x2000));
     this.setMachine(machine || 'zx80');
     this.ram = new Uint8Array(0xC000);         // 4000h-FFFFh
-    this.ramSize = 0x400;                      // 1K as supplied; 16K with the RAM pack; 32K or 48K with bigger packs
+    this.ramSize = 0x400;                      // 1K as supplied (2K on the Timex Sinclair 1000); 16K with the RAM pack; 32K or 48K with bigger packs
     this.lowRam = new Uint8Array(0x2000);      // 8K of RAM at 2000h-3FFFh in place of the ROM's echo (a hi-res board)
     this.hires = false;                        // hi-res board fitted: RAM at 2000h, and RAM answers refresh cycles (WRX)
     // memory chips (src/memchips.js), for the pin display and fault simulation: the ROM (IC2: a 4K 2332 on the ZX80,
     // an 8K 2364 with the 8K ROM), the two 2114s of the built-in 1K (IC3 and IC4 on the ZX80, IC4a and IC4b on the ZX81;
-    // which holds which half of the byte is assumed: bits 0-3 in the first) and the 4116s of the RAM packs, one per data bit per 16K
+    // which holds which half of the byte is assumed: bits 0-3 in the first) and the 4116s of the RAM packs, one per data bit per 16K.
+    // The ZX81 board also takes one 24-pin static RAM in position IC4 in place of the two 2114s. A Timex Sinclair 1000
+    // (a Sinclair ZX81 issue 3 board, seen on a real machine) has a 2K NEC uPD4016 there; how its enables are wired is assumed.
     const C = (id, part, what, range, arr, base, abits, extra) => new MemChip(id, part, what, range, arr, base, abits, extra);
     this.romChips = [C('IC2', '2332', 'ROM: 4K BASIC', '0000h-0FFFh, repeated up to 3FFFh', this.rom, 0, 12, { rom: true, en: 'CS' }), C('IC2-8K', '2364', 'ROM: 8K BASIC', '0000h-1FFFh, repeated up to 3FFFh', this.rom, 0, 13, { rom: true, en: 'CS' })];
     this.ram1k = [C('IC3', '2114', 'built-in RAM, data bits 0-3', '4000h-43FFh, repeated', this.ram, 0, 10, { nib: 0, en: 'CS' }), C('IC4', '2114', 'built-in RAM, data bits 4-7', '4000h-43FFh, repeated', this.ram, 0, 10, { nib: 4, en: 'CS' })];
+    this.ram2k = [C('IC4-2K', '4016', 'built-in RAM: one 2K static RAM (Timex Sinclair 1000)', '4000h-47FFh, repeated', this.ram, 0, 11, { en: 'CE', label: 'IC4' })];
     this.packs = [0, 1, 2].map(k => [0, 1, 2, 3, 4, 5, 6, 7].map(bit => C(`PACK${k + 1}.D${bit}`, '4116', `RAM pack: ${k ? ['', 'second', 'third'][k] + ' 16K' : '16K'}, data bit ${bit}`, `${(0x4000 + k * 0x4000).toString(16).toUpperCase()}h-${(0x7FFF + k * 0x4000).toString(16).toUpperCase()}h`, this.ram, k * 0x4000, 14, { dram: true, bit, mux: 7, pack: k })));
-    this.chips = [...this.romChips, ...this.ram1k, ...this.packs[0], ...this.packs[1], ...this.packs[2]];
-    this.banks = [[this.romChips[0]], [this.romChips[1]], this.ram1k, ...this.packs];
+    this.chips = [...this.romChips, ...this.ram1k, ...this.packs[0], ...this.packs[1], ...this.packs[2], ...this.ram2k];   // the 2K chip is last so the other indexes stay put
+    this.banks = [[this.romChips[0]], [this.romChips[1]], this.ram1k, ...this.packs, this.ram2k];
     this.chipById = {}; for (const c of this.chips) this.chipById[c.id] = c;
-    this.acc = new Uint32Array(5);             // accesses: 0 the ROM, 1 the built-in 1K, 2-4 the RAM pack's 16K banks
+    this.acc = new Uint32Array(5);             // accesses: 0 the ROM, 1 the built-in RAM (1K or 2K), 2-4 the RAM pack's 16K banks
     this.faulty = false;
     this.keys = new Uint8Array(8);             // bit set = key down
     this.fb = new Uint8Array(ZX.W * ZX.H);      // TV picture being built: 1 = ink (black)
@@ -1532,9 +1537,9 @@ class ZX80 {
     return a & 0x4000 ? (a - 0x4000) & (this.ramSize - 1) & 0x3FFF : -1;
   }
   // memory through the chips; quiet = no side effects and no access counting (the panes, the display)
-  ramBank(i) { return this.ramSize <= 0x400 ? this.ram1k : this.packs[i >> 14]; }
+  ramBank(i) { return this.ramSize <= 0x400 ? this.ram1k : this.ramSize < 0x4000 ? this.ram2k : this.packs[i >> 14]; }
   ramGet(i, quiet) {
-    if (!quiet) this.acc[this.ramSize <= 0x400 ? 1 : 2 + (i >> 14)]++;
+    if (!quiet) this.acc[this.ramSize < 0x4000 ? 1 : 2 + (i >> 14)]++;
     if (!this.faulty) return this.ram[i];
     const bank = this.ramBank(i); let v = bank.faulty ? memBankRead(bank, i & 0x3FFF, quiet) : this.ram[i];
     const r = this.romChips[this.rom8k ? 1 : 0]; if (r.always) v &= memBankRead([r], i & this.romMask, true);      // ROM chip select stuck low: it drives the bus too
@@ -1553,7 +1558,7 @@ class ZX80 {
   peek(a) { return this.read(a, false, true); }
   write(a, v) {
     const i = this.ramAt(a, false);
-    if (i >= 0) { this.acc[this.ramSize <= 0x400 ? 1 : 2 + (i >> 14)]++; const bank = this.faulty ? this.ramBank(i) : null; if (bank && bank.faulty) memBankWrite(bank, i & 0x3FFF, v); else this.ram[i] = v; return; }
+    if (i >= 0) { this.acc[this.ramSize < 0x4000 ? 1 : 2 + (i >> 14)]++; const bank = this.faulty ? this.ramBank(i) : null; if (bank && bank.faulty) memBankWrite(bank, i & 0x3FFF, v); else this.ram[i] = v; return; }
     a &= 0x7FFF; if (this.hires && a >= 0x2000) this.lowRam[a - 0x2000] = v;
   }
   // the byte RAM puts on the bus during a refresh cycle (address I:R), or -1 if no RAM answers. A plain ZX81's
@@ -3178,6 +3183,7 @@ $('zxDumpBin').onclick = () => { const sz = zx.ramSize; zxSaved(zxDownload(`${zx
 $('zxDumpTxt').onclick = () => zxSaved(zxDownload(`${zx.rom8k ? 'zx81' : 'zx80'}-ram-${zxStamp()}.txt`, zx.ramReport(), 'text/plain;charset=utf-8'), f => `RAM listing saved to ${f}: system variables, memory areas, the BASIC program and a hex dump.`);
 $('zxRam').onchange = () => {
   zx.ramSize = +$('zxRam').value; disDirty = true; if (zxRom) zxPowerOn(); else render();
+  if (zx.ramSize === 0x800) { $('zxMsg').className = 'msg'; $('zxMsg').textContent = '2K fitted: one 2K static RAM (NEC µPD4016) in position IC4 in place of the two 2114s, as on the Timex Sinclair 1000, which is a ZX81 issue 3 board built for the US market. The American 60 Hz picture is not emulated: the machine still runs as a 50 Hz ZX81.'; }
   if (zx.ramSize > 0x4000) {   // the ROMs only look for RAM up to 7FFFh, as on the real machines
     const hi = zx.ramSize === 0x8000 ? 192 : 255;
     $('zxMsg').className = 'msg'; $('zxMsg').textContent = zx.rom8k
@@ -3192,16 +3198,18 @@ $('zxHires').onchange = () => {
 };
 
 // ---------- memory chips: what this machine has, and what each pin's board net is doing ----------
+const MC2K = zx.chips.indexOf(zx.ram2k[0]);   // the Timex Sinclair 1000's single 2K RAM chip
 const MC = {
   m: zx,
   groups() {
     const g = [['ROM', [zx.rom8k ? 1 : 0]]];
     if (zx.ramSize <= 0x400) g.push(['Built-in 1K RAM · two 2114s, four bits each', [3, 2]]);
+    else if (zx.ramSize < 0x4000) g.push(['Built-in 2K RAM · one 4016 in position IC4 (Timex Sinclair 1000)', [MC2K]]);
     else for (let k = 0; k < zx.ramSize >> 14; k++) g.push([`RAM pack · ${k ? ['', 'second', 'third'][k] + ' 16K' : '16K'} at ${h4(0x4000 + k * 0x4000)}h · one 4116 per data bit`, [7, 6, 5, 4, 3, 2, 1, 0].map(b => 4 + k * 8 + b)]);
     return g;
   },
-  tile(c, i) { return i < 2 ? ['IC2', c.part + ' · ROM'] : i < 4 ? [zx.machine === 'zx81' ? 'IC4' + 'ab'[i - 2] : c.id, '2114 · D' + (c.nib ? '4–7' : '0–3')] : ['D' + c.bit, '4116']; },
-  acc(i) { return i < 2 ? 0 : i < 4 ? 1 : 2 + ((i - 4) >> 3); },
+  tile(c, i) { return i === MC2K ? ['IC4', '4016 · D0–7'] : i < 2 ? ['IC2', c.part + ' · ROM'] : i < 4 ? [zx.machine === 'zx81' ? 'IC4' + 'ab'[i - 2] : c.id, '2114 · D' + (c.nib ? '4–7' : '0–3')] : ['D' + c.bit, '4116']; },
+  acc(i) { return i < 2 ? 0 : i < 4 || i === MC2K ? 1 : 2 + ((i - 4) >> 3); },
   bus() {
     const T = curT, A = T.a === null || T.a === 'z' ? null : T.a, mem = T.mreq === 0 && T.rfsh !== 0 && A !== null;
     const ri = mem ? zx.ramAt(A, T.m1 === 0) : -1, low = mem && ri < 0 && zx.hires && (A & 0x7FFF) >= 0x2000;
@@ -3214,6 +3222,13 @@ const MC = {
       if ((d = /^D(\d)$/.exec(name))) return B.rom && B.rd ? D(+d[1]) : 'z';
       return name === 'CS' ? (B.rom ? 0 : 1) : 1;
     }
+    if (i === MC2K) {                   // the 2K static RAM in IC4 (assumed: CE is the RAM select, OE follows /RD, WE follows /WR)
+      const sel = B.ri >= 0 && zx.ramSize === 0x800;
+      if (m) return A === null ? 'z' : (A >> +m[1]) & 1;
+      if (name === 'CE') return sel ? 0 : 1; if (name === 'OE') return sel && B.rd ? 0 : 1; if (name === 'WE') return sel && B.wr ? 0 : 1;
+      if ((d = /^D(\d)$/.exec(name))) return sel && (B.rd || B.wr) ? D(+d[1]) : 'z';
+      return 'z';
+    }
     if (i < 4) {                        // the two 2114s
       const sel = B.ri >= 0 && zx.ramSize <= 0x400;
       if (m) return A === null ? 'z' : (A >> +m[1]) & 1;
@@ -3222,7 +3237,7 @@ const MC = {
       return 'z';
     }
     {                                   // RAM pack 4116s: seven address pins carry the row, then the column
-      const sel = B.ri >= 0 && zx.ramSize > 0x400 && (B.ri >> 14) === c.pack, o = B.ri & 0x3FFF;
+      const sel = B.ri >= 0 && zx.ramSize >= 0x4000 && (B.ri >> 14) === c.pack, o = B.ri & 0x3FFF;
       if (m) return A === null ? 'z' : sel && (B.rd || B.wr) ? (o >> (7 + +m[1])) & 1 : (A >> +m[1]) & 1;
       switch (name) { case 'RAS': return B.T.mreq === 0 ? 0 : 1; case 'CAS': return sel && (B.rd || B.wr) ? 0 : 1; case 'WE': return sel && B.wr ? 0 : 1; case 'DIN': return D(c.bit); case 'DOUT': return sel && B.rd ? D(c.bit) : 'z'; }
       return 'z';
@@ -3238,7 +3253,7 @@ function mcClosePop() { if (mcPop) { mcPop.remove(); mcPop = null; } }
 document.addEventListener('click', e => { if (mcPop && !mcPop.contains(e.target) && !e.target.closest('#mcChip .pin.input')) mcClosePop(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') mcClosePop(); });
 // debug-pane entries for the faults
-function mcDebugItems() { return memFaultList(MC.m).map(([id, pin, v]) => ['mfault:' + id + ':' + pin, 'chip fault', `${id} (${MC.m.chipById[id].part}) pin ${pin} ${mcFaultText(v)}`]); }
+function mcDebugItems() { return memFaultList(MC.m).map(([id, pin, v]) => ['mfault:' + id + ':' + pin, 'chip fault', `${MC.m.chipById[id].label || id} (${MC.m.chipById[id].part}) pin ${pin} ${mcFaultText(v)}`]); }
 function mcDebugRemove(t, v) { if (t !== 'mfault') return false; const i = v.lastIndexOf(':'); mcSetFault(v.slice(0, i), v.slice(i + 1), null); return true; }
 // a DIP of any size, drawn the same way as the CPU
 function mcDraw() {
@@ -3249,7 +3264,7 @@ function mcDraw() {
   svg('rect', { class: 'body-rect', x: bx, y: top - 6, width: bw, height: bh, rx: 5 }, s);
   svg('path', { d: `M ${bx + bw / 2 - 12} ${top - 6} a 12 12 0 0 0 24 0`, fill: 'var(--bg)' }, s);
   const t1 = svg('text', { class: 'chiptitle', x: bx + bw / 2, y: top + bh / 2 - 8, 'text-anchor': 'middle', 'font-size': 24 }, s); t1.textContent = c.part;
-  const t2 = svg('text', { class: 'chipsub', x: bx + bw / 2, y: top + bh / 2 + 12, 'text-anchor': 'middle' }, s); t2.textContent = c.id;
+  const t2 = svg('text', { class: 'chipsub', x: bx + bw / 2, y: top + bh / 2 + 12, 'text-anchor': 'middle' }, s); t2.textContent = c.label || c.id;
   for (const [n, name, kind] of list) {
     const left = n <= half, idx = left ? n - 1 : list.length - n, y = top + idx * pitch + 6, sx = left ? bx - 30 : bx + bw + 4;
     const g = svg('g', { class: 'pin' + (kind === 'i' ? ' input' : ''), 'data-pin': name }, s);
@@ -3267,7 +3282,7 @@ function mcDraw() {
     }
     mcEls[name] = { g, sv, prev: null, kind };
   }
-  $('mcCap').innerHTML = `<b>${esc(c.id)} · ${esc(c.part)}</b><br>${esc(c.what)}<br>${esc(c.range)}`;
+  $('mcCap').innerHTML = `<b>${esc(c.label || c.id)} · ${esc(c.part)}</b><br>${esc(c.what)}<br>${esc(c.range)}`;
 }
 function mcMenu(name, ev) {
   mcClosePop();
