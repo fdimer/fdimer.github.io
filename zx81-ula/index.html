@@ -23,7 +23,7 @@
 
     <h2>Features</h2>
     <ul class="features">
-      <li><b>Two ULAs:</b> the synchronous design (one 13 MHz clock, the Verilog that would go into an FPGA), which runs at about the speed of a real ZX81, and the gate-level netlist of the 2C210 with a delay on every gate, which runs about a hundred times slower</li>
+      <li><b>Two ULAs:</b> the synchronous design (one 13 MHz clock, the Verilog that would go into an FPGA), which runs at about the speed of a real ZX81, and the gate-level netlist of the 2C210 with each gate's delay taken from Ferranti's delay table, which runs about a hundred times slower</li>
       <li><b>Nothing modelled:</b> the opcode the Z80 reads (so the NOPs that draw the picture), NMI, WAIT, the memory selects, the font address, sync and video all come from the ULA's pins</li>
       <li><b>Your own ROM and programs:</b> load an 8 KB ZX81 ROM image (not included; your browser remembers it) and .p program files; the page types LOAD "" for you</li>
       <li><b>Picture check:</b> twice a second the dots on the ULA's TV pin are read back as characters with the ROM's font and compared with the display file in memory</li>
