@@ -10,7 +10,7 @@ The projects are split into three groups, each with its own section page:
 | Page | What goes there |
 |---|---|
 | `index.html` | Hub only: one card per group, linking to the three section pages, plus the Publications and Favourite books cards. No project cards here. |
-| `emulators/index.html` | **Emulators**: Z80 Bench and every emulator built on it or derived from it (6502 Bench, Osborne Executive, Sinclair ZX80/ZX81, MSX, Amstrad CPC, Commodore PET). |
+| `emulators/index.html` | **Emulators**: Z80 Bench and every emulator built on it or derived from it (6502 Bench, Osborne Executive, Sinclair ZX80/ZX81, ZX81 ULA Test Bench, MSX, Amstrad CPC, Commodore PET). |
 | `personal/index.html` | **Miscellaneous projects**: the user's other personal hobby tools that are neither emulators nor part of the aWkward sn@ail business. The folder keeps its old name `personal/` so existing links work; its title is "Miscellaneous projects". |
 | `awkward-snail/index.html` | **aWkward sn@ail projects**: apps published under the aWkward sn@ail software label (Microsoft Store apps). |
 | `publications/index.html` | **Publications**: the user's research papers, taken from their Google Scholar profile (user `nXwTI4cAAAAJ`), grouped by field. Linked from its own card on `index.html`. Citation counts are a dated snapshot; when refreshing, update the stats line, the counts and the card's publication count. Google Scholar blocks automated fetching, so read it through the user's browser. **Never list** "Desenvolvimento de Pacotes de Auto-Aprendizagem e Avaliação no ISUTC" (F Oliveira, CO Smith, CLME'08): Scholar attributes it to the user, but it isn't theirs. Also leave out "Phase transition in the Dicke model: Phase space approach": an internal communication, not a publication. **Keep** the items that aren't on Scholar when refreshing: the 2015 Adelaide earthquake loss scenario paper and the whole "Articles and talks" section (found by web search or supplied by the user, and approved by the user; "Tails of Woe" is Risk Frontiers Newsletter 15(2), Nov 2015). |
@@ -44,7 +44,7 @@ links keep working.
   SimpleFunLetters (`fun-letters/`).
 - **Emulators:** personal (repo only under `fdimer`) and an emulator. Currently:
   Z80 Bench (`z80-bench/`), 6502 Bench (`6502-bench/`), Osborne Executive
-  (`osborne-executive/`), Sinclair ZX80/ZX81 (`zx80/`), MSX Sony HB-55P (`msx/`), Amstrad CPC 464 (`cpc/`, `cpc` branch of `fdimer/z80-bench`; work in progress, its documentation page is still to be written), Commodore PET 2001-N (`pet/`, built on 6502 Bench, `pet` branch of `fdimer/6502-bench`). Z80 Bench and the
+  (`osborne-executive/`), Sinclair ZX80/ZX81 (`zx80/`), MSX Sony HB-55P (`msx/`), Amstrad CPC 464 (`cpc/`, `cpc` branch of `fdimer/z80-bench`; work in progress, its documentation page is still to be written), Commodore PET 2001-N (`pet/`, built on 6502 Bench, `pet` branch of `fdimer/6502-bench`). ZX81 ULA Test Bench (`zx81-ula/`, `zx81-ULA` branch of `fdimer/z80-bench`): a ZX81 run from the gate-level Ferranti ULA, for testing; its app is one generated file, `ula/zx81-ula.html` in that branch (built by `node ula/build_page.js`), copied to `zx81-ula/app/index.html`; it has no documentation page yet; its project page and the app's footer must keep the Ferranti archive's non-commercial terms and sources. Z80 Bench and the
   emulators built on it are never part of aWkward sn@ail.
 - **Miscellaneous:** any other personal project (repo only under `fdimer`).
   Currently: Font Developer (`font-developer/`).

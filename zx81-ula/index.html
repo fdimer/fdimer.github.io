@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZX81 ULA Test Bench</title>
+  <meta name="description" content="A ZX81 run from the gate-level logic of its Ferranti ULA, transcribed from the original logic diagram, for testing the ULA against real programs. Non-commercial use only.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../emulators/">&larr; Emulators</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; RUN</p>
+      <h1>ZX81 ULA Test Bench</h1>
+      <p class="lead">A ZX81 whose ULA is the real logic, not a model of its behaviour. The Ferranti 2C210 was transcribed gate for gate from Ferranti's own logic diagram, and a single-clock version was made from it for an FPGA. Here the Z80 and the TV picture get everything from that ULA's pins. It is for anyone who wants to help check the ULA against real programs; for using a ZX81, the <a href="../zx80/">ZX80 and ZX81 emulator</a> is the one to open.</p>
+    </header>
+
+    <a class="button" href="app/">Open the test bench</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>Two ULAs:</b> the synchronous design (one 13 MHz clock, the Verilog that would go into an FPGA), which runs at about the speed of a real ZX81, and the gate-level netlist of the 2C210 with a delay on every gate, which runs about a hundred times slower</li>
+      <li><b>Nothing modelled:</b> the opcode the Z80 reads (so the NOPs that draw the picture), NMI, WAIT, the memory selects, the font address, sync and video all come from the ULA's pins</li>
+      <li><b>Your own ROM and programs:</b> load an 8 KB ZX81 ROM image (not included; your browser remembers it) and .p program files; the page types LOAD "" for you</li>
+      <li><b>Picture check:</b> twice a second the dots on the ULA's TV pin are read back as characters with the ROM's font and compared with the display file in memory</li>
+      <li><b>Frame meters:</b> the lines and sync of the last frame, and how many frames changed their line count</li>
+      <li><b>Logic analyser:</b> the ULA's pins and some inside signals for the last 16,000 T-states, with stepping by instruction or frame, and a copy in VCD format for viewers such as GTKWave</li>
+      <li><b>Report:</b> a summary of the run to paste into an issue or an email</li>
+      <li><b>Keyboard:</b> your own, or the on-screen keys marked as on a ZX81</li>
+    </ul>
+
+    <h2>Not modelled</h2>
+    <p>The tape signal (LOAD puts the program straight into memory), a RAM pack's own address decoding (the 16K is one block on the ULA's RAM select), and the analogue side of the pins.</p>
+
+    <h2>Sources</h2>
+    <p>Ferranti logic diagram LD6679/ULA2C210/1 (12 January 1982) and the cell circuits ULA 2C158/2, from the Ferranti archive catalogued in 2026 by Happy Little Diodes. The netlist, the Verilog, the simulator and how each was checked are in the repository.</p>
+    <a class="button secondary" href="https://github.com/fdimer/z80-bench/tree/zx81-ULA/ula">View on GitHub (zx81-ULA branch)</a>
+
+    <h2>Terms of use and licence</h2>
+    <p>The archive's documents are for preserving material of historical interest and for non-commercial, educational and archival research only. Commercial use of them or their contents, including in connection with the manufacture, marketing or sale of goods, is prohibited by Sky UK Limited. The netlist, the Verilog and this test bench are made from those contents and carry the same terms: <b>strictly not for commercial use of any kind</b>. The code is under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The ZX81 ROM is not part of this project.</p>
+
+    <footer><a href="../emulators/">&larr; Back to emulators</a> · <a href="../">All projects</a></footer>
+  </main>
+</body>
+</html>
