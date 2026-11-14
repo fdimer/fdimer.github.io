@@ -137,7 +137,7 @@
     </figure>
     <p>The four large chips are drawn with every pin live, wired as on the OCC2 schematic. Amber is high, dark is low and a dashed outline is floating.</p>
     <ol class="keyed">
-      <li><b>UC9, Z80A CPU:</b> the same pinout as in Z80 Bench. Click CLK, /INT, /NMI, /WAIT, /BUSREQ or /RESET to drive it.</li>
+      <li><b>UD22, Z80A CPU:</b> the same pinout as in Z80 Bench. Its ringed pins open the fault menu (see <a href="#memchips">fault simulation</a>); CLK pulses one clock on a click.</li>
       <li><b>UD12, MC6821 system PIA</b> (ports <code>00h</code>–<code>03h</code>): port A drives the bank select lines, CB1 receives VBLANK, and the chip also handles the speaker and disk select.</li>
       <li><b>UD8, MC6821 IEEE-488 PIA</b> (ports <code>10h</code>–<code>13h</code>): nothing is attached to it.</li>
       <li><b>UD4, Z80A SIO/2</b> (ports <code>0Ch</code>–<code>0Fh</code>): the modem (A) and printer (B) serial ports.</li>
@@ -149,7 +149,7 @@
 
     <h3 id="memchips">Memory chips and fault simulation</h3>
     <figure class="fig wide">
-      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a fault set on chip U10 and a pin menu open"></a>
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a pin disconnected on chip U10 and the fault menu of another pin open"></a>
     </figure>
     <ol class="keyed">
       <li><b>Main logic board:</b> the boot ROM, the scratch RAM, four video RAMs and two font RAMs.</li>
@@ -158,26 +158,33 @@
       <li><b>RAM board connector P1:</b> the 72-way connector between the RAM board and the main logic board, which can be faulted in the same way. See <a href="#p1">below</a>.</li>
       <li><b>Selected chip:</b> click a tile to see that chip. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red and shows the count.</li>
       <li><b>Pinout:</b> the selected chip's pins, which follow the bus on every clock. The video and font RAMs also show the display circuit's own reads between CPU accesses.</li>
-      <li><b>Pin menu:</b> click a pin and choose <b>Disconnected</b>, <b>Stuck high</b> or <b>Stuck low</b>.</li>
+      <li><b>Fault menu:</b> click a pin. It names the line the pin is on and the other pins that share it. Hold the whole line <b>High</b> or <b>Low</b>, or tick <b>Disconnected from the line</b> for a fault on this pin alone. A pin on a line of its own has the plain choices <b>Disconnected</b>, <b>High</b> and <b>Low</b>.</li>
       <li><b>Faults on this chip</b></li>
-      <li><b>Clear this chip's faults</b> and <b>Clear all memory faults</b></li>
+      <li><b>Clear this chip's faults</b> (its pins, and the lines its pins are on) and <b>Clear all faults</b></li>
     </ol>
-    <p>The machine then runs with the fault, and the memory view and the disassembly show what the CPU reads through it:</p>
+    <p>There are two kinds of fault:</p>
+    <ul class="features">
+      <li><b>A line held high or low</b> is a short on the wire: every pin on that line, on every chip, sees the level and shows it.</li>
+      <li><b>A pin disconnected from its line</b> (tick the box in the menu) is a broken trace or a lifted pin: only that chip is affected. A disconnected input floats high, or can be given a level of its own. A disconnected pin ignores a fault on its line. On connector P1, it is a bad contact.</li>
+    </ul>
+    <p>The lines follow the OCC2 schematic (checked against an RD1137 rev 06 board) and the measured RAM board. The Z80 (UD22) has no buffers: its address lines ADR0–ADR15 and data lines DATA0–DATA7 go straight to ROM 0 (UD18), the ROM 1 socket (UD15) and P1, and each data line runs on to the two RAM chips of its bit, whose DIN and DOUT are joined. The RAM board's sixteen chips share their own address lines (from the buffers U25 and U16), the write enable and CAS; each row has its own RAS. The video RAMs and font RAMs have their own multiplexed lines, apart from the processor's buses.</p>
+    <p>The Z80's own pins take faults too: click any ringed pin on the Chips panel for the same menu (CLK pulses one clock on a click; right-click it for its menu). A fault on an address or data pin acts on everything the processor reads and writes; MREQ, IORQ, RD or WR held high stop those cycles; CLK, RESET, BUSREQ and WAIT hold the processor; INT and NMI act on it.</p>
+    <p>The machine then runs with the faults, and the memory view and the disassembly show what the CPU reads through them:</p>
     <div class="tablewrap"><table class="ref">
       <tr><th>Pin</th><th>Fault</th><th>Effect</th></tr>
       <tr><td>Address</td><td>Any</td><td>The chip uses the wrong cell. A disconnected input floats high</td></tr>
       <tr><td>Data</td><td>Any</td><td>That bit reads as the forced level, and is stored as it</td></tr>
-      <tr><td>Chip enable (RAS or CAS on a dynamic RAM)</td><td>Stuck high or disconnected</td><td>The chip is out of circuit: reads float to 1s and writes are lost</td></tr>
-      <tr><td>Chip enable</td><td>Stuck low</td><td>The chip drives the data bus on every memory read and fights the chip that should answer; the bus carries the AND of the two</td></tr>
-      <tr><td>Output enable</td><td>Stuck high or disconnected</td><td>The chip never drives the bus</td></tr>
-      <tr><td>Write enable</td><td>Stuck high or disconnected</td><td>Writes are lost</td></tr>
-      <tr><td>Write enable</td><td>Stuck low</td><td>Every access becomes a write</td></tr>
+      <tr><td>Chip enable (RAS or CAS on a dynamic RAM)</td><td>High or disconnected</td><td>The chip is out of circuit: reads float to 1s and writes are lost</td></tr>
+      <tr><td>Chip enable</td><td>Low</td><td>The chip drives the data bus on every memory read and fights the chip that should answer; the bus carries the AND of the two</td></tr>
+      <tr><td>Output enable</td><td>High or disconnected</td><td>The chip never drives the bus</td></tr>
+      <tr><td>Write enable</td><td>High or disconnected</td><td>Writes are lost</td></tr>
+      <tr><td>Write enable</td><td>Low</td><td>Every access becomes a write</td></tr>
     </table></div>
     <figure class="fig">
       <img src="img/debug.png" width="308" alt="The Debug pane listing a memory chip fault">
     </figure>
     <ol class="keyed">
-      <li><b>Debug pane:</b> memory chip and connector faults are listed with the breakpoints and stops. Remove one with its ×, or everything with <b>Clear all</b> or Master reset.</li>
+      <li><b>Debug pane:</b> line, pin and connector faults are listed with the breakpoints and stops. Remove one with its ×, or everything with <b>Clear all</b> or Master reset.</li>
     </ol>
 
     <h3 id="p1">The RAM board connector</h3>
@@ -248,7 +255,7 @@
     <h3 id="hw-overview">The machine</h3>
     <div class="tablewrap"><table class="ref">
       <tr><th>Part</th><th>Details</th></tr>
-      <tr><td>CPU</td><td>Z80A (UC9) at 3.9936 MHz: the 23.9616 MHz crystal divided by 6</td></tr>
+      <tr><td>CPU</td><td>Z80A (UD22) at 3.9936 MHz: the 23.9616 MHz crystal divided by 6</td></tr>
       <tr><td>RAM</td><td>128K of dynamic RAM in two 64K banks, on a separate RAM board</td></tr>
       <tr><td>ROM</td><td>8K boot ROM (a 2764), switched out once the system is loaded</td></tr>
       <tr><td>Display</td><td>80 × 24 characters, with a character set held in RAM</td></tr>

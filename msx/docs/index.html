@@ -71,7 +71,7 @@
       <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
       <li><b>Screen:</b> the picture, the machine choice, cartridges, tape, dumps and the keyboard.</li>
       <li><b>Memory chips:</b> the ROM, RAM and video RAM chips, with live pins and fault simulation.</li>
-      <li><b>Pinout:</b> the Z80, live.</li>
+      <li><b>Pinout:</b> the Z80, live; its ringed pins take faults.</li>
       <li><b>Program:</b> the assembler and hex loader.</li>
       <li><b>I/O ports</b></li>
       <li><b>Disassembly</b></li>
@@ -134,25 +134,32 @@
 
     <h3 id="memchips">Memory chips and fault simulation</h3>
     <figure class="fig wide">
-      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a fault set on RAM chip IC58 and a pin menu open"></a>
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a pin disconnected on RAM chip IC68 and the fault menu of another pin open"></a>
     </figure>
     <ol class="keyed">
       <li><b>System ROM and firmware:</b> IC42 (BIOS), IC43 (BASIC) and IC44 (firmware).</li>
       <li><b>Main RAM:</b> IC58–IC61 and IC65–IC68, one chip for each data bit.</li>
       <li><b>Video RAM:</b> IC3–IC6 and IC9–IC12, the eight 4116s that belong to the video processor.</li>
       <li><b>Pinout:</b> click a tile to see that chip's pins, which follow the bus on every clock. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
-      <li><b>Pin menu:</b> click a pin and choose <b>Disconnected</b>, <b>Stuck high</b> or <b>Stuck low</b>.</li>
+      <li><b>Fault menu:</b> click a pin. It names the line the pin is on and the other pins that share it. Hold the whole line <b>High</b> or <b>Low</b>, or tick <b>Disconnected from the line</b> for a fault on this pin alone. A pin on a line of its own has the plain choices <b>Disconnected</b>, <b>High</b> and <b>Low</b>.</li>
       <li><b>Faults on this chip</b></li>
-      <li><b>Clear this chip's faults</b> and <b>Clear all memory faults</b></li>
+      <li><b>Clear this chip's faults</b> (its pins, and the lines its pins are on) and <b>Clear all faults</b></li>
     </ol>
-    <p>The machine then runs with the fault, and the memory view and the disassembly show what the CPU reads through it:</p>
+    <p>There are two kinds of fault:</p>
+    <ul class="features">
+      <li><b>A line held high or low</b> is a short on the wire: every pin on that line, on every chip, sees the level and shows it.</li>
+      <li><b>A pin disconnected from its line</b> (tick the box in the menu) is a broken trace or a lifted pin: only that chip is affected. A disconnected input floats high, or can be given a level of its own. A disconnected pin ignores a fault on its line.</li>
+    </ul>
+    <p>The lines follow the Sony service manual's schematic. The Z80's data bus D0–D7 goes straight to the three ROMs, to each main RAM chip's DIN and DOUT, and to the video, sound and keyboard chips. Its address goes through the buffers IC47, IC54 and IC56 to AB0–AB15, which feed the ROMs. The main RAM chips share their address lines from the multiplexers IC57 and IC49, and their RAS, CAS and WE lines; the video RAM shares the video processor's address, RAS, CAS and R/W lines. The buffers, multiplexers and support chips are not drawn as chips.</p>
+    <p>The Z80's own pins take faults too: click any ringed pin on the Pinout panel for the same menu (CLK pulses one clock on a click; right-click it for its menu). A fault on an address or data pin acts on everything the processor reads and writes; MREQ, IORQ, RD or WR held high stop those cycles; CLK, RESET, BUSREQ and WAIT hold the processor; INT and NMI act on it.</p>
+    <p>The machine then runs with the faults, and the memory view and the disassembly show what the CPU reads through them:</p>
     <div class="tablewrap"><table class="ref">
       <tr><th>Pin</th><th>Fault</th><th>Effect</th></tr>
       <tr><td>Address</td><td>Any</td><td>The chip uses the wrong cell. A disconnected input floats high</td></tr>
       <tr><td>Data</td><td>Any</td><td>That bit is changed on reads and writes</td></tr>
-      <tr><td>Chip select (RAS or CAS on a dynamic RAM)</td><td>Stuck high or disconnected</td><td>The chip is out of circuit</td></tr>
-      <tr><td>Write enable</td><td>Stuck high or disconnected</td><td>Writes are lost</td></tr>
-      <tr><td>Write enable</td><td>Stuck low</td><td>Every access becomes a write</td></tr>
+      <tr><td>Chip select (RAS or CAS on a dynamic RAM)</td><td>High or disconnected</td><td>The chip is out of circuit</td></tr>
+      <tr><td>Write enable</td><td>High or disconnected</td><td>Writes are lost</td></tr>
+      <tr><td>Write enable</td><td>Low</td><td>Every access becomes a write</td></tr>
     </table></div>
     <p>The video RAM's pins are shown for the CPU's reads and writes through port <code>98h</code>, not for the picture being drawn. Cartridge chips are not included. Faults are listed in the Debug pane and cleared there, here, or by Master reset.</p>
 
@@ -181,7 +188,7 @@
     <h3 id="tools">The debugging tools</h3>
     <p>The remaining panels are Z80 Bench's own and work the same way here. In the Memory panel only RAM can be edited.</p>
     <ul class="features">
-      <li><a href="../../z80-bench/docs/#pinout">Pinout</a></li>
+      <li><a href="../../z80-bench/docs/#pinout">Pinout</a>: as described there, except that the input pins open the fault menu here instead of toggling</li>
       <li><a href="../../z80-bench/docs/#program">Loading a program</a>: the sample program loads into RAM at <code>E000h</code></li>
       <li><a href="../../z80-bench/docs/#dis">Disassembly and breakpoints</a></li>
       <li><a href="../../z80-bench/docs/#memory">Memory</a></li>

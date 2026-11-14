@@ -22,11 +22,11 @@ await S.snap(p,out+'overview.png',{x:0,y:0,width:1440,height:await p.evaluate(()
 chk(await S.mark(p,[['#mxScreen',1,'tl',18,18],['#mxLoadRom',2,'t',0,-2],['#mxRestart',3,'t',0,-2],['#mxMachine',4,'t',0,-2],['#mxFw',5,'t',0,-12],['#mxSound',6,'t',0,-12],['#mxCartIn',7,'r',10,0],['#mxTapeIn',8,'r',10,0],['#mxDumpTxt',9,'r',14,0],['#mxKb',10,'tl',-2,6]]));
 await S.snap(p,out+'screen.png',await S.clip(p,['#mxScreen','#mxKb'],20));
 // memory chips, with a fault and the pin menu open
-await p.click('#mcTiles button:has-text("IC58")');await p.waitForTimeout(200);
+await p.click('#mcTiles button:has-text("IC68")');await p.waitForTimeout(200);
 console.log('pins:',await p.evaluate(()=>[...document.querySelectorAll('#mcChip g.pin')].map(g=>g.dataset.pin).join(' ')));
-await p.click('#mcChip g.pin[data-pin="DOUT"]');await p.waitForTimeout(200);await p.click('.mcpop button:has-text("Stuck low"), .pinpop button:has-text("Stuck low")');await p.waitForTimeout(200);
-await p.click('#mcChip g.pin[data-pin="A1"]');await p.waitForTimeout(200);
-chk(await S.mark(p,[['text:#mcTiles button|IC42',1,'l',-4,0],['text:#mcTiles button|IC58',2,'l',-4,0],['text:#mcTiles button|IC3',3,'l',-4,0],['#mcChip',4,'tr',-30,10],['.mcpop, .pinpop',5,'tr',6,0],['#mcFaults',6,'l',-14,8],['#mcClear',7,'l',-16,0]]));
+await p.click('#mcChip g.pin[data-pin="DOUT"]');await p.waitForTimeout(200);await p.check('.mcpop input[type=checkbox]');await p.waitForTimeout(150);await p.click('.mcpop button:has-text("Low")');await p.waitForTimeout(200);
+await p.keyboard.press('Escape');await p.click('#mcChip g.pin[data-pin="A1"]');await p.waitForTimeout(200);await p.evaluate(()=>{const e=document.querySelector('.mcpop, .pinpop');e.style.left=(-e.offsetWidth-14)+'px';e.style.top='0px';});await p.waitForTimeout(100);
+chk(await S.mark(p,[['text:#mcTiles button|IC42',1,'l',-4,0],['text:#mcTiles button|IC68',2,'l',-4,0],['text:#mcTiles button|IC3',3,'l',-4,0],['#mcChip',4,'tr',-30,10],['.mcpop, .pinpop',5,'tr',6,0],['#mcFaults',6,'l',-14,8],['#mcClear',7,'l',-16,0]]));
 await S.snap(p,out+'memchips.png',await S.clip(p,['#mcTiles','#mcFig','#mcInfo'],18));
 await p.keyboard.press('Escape');await p.click('#pMemChips h2');
 // MSX hardware panel

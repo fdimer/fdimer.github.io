@@ -72,7 +72,7 @@
       <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
       <li><b>Screen:</b> the picture, the BASIC and RAM choices, programs, the ROM sockets and the keyboard.</li>
       <li><b>Memory chips:</b> every memory chip on the board, with live pins and fault simulation.</li>
-      <li><b>Pinout:</b> the 6502, live.</li>
+      <li><b>Pinout:</b> the 6502, live; its ringed pins take faults.</li>
       <li><b>Program:</b> the assembler and hex loader.</li>
       <li><b>I/O registers:</b> the last value written to the interface chips, and a log.</li>
       <li><b>Disassembly</b></li>
@@ -148,7 +148,7 @@
 
     <h3 id="memchips">Memory chips and fault simulation</h3>
     <figure class="fig wide">
-      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a fault set on RAM chip UI7 and a pin menu open"></a>
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a pin disconnected on RAM chip UI2 and the fault menu of another pin open"></a>
     </figure>
     <ol class="keyed">
       <li><b>RAM, lower 16K:</b> UI2–UI9, one 4116 for each data bit. Position 9 holds data bit 0 and position 2 holds bit 7.</li>
@@ -156,18 +156,25 @@
       <li><b>Screen RAM and character generator:</b> the two 2114s UF7 and UF8, and the character ROM UF10.</li>
       <li><b>ROM sockets:</b> UD3–UD9.</li>
       <li><b>Pinout:</b> click a tile to see that chip's pins, which follow the bus on every clock. The screen RAM and the character generator also show the video circuit's own reads between CPU accesses. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
-      <li><b>Pin menu:</b> click a pin and choose <b>Disconnected</b>, <b>Stuck high</b> or <b>Stuck low</b>.</li>
+      <li><b>Fault menu:</b> click a pin. It names the line the pin is on and the other pins that share it. Hold the whole line <b>High</b> or <b>Low</b>, or tick <b>Disconnected from the line</b> for a fault on this pin alone. A pin on a line of its own has the plain choices <b>Disconnected</b>, <b>High</b> and <b>Low</b>.</li>
       <li><b>Faults on this chip</b></li>
-      <li><b>Clear this chip's faults</b> and <b>Clear all memory faults</b></li>
+      <li><b>Clear this chip's faults</b> (its pins, and the lines its pins are on) and <b>Clear all faults</b></li>
     </ol>
-    <p>The machine then runs with the fault, and the memory view and the disassembly show what the CPU reads through it:</p>
+    <p>There are two kinds of fault:</p>
+    <ul class="features">
+      <li><b>A line held high or low</b> is a short on the wire: every pin on that line, on every chip, sees the level and shows it.</li>
+      <li><b>A pin disconnected from its line</b> (tick the box in the menu) is a broken trace or a lifted pin: only that chip is affected. A disconnected input floats high, or can be given a level of its own. A disconnected pin ignores a fault on its line.</li>
+    </ul>
+    <p>The lines follow the 320349 logic diagram. The 6502's own data bus D0–D7 goes to the seven ROM sockets (and the PIAs and VIA); its address goes through the 74LS244s UC3 and UB3 to BA0–BA15, which feed the ROMs. The sixteen RAM chips share the address lines FA0–FA6 from the 74153 multiplexers, the RAS0 and RAM R/W lines, and each bank its CAS line (CAS0 for UI, CAS1 for UJ); the two chips of a data bit share its line RD0–RD7, with each chip's DI and DO joined. The buffers, multiplexers and support chips are not drawn as chips.</p>
+    <p>The 6502's own pins take faults too: click any ringed pin on the Pinout panel for the same menu (&phi;0 pulses one clock on a click; right-click it for its menu). A fault on an address or data pin acts on everything the processor reads and writes; R/W held high loses the writes; &phi;0, RES and RDY hold the processor; IRQ and NMI act on it.</p>
+    <p>The machine then runs with the faults, and the memory view and the disassembly show what the CPU reads through them:</p>
     <div class="tablewrap"><table class="ref">
       <tr><th>Pin</th><th>Fault</th><th>Effect</th></tr>
       <tr><td>Address</td><td>Any</td><td>The chip uses the wrong cell. A disconnected input floats high</td></tr>
       <tr><td>Data</td><td>Any</td><td>That bit is changed on reads and writes</td></tr>
-      <tr><td>Chip select (RAS or CAS on a dynamic RAM)</td><td>Stuck high or disconnected</td><td>The chip is out of circuit</td></tr>
-      <tr><td>Write enable</td><td>Stuck high or disconnected</td><td>Writes are lost</td></tr>
-      <tr><td>Write enable</td><td>Stuck low</td><td>Every access becomes a write</td></tr>
+      <tr><td>Chip select (RAS or CAS on a dynamic RAM)</td><td>High or disconnected</td><td>The chip is out of circuit</td></tr>
+      <tr><td>Write enable</td><td>High or disconnected</td><td>Writes are lost</td></tr>
+      <tr><td>Write enable</td><td>Low</td><td>Every access becomes a write</td></tr>
     </table></div>
     <p>Faults are listed in the Debug pane and cleared there, here, or by Master reset.</p>
 
@@ -196,7 +203,7 @@
     <h3 id="tools">The debugging tools</h3>
     <p>The remaining panels are 6502 Bench's own and work the same way here.</p>
     <ul class="features">
-      <li><a href="../../6502-bench/docs/#pinout">Pinout</a></li>
+      <li><a href="../../6502-bench/docs/#pinout">Pinout</a>: as described there, except that the input pins open the fault menu here instead of toggling</li>
       <li><a href="../../6502-bench/docs/#program">Loading a program</a>: the sample program loads at <code>033Ah</code>, in the cassette buffer; start it from BASIC with <code>SYS 826</code></li>
       <li><a href="../../6502-bench/docs/#dis">Disassembly and breakpoints</a></li>
       <li><a href="../../6502-bench/docs/#memory">Memory</a></li>

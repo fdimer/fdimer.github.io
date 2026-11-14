@@ -139,6 +139,7 @@
       <li><b>Data bus pins:</b> show the byte being read or written in the current cycle.</li>
       <li><b>Bus readout:</b> the kind of bus cycle and its number within the instruction, the address on the bus with a note of what lives there, and the data bus value in hex and binary with what is driving it.</li>
     </ol>
+    <p><b>Pin faults:</b> the address and data pins and R/W are ringed in grey. Click one to disconnect it (it floats high, so the memory and ports see a 1 there) or hold it high or low (R/W offers Disconnected and High: every cycle then looks like a read, so writes are lost). With no other chips on the bench, each pin is a line of its own. An address pin fault sends every access to the wrong place; a data pin fault changes that bit of every byte read or written. A faulty pin is drawn with a dashed red ring, and the faults are listed under the chip and in the Debug pane, where each can be removed. The emulated machines (MSX, PET, Osborne, ZX81, CPC) go further: there the processor's pins share lines with the other chips on the board.</p>
 
     <h3 id="dis">Disassembly and breakpoints</h3>
     <figure class="fig">

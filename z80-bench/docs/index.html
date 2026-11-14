@@ -134,6 +134,7 @@
       <li><b>Data bus pins:</b> these float except while a read or write is in progress, so you can see exactly when the bus is driven.</li>
       <li><b>Bus readout:</b> the machine cycle and T-state the CPU is in, the address on the bus, and the data bus value in hex and binary with where it came from.</li>
     </ol>
+    <p><b>Pin faults:</b> the address and data pins and MREQ, IORQ, RD and WR are ringed in grey. Click one to disconnect it (it floats high, so the memory and ports see a 1 there) or hold it high or low (the control pins offer Disconnected and High: low is their normal active level). With no other chips on the bench, each pin is a line of its own. An address pin fault sends every access to the wrong place; a data pin fault changes that bit of every byte read or written; MREQ, IORQ, RD or WR held high stops those cycles. A faulty pin is drawn with a dashed red ring, and the faults are listed under the chip and in the Debug pane, where each can be removed. The emulated machines (MSX, PET, Osborne, ZX81, CPC) go further: there the processor's pins share lines with the other chips on the board.</p>
 
     <h3 id="dis">Disassembly and breakpoints</h3>
     <figure class="fig">
