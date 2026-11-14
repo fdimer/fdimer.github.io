@@ -72,8 +72,8 @@
     <ol class="keyed">
       <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
       <li><b>Screen:</b> the TV picture, the machine and RAM choices, tape and the keyboard.</li>
+      <li><b>Processor and ULA:</b> the Z80 and, on the ZX81, the ULA, with live pins and fault simulation.</li>
       <li><b>Memory chips:</b> the ROM and RAM chips, with live pins and fault simulation.</li>
-      <li><b>Pinout:</b> the Z80, live.</li>
       <li><b>Program:</b> the assembler and hex loader.</li>
       <li><b>I/O ports</b></li>
       <li><b>Disassembly</b></li>
@@ -133,17 +133,47 @@
       <li><b>Status:</b> what the machine is doing, or what halted it.</li>
     </ol>
 
+    <h3 id="ula">Processor and ULA</h3>
+    <figure class="fig wide">
+      <a href="img/ula.png"><img src="img/ula.png" width="1080" alt="The Processor and ULA panel on a ZX81, paused in the refresh half of a character fetch, with a pin's fault menu open"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Z80:</b> the processor's 40 pins on every clock. Every ringed pin opens a fault menu; CLK pulses one clock on a click and opens its menu on a right-click.</li>
+      <li><b>ULA (ZX81 only):</b> IC1, Sinclair's computer logic chip, with its 40 pins live. Here it is in the refresh half of a character fetch: it drives A0'–A8' with the character's row address in the ROM, and the ROM's dots for that row are on its data pins. TV/TAPE shows <b>S</b> for sync, <b>B</b> for black and <b>W</b> for white.</li>
+      <li><b>Fault menu:</b> which line the pin is on and which other pins share it, then either hold the whole line high or low, or tick <b>Disconnected from the line</b> for a fault on this pin alone.</li>
+      <li><b>Faults on each chip</b>, listed under its name.</li>
+    </ol>
+    <p>There are two kinds of fault:</p>
+    <ul class="features">
+      <li><b>A line held high or low</b> is a short on the wire: every pin on that line, on every chip, sees the level and shows it.</li>
+      <li><b>A pin disconnected from its line</b> is a broken trace or a lifted pin: only that chip is affected. A disconnected input floats high, or can be given a level of its own. A disconnected output no longer drives its line, which then floats high for the pins that listen to it. A disconnected pin ignores a fault on its line.</li>
+    </ul>
+    <p>The ZX81's lines follow Sinclair's circuit diagram (see <a href="#hw-ula">the ULA</a> below). On the ZX80 and on a RAM pack's chips every pin counts as a line of its own. Some faults to try:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Fault</th><th>What happens</th></tr>
+      <tr><td>NMI line held high, or the ULA's NMI pin disconnected</td><td>No NMIs: SLOW mode never starts and there is no picture</td></tr>
+      <tr><td>Clock line held, or the ULA's oscillator pin</td><td>The Z80 has no clock and stops</td></tr>
+      <tr><td>The ULA's M1 pin disconnected</td><td>It never sees an opcode fetch, so the Z80 runs the display file as code and crashes</td></tr>
+      <tr><td>The ULA's D0–D7 pin disconnected</td><td>It cannot pull that bit low, so the Z80 is fed the wrong instruction for a character</td></tr>
+      <tr><td>The ULA's A0'–A8' pin disconnected</td><td>The wrong row of the character set is drawn: the characters are scrambled</td></tr>
+      <tr><td>The ULA's RD or IORQ pin disconnected</td><td>The keyboard and tape port does not answer</td></tr>
+      <tr><td>The ULA's KBD0–KBD4 pin</td><td>A column of keys is dead, or reads as always pressed</td></tr>
+      <tr><td>ROMCS or RAMCS line held high</td><td>That memory is out of circuit</td></tr>
+      <tr><td>The Z80's A6 pin disconnected</td><td>The INT pin, on the same line, floats: no interrupts, so no picture lines</td></tr>
+    </table></div>
+    <p>Faults are listed in the Debug pane and stay until cleared there, in the Memory chips panel, or by Master reset.</p>
+
     <h3 id="memchips">Memory chips and fault simulation</h3>
     <figure class="fig wide">
-      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a fault set on one of the 2114 RAM chips and a pin menu open"></a>
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a pin disconnected on one of the 2114 RAM chips and a pin's fault menu open"></a>
     </figure>
     <ol class="keyed">
       <li><b>ROM:</b> IC2, the 4K 2332 of the ZX80 or the 8K 2364.</li>
       <li><b>RAM:</b> the two 2114s of the built-in 1K, four data bits each. With 2K chosen, the single 4016 in position IC4 appears instead. With a RAM pack fitted, its 4116 dynamic RAMs appear here instead, one for each data bit in each 16K. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
       <li><b>Pinout:</b> click a tile to see that chip's pins, which follow the bus on every clock.</li>
-      <li><b>Pin menu:</b> click a pin and choose <b>Disconnected</b>, <b>Stuck high</b> or <b>Stuck low</b>.</li>
+      <li><b>Fault menu:</b> on the ZX81 the ROM and the built-in RAM share their lines with the ULA, so the menu works as on <a href="#ula">the Processor and ULA panel</a>: hold the whole line, or disconnect this pin. On the ZX80 and on a RAM pack's chips, each pin is a line of its own: <b>Disconnected</b>, <b>High</b> or <b>Low</b>.</li>
       <li><b>Faults on this chip</b></li>
-      <li><b>Clear this chip's faults</b> and <b>Clear all memory faults</b></li>
+      <li><b>Clear this chip's faults</b> and <b>Clear all faults</b></li>
     </ol>
     <p>The machine then runs with the fault, and the memory view and the disassembly show what the CPU reads through it:</p>
     <div class="tablewrap"><table class="ref">
@@ -182,7 +212,7 @@
     <h3 id="tools">The debugging tools</h3>
     <p>The remaining panels are Z80 Bench's own and work the same way here.</p>
     <ul class="features">
-      <li><a href="../../z80-bench/docs/#pinout">Pinout</a></li>
+      <li><a href="../../z80-bench/docs/#pinout">Pinout</a>: the Z80's pins work as described there, except that its input pins open the fault menu here</li>
       <li><a href="../../z80-bench/docs/#program">Loading a program</a>: you can assemble your own code into the machine's RAM</li>
       <li><a href="../../z80-bench/docs/#dis">Disassembly and breakpoints</a></li>
       <li><a href="../../z80-bench/docs/#memory">Memory</a></li>
@@ -219,10 +249,28 @@
     <h3 id="hw-zx81">What the ZX81 adds</h3>
     <ul class="features">
       <li><b>NMI generator:</b> the ULA can fire an NMI on every horizontal sync. <code>OUT FEh</code> turns it on and <code>OUT FDh</code> turns it off. The ROM uses the NMIs to count the blank lines above and below the picture while your program runs in between, which is SLOW mode.</li>
-      <li><b>/WAIT:</b> when an NMI meets a <code>HALT</code>, the ULA holds /WAIT so that the picture starts at exactly the right clock.</li>
+      <li><b>/WAIT:</b> when an NMI meets a <code>HALT</code>, /WAIT is held (by transistor TR1, from the NMI and HALT lines) so that the picture starts at exactly the right clock.</li>
       <li><b>Sync:</b> horizontal sync comes from a free-running counter that each interrupt acknowledge re-phases.</li>
     </ul>
     <p>The ZX80 fitted with the 8K ROM has none of this hardware, so it runs ZX81 BASIC in FAST mode only.</p>
+
+    <h3 id="hw-ula">The ULA</h3>
+    <p>The ZX81's ULA (IC1, a Ferranti uncommitted logic array, 2C184E or 2C210E) is the ZX80's video logic in one chip, plus the NMI generator. Ferranti published no data sheet. The pinout below is read from Sinclair's circuit diagram (drawing SRC 049); what the emulator does inside the chip is a model of its known behaviour, and the moment of each change within a character is approximate.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pins</th><th>Signal</th><th>What it does</th></tr>
+      <tr><td class="mono">5, 4, 3, 36, 37, 38, 39, 1, 2</td><td>A0'–A8'</td><td>Address lines on the ROM and RAM side of the 1K resistors R18–R26. The ULA drives them in the refresh half of a character fetch to pick the character's row in the ROM</td></tr>
+      <tr><td class="mono">11, 18</td><td>A14, A15</td><td>A14 picks ROM or RAM; A15 high on an opcode fetch marks a display file byte</td></tr>
+      <tr><td class="mono">32, 30, 28, 26, 24, 23, 21, 19</td><td>D0–D7</td><td>Data lines on the Z80's side of the 470 ohm resistors R7–R14. The ULA pulls them low to feed the Z80 a NOP, and puts the keyboard and tape on them for a port read</td></tr>
+      <tr><td class="mono">6, 7, 8, 9, 10, 17</td><td>RD, IORQ, WR, MREQ, M1, HALT</td><td>The Z80's control lines</td></tr>
+      <tr><td class="mono">12, 13</td><td>RAMCS, ROMCS</td><td>Memory selects, each through a 680 ohm resistor (R2, R28) so that a RAM pack can overrule them</td></tr>
+      <tr><td class="mono">14, 35</td><td>CLK, OSC</td><td>The clock to the Z80 (through TR2), and the 6.5 MHz ceramic resonator</td></tr>
+      <tr><td class="mono">15</td><td>NMI</td><td>One pulse per line while the NMI generator is on</td></tr>
+      <tr><td class="mono">16, 20</td><td>TV/TAPE, TAPE IN</td><td>Picture, sync and tape out to the modulator and MIC socket; tape in from the EAR socket</td></tr>
+      <tr><td class="mono">33, 31, 29, 27, 25</td><td>KBD0–KBD4</td><td>The keyboard's five columns</td></tr>
+      <tr><td class="mono">22</td><td>USA/UK</td><td>Picks a 50 Hz or 60 Hz picture</td></tr>
+      <tr><td class="mono">40, 34</td><td>+5V, 0V</td><td>Power</td></tr>
+    </table></div>
+    <p>The Z80's /INT pin is wired to its own A6 line, which is how the video logic gets an interrupt at the end of each line of characters.</p>
 
     <h3 id="hw-mem">Memory map</h3>
     <div class="tablewrap"><table class="ref">
