@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="An interactive three-cell FPGA: click LUT bits, input pins and routing switches, then clock the flip-flops and watch the bitstream change.">
+<title>Three-Cell FPGA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: one working bench. Controls bar, then the fabric drawing (tracks across the top, three cells below), then the bitstream. */
+:root {
+  --bg: #f4f6f5; --panel: #ffffff; --ink: #1c2422; --muted: #5e6b67; --line: #b9c3bf;
+  --hi: #d9811c; --hi-soft: #f6e3c9; --cfg: #6a4fc4; --cfg-soft: #e8e2fa; --warn: #b3261e;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --panel: #1a211e; --ink: #e3e9e6; --muted: #93a19c; --line: #3d4a45;
+  --hi: #f0a33e; --hi-soft: #3d2e17; --cfg: #a892f2; --cfg-soft: #2a2442; --warn: #ff8a80; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121715; --panel: #1a211e; --ink: #e3e9e6; --muted: #93a19c; --line: #3d4a45;
+  --hi: #f0a33e; --hi-soft: #3d2e17; --cfg: #a892f2; --cfg-soft: #2a2442; --warn: #ff8a80; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 32px; }
+main { max-width: 1000px; margin: 0 auto; display: grid; gap: 16px; }
+h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 70ch; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+button, select { font: inherit; font-size: 14px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, select:focus-visible { outline: 2px solid var(--cfg); outline-offset: 2px; }
+#clk { background: var(--ink); color: var(--panel); border-color: var(--ink); font-weight: 600; padding: 8px 18px; }
+.stat { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stat b { color: var(--ink); font-weight: 600; }
+.warn { color: var(--warn); }
+.spacer { flex: 1; }
+.fabric { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+.fabric svg { display: block; min-width: 760px; width: 100%; height: auto; font-family: var(--mono); }
+.hit { cursor: pointer; }
+.hit:focus { outline: none; }
+.hit:focus-visible > :first-child { stroke: var(--cfg); stroke-width: 2.5; }
+.bits { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+.bits h2, .help h2 { font-size: 15px; margin: 0; }
+#stream { font-family: var(--mono); font-size: 14px; word-break: break-all; line-height: 1.8; }
+#stream span { padding: 1px 0; }
+.k-lut { color: var(--cfg); } .k-mux { color: var(--hi); } .k-ff { color: var(--ink); text-decoration: underline; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); }
+.help { display: grid; gap: 6px; color: var(--muted); font-size: 14px; }
+.help ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+@media (prefers-reduced-motion: no-preference) { .pulse { animation: pulse .35s ease-out; } @keyframes pulse { from { opacity: .35 } to { opacity: 1 } } }
+</style>
+</head>
+<body>
+
+<main>
+  <header style="display:grid;gap:6px">
+    <h1>Three-Cell FPGA</h1>
+    <p class="lede">Three logic cells, each a 3-input LUT and a flip-flop, joined by a lattice of routing switches. Click any stored bit, input or switch, then press Clock. It starts as a 3-bit counter.</p>
+  </header>
+
+  <div class="bar">
+    <button id="clk" type="button">Clock ▸</button>
+    <button id="rst" type="button">Reset flip-flops</button>
+    <label for="preset" class="stat">Load</label>
+    <select id="preset">
+      <option value="counter">3-bit counter</option>
+      <option value="shift">Shift register from A</option>
+      <option value="majority">Majority of A, B, C (no clock)</option>
+      <option value="blank">Blank</option>
+    </select>
+    <span class="spacer"></span>
+    <span class="stat">clock edges <b id="cyc">0</b></span>
+    <span class="stat" id="state"></span>
+  </div>
+
+  <div class="fabric"><svg id="fab" viewBox="0 0 960 610" role="img" aria-label="FPGA fabric: input pins and cell outputs on six routing tracks, three logic cells below"></svg></div>
+
+  <section class="bits">
+    <h2>Configuration bitstream</h2>
+    <div id="stream"></div>
+    <div class="legend"><span class="k-lut">LUT bits (8 per cell, address 7 to 0)</span><span class="k-mux">switch selects (3 bits per LUT input)</span><span class="k-ff">use flip-flop (1 per cell)</span></div>
+  </section>
+
+  <section class="help">
+    <h2>How it works</h2>
+    <ul>
+      <li>The six horizontal tracks carry the pins A, B, C and the three cell outputs. Orange means 1.</li>
+      <li>Each LUT input picks one track through a column of switches, like a multiplexer: closing one switch opens the others in that column. An unconnected input reads 0.</li>
+      <li>The inputs in2 in1 in0 form an address; the LUT outputs the bit stored there. Click a bit to change the truth table.</li>
+      <li>With the flip-flop on, a cell's output changes only on Clock. With it off, the output follows the LUT at once. A loop of cells with the flip-flops off can oscillate, as in real hardware.</li>
+      <li>Everything you click is one of the 54 configuration bits listed above: this is the whole bitstream for the chip.</li>
+    </ul>
+  </section>
+
+  <footer class="help" style="font-size:13px">A beginner's guide to FPGAs: <a href="../guide/" style="color:inherit">FPGAs for beginners</a> · <a href="../" style="color:inherit">About Three-Cell FPGA</a></footer>
+</main>
+
+<script>
+const TR = ['A', 'B', 'C', 'cell 1 out', 'cell 2 out', 'cell 3 out'];
+const S = { lut: [[], [], []], ff: [true, true, true], sel: [[-1,-1,-1],[-1,-1,-1],[-1,-1,-1]], pin: [0, 0, 0], q: [0, 0, 0], out: [0, 0, 0], cyc: 0, unstable: false };
+const bit = (v, i) => (v >> i) & 1;
+
+function preset(name) {
+  const f = g => Array.from({length: 8}, (_, i) => g(i) ? 1 : 0);
+  S.ff = [true, true, true]; S.sel = [[-1,-1,-1],[-1,-1,-1],[-1,-1,-1]]; S.q = [0,0,0]; S.cyc = 0; S.pin = [0,0,0];
+  S.lut = [f(() => 0), f(() => 0), f(() => 0)];
+  if (name === 'counter') {
+    S.lut[0] = f(i => !bit(i,0));                          // NOT q0
+    S.lut[1] = f(i => bit(i,0) ^ bit(i,1));                // q1 xor q0
+    S.lut[2] = f(i => bit(i,2) ^ (bit(i,0) & bit(i,1)));   // q2 xor (q1 and q0)
+    S.sel[0] = [3,-1,-1]; S.sel[1] = [3,4,-1]; S.sel[2] = [3,4,5];
+  } else if (name === 'shift') {
+    S.lut = [f(i => bit(i,0)), f(i => bit(i,0)), f(i => bit(i,0))];
+    S.sel[0] = [0,-1,-1]; S.sel[1] = [3,-1,-1]; S.sel[2] = [4,-1,-1];
+    S.pin[0] = 1;
+  } else if (name === 'majority') {
+    S.lut[0] = f(i => bit(i,0) + bit(i,1) + bit(i,2) >= 2);
+    S.sel[0] = [0,1,2]; S.ff[0] = false; S.pin = [1,0,1];
+  }
+  settle();
+}
+
+function track(t) { return t < 0 ? 0 : t < 3 ? S.pin[t] : S.out[t - 3]; }
+function addr(k) { return S.sel[k].reduce((a, t, j) => a | (track(t) << j), 0); }
+function lutOut(k) { return S.lut[k][addr(k)]; }
+function settle() {
+  S.unstable = true;
+  for (let n = 0; n < 12; n++) {
+    const next = [0,1,2].map(k => S.ff[k] ? S.q[k] : lutOut(k));
+    const same = next.every((v, k) => v === S.out[k]);
+    S.out = next;
+    if (same) { S.unstable = false; break; }
+  }
+  draw();
+}
+function clock() { const d = [0,1,2].map(lutOut); S.q = d; S.cyc++; settle(); pulse(); }
+function pulse() { const el = document.getElementById('fab'); el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
+
+const TY = t => 64 + t * 30, CX = k => 150 + k * 270, IX = (k, j) => CX(k) + 34 + j * 40, FX = k => CX(k) + 232;
+const col = v => v ? 'var(--hi)' : 'var(--line)';
+const T = (x, y, s, o = '') => `<text x="${x}" y="${y}" ${o}>${s}</text>`;
+
+function draw() {
+  let s = '';
+  // tracks
+  for (let t = 0; t < 6; t++) {
+    const y = TY(t), v = track(t);
+    s += `<line x1="128" y1="${y}" x2="944" y2="${y}" stroke="${col(v)}" stroke-width="${v ? 3 : 2}"/>`;
+    if (t < 3) {
+      s += `<g class="hit" tabindex="0" role="button" aria-label="Pin ${TR[t]} is ${v}, click to toggle" data-act="pin" data-t="${t}">
+        <rect x="40" y="${y - 11}" width="76" height="22" rx="11" fill="${v ? 'var(--hi-soft)' : 'var(--panel)'}" stroke="${col(v)}" stroke-width="1.5"/>
+        ${T(54, y + 4, `${TR[t]}`, 'font-size="13" font-weight="600" fill="var(--ink)"')}${T(102, y + 4, v, 'font-size="13" text-anchor="end" fill="var(--ink)"')}</g>`;
+    } else s += T(120, y + 4, TR[t], 'font-size="12" text-anchor="end" fill="var(--muted)"');
+  }
+  s += T(128, 30, 'routing tracks', 'font-size="12" fill="var(--muted)" font-family="var(--sans)"');
+  for (let k = 0; k < 3; k++) {
+    const x0 = CX(k), a = addr(k), d = lutOut(k), out = S.out[k];
+    // feedback line from the cell output up to its own track
+    s += `<path d="M${x0 + 218} 520H${FX(k)}V${TY(3 + k)}" fill="none" stroke="${col(out)}" stroke-width="${out ? 3 : 2}"/><circle cx="${FX(k)}" cy="${TY(3 + k)}" r="4" fill="${col(out)}"/>`;
+    // LUT input columns and their switches
+    for (let j = 0; j < 3; j++) {
+      const x = IX(k, j), t = S.sel[k][j], v = track(t);
+      s += `<line x1="${x}" y1="${t < 0 ? 50 : TY(t)}" x2="${x}" y2="262" stroke="${col(v)}" stroke-width="${v ? 3 : 2}"/>`;
+      if (t >= 0) s += `<line x1="${x}" y1="50" x2="${x}" y2="${TY(t)}" stroke="var(--line)" stroke-width="2"/>`;
+      for (let tt = 0; tt < 6; tt++) {
+        const on = t === tt;
+        s += `<g class="hit" tabindex="0" role="button" aria-label="Switch from ${TR[tt]} to cell ${k + 1} input ${j}, ${on ? 'closed' : 'open'}" data-act="sw" data-k="${k}" data-j="${j}" data-t="${tt}">
+          <circle cx="${x}" cy="${TY(tt)}" r="8" fill="${on ? 'var(--cfg)' : 'var(--panel)'}" stroke="${on ? 'var(--cfg)' : 'var(--muted)'}" stroke-width="1.5"/></g>`;
+      }
+    }
+    // cell body
+    s += `<rect x="${x0}" y="242" width="240" height="350" rx="10" fill="none" stroke="var(--line)" stroke-width="1.5"/>`;
+    s += T(x0 + 140, 236, `cell ${k + 1}`, 'font-size="13" font-weight="600" fill="var(--ink)" font-family="var(--sans)"');
+    for (let j = 0; j < 3; j++) s += T(IX(k, j), 280, `in${j}`, 'font-size="11" text-anchor="middle" fill="var(--muted)"');
+    // LUT truth table
+    s += `<rect x="${x0 + 12}" y="262" width="138" height="232" rx="8" fill="none" stroke="var(--muted)" stroke-width="1.25"/>`;
+    s += T(x0 + 22, 302, 'in2 in1 in0', 'font-size="11" fill="var(--muted)"') + T(x0 + 128, 302, 'bit', 'font-size="11" text-anchor="middle" fill="var(--muted)"');
+    for (let r = 0; r < 8; r++) {
+      const y = 312 + r * 22, act = r === a, b = S.lut[k][r];
+      if (act) s += `<rect x="${x0 + 16}" y="${y}" width="130" height="20" rx="4" fill="var(--hi-soft)"/>`;
+      s += T(x0 + 30, y + 15, `${bit(r,2)}   ${bit(r,1)}   ${bit(r,0)}`, `font-size="13" fill="${act ? 'var(--ink)' : 'var(--muted)'}" xml:space="preserve"`);
+      s += `<g class="hit" tabindex="0" role="button" aria-label="Cell ${k + 1} LUT address ${r} stores ${b}, click to flip" data-act="lut" data-k="${k}" data-r="${r}">
+        <rect x="${x0 + 116}" y="${y + 1}" width="24" height="18" rx="3" fill="${b ? 'var(--cfg)' : 'var(--panel)'}" stroke="var(--cfg)" stroke-width="1.25"/>
+        ${T(x0 + 128, y + 15, b, `font-size="13" text-anchor="middle" fill="${b ? 'var(--panel)' : 'var(--cfg)'}" pointer-events="none"`)}</g>`;
+    }
+    // LUT output to flip-flop and to the output selector
+    const ffx = x0 + 162, ffy = 330;
+    s += `<path d="M${x0 + 150} 400H${x0 + 156}V${ffy + 24}H${ffx}" fill="none" stroke="${col(d)}" stroke-width="${d ? 3 : 2}"/>`;
+    s += `<rect x="${ffx}" y="${ffy}" width="56" height="56" rx="6" fill="none" stroke="var(--muted)" stroke-width="1.25"/>`;
+    s += T(ffx + 6, ffy + 28, 'D', 'font-size="12" fill="var(--muted)"') + T(ffx + 50, ffy + 28, 'Q', 'font-size="12" text-anchor="end" fill="var(--muted)"');
+    s += T(ffx + 28, ffy + 48, S.q[k], 'font-size="15" font-weight="600" text-anchor="middle" fill="var(--ink)"');
+    s += `<path d="M${ffx} ${ffy + 40}l7 5l-7 5" fill="none" stroke="var(--muted)" stroke-width="1.25"/>`;
+    s += T(ffx + 28, ffy - 8, 'flip-flop', 'font-size="11" text-anchor="middle" fill="var(--muted)"');
+    // output select (a config bit)
+    const ff = S.ff[k];
+    s += `<g class="hit" tabindex="0" role="button" aria-label="Cell ${k + 1} uses its flip-flop: ${ff ? 'yes' : 'no'}, click to change" data-act="ff" data-k="${k}">
+      <rect x="${ffx - 6}" y="420" width="68" height="40" rx="6" fill="${ff ? 'var(--cfg-soft)' : 'var(--panel)'}" stroke="var(--cfg)" stroke-width="1.25"/>
+      ${T(ffx + 28, 436, 'use FF', 'font-size="11" text-anchor="middle" fill="var(--cfg)" pointer-events="none"')}
+      ${T(ffx + 28, 452, ff ? 'yes' : 'no', 'font-size="13" font-weight="600" text-anchor="middle" fill="var(--cfg)" pointer-events="none"')}</g>`;
+    s += `<path d="M${ffx + 28} 460V520H${x0 + 218}" fill="none" stroke="${col(out)}" stroke-width="${out ? 3 : 2}"/>`;
+    s += `<circle cx="${ffx + 28}" cy="545" r="14" fill="${out ? 'var(--hi)' : 'var(--panel)'}" stroke="${col(out)}" stroke-width="2"/>`;
+    s += T(x0 + 22, 549, `out = ${out}`, 'font-size="14" font-weight="600" fill="var(--ink)"');
+    s += T(x0 + 22, 572, ff ? 'changes on Clock' : 'follows the LUT now', 'font-size="11" fill="var(--muted)" font-family="var(--sans)"');
+  }
+  document.getElementById('fab').innerHTML = s;
+  document.getElementById('cyc').textContent = S.cyc;
+  const st = document.getElementById('state');
+  st.textContent = S.unstable ? 'oscillating: a loop with no flip-flop' : `outputs ${S.out.slice().reverse().join('')} (cell 3 to 1)`;
+  st.className = 'stat' + (S.unstable ? ' warn' : '');
+  drawStream();
+}
+
+function drawStream() {
+  let h = '';
+  for (let k = 0; k < 3; k++) {
+    h += `<span class="k-lut">${S.lut[k].slice().reverse().join('')}</span> `;
+    h += S.sel[k].map(t => `<span class="k-mux">${(t + 1).toString(2).padStart(3, '0')}</span>`).join(' ') + ' ';
+    h += `<span class="k-ff">${S.ff[k] ? 1 : 0}</span>${k < 2 ? ' &nbsp;│&nbsp; ' : ''}`;
+  }
+  document.getElementById('stream').innerHTML = h;
+}
+
+function act(g) {
+  const d = g.dataset, k = +d.k, j = +d.j, t = +d.t;
+  if (d.act === 'pin') S.pin[t] ^= 1;
+  else if (d.act === 'sw') S.sel[k][j] = S.sel[k][j] === t ? -1 : t;
+  else if (d.act === 'lut') S.lut[k][+d.r] ^= 1;
+  else if (d.act === 'ff') S.ff[k] = !S.ff[k];
+  settle();
+}
+const fab = document.getElementById('fab');
+fab.addEventListener('click', e => { const g = e.target.closest('.hit'); if (g) act(g); });
+fab.addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; const g = e.target.closest('.hit'); if (!g) return; e.preventDefault();
+  act(g); const again = [...fab.querySelectorAll('.hit')].find(n => ['act','k','j','t','r'].every(a => n.dataset[a] === g.dataset[a])); if (again) again.focus(); });
+document.getElementById('clk').addEventListener('click', clock);
+document.getElementById('rst').addEventListener('click', () => { S.q = [0,0,0]; S.cyc = 0; settle(); });
+document.getElementById('preset').addEventListener('change', e => preset(e.target.value));
+preset('counter');
+</script>
+</body>
+</html>

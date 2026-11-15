@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Three-Cell FPGA</title>
+  <meta name="description" content="Three-Cell FPGA: an FPGA small enough to see all of. Click LUT bits, input pins and routing switches, clock the flip-flops and watch the bitstream change.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../personal/">&larr; Miscellaneous projects</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LOAD "FPGA"</p>
+      <h1>Three-Cell FPGA</h1>
+      <p class="lead">An FPGA small enough to see all of: three logic cells, each a 3-input look-up table and a flip-flop, joined by a lattice of routing switches. Click any stored bit, input or switch, press Clock, and watch the circuit and its bitstream change.</p>
+    </header>
+
+    <a class="button" href="app/">Open Three-Cell FPGA</a>
+    <a class="button secondary" href="guide/">Read FPGAs for beginners</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>Look-up tables:</b> each cell's 8 stored bits are its truth table; click one to change it, and the row the inputs select lights up</li>
+      <li><b>Routing switches:</b> six tracks carry the pins A, B, C and the three cell outputs; each LUT input picks one track through a column of switches, like a multiplexer</li>
+      <li><b>Flip-flops and a clock:</b> each cell can send its output through its flip-flop or straight out; Clock loads every flip-flop at once</li>
+      <li><b>The bitstream:</b> all 54 configuration bits are shown live, so every click is a visible change to the chip's configuration</li>
+      <li><b>Ready-made circuits:</b> a 3-bit counter, a shift register, a majority gate and a blank chip; a loop with no flip-flop is reported as oscillating</li>
+    </ul>
+
+    <h2>FPGAs for beginners</h2>
+    <p>A short guide written alongside it: what an FPGA is, what's inside, how the configuration bits control the hardware, how one is programmed, a first Verilog example, tools and boards, and a reading list.</p>
+    <a class="button secondary" href="guide/">Read the guide</a>
+
+    <h2>Source</h2>
+    <p>One page of plain HTML, CSS and JavaScript with no libraries. MIT licence. Built with Claude.</p>
+
+    <footer><a href="../personal/">&larr; Back to miscellaneous projects</a> · <a href="../">All projects</a></footer>
+  </main>
+</body>
+</html>

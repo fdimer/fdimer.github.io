@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FPGAs for beginners</title>
+  <meta name="description" content="A short guide to FPGAs: what's inside one, how the configuration bits control the hardware, how one is programmed, a first Verilog example and what to read next.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css">
+  <style>pre { overflow-x: auto; background: var(--card, rgba(127,127,127,.08)); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; } pre code { background: none; padding: 0; }</style>
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; Three-Cell FPGA</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LIST</p>
+      <h1>FPGAs for beginners</h1>
+      <p class="lead">Felipe Dimer de Oliveira, 15 November 2026. Written with Claude.</p>
+    </header>
+
+    <a class="button" href="../app/">Open Three-Cell FPGA</a>
+
+<h2>What an FPGA is</h2>
+<p>An FPGA (field-programmable gate array) is a chip full of small logic blocks and flip-flops that start out unconnected, plus a mesh of wiring with electronic switches at every crossing. You describe a digital circuit in text; tools turn that into a configuration file that sets every switch and fills every block. Load it, and the chip <em>becomes</em> your circuit: a ZX81 ULA, a Z80, a video generator, or all three at once.</p>
+<p>The key difference from a CPU: a CPU is fixed hardware that runs instructions one at a time. An FPGA runs no program at all. Every part of the circuit you described works at the same moment, the way a board of 74-series chips does. A counter, a shift register and an address decoder all tick on the same clock edge.</p>
+<p>The Ferranti ULA is the FPGA's ancestor. It was a gate array: an uncommitted grid of gates on the wafer, customised for Sinclair by one final metal wiring layer at the factory. An FPGA does the same job with the wiring held in on-chip memory instead of metal, so it can be rewired in the field, in seconds, as often as you like. Most FPGAs keep that configuration in volatile memory and reload it from a small flash chip at every power-up.</p>
+<h2>What's inside</h2>
+<p>An FPGA is mostly thousands of identical cells, each a look-up table (LUT) feeding a flip-flop, with programmable wiring between them. The LUT is the clever part: a 4-input LUT is just a 16-bit memory. Its four inputs form an address, and the bit stored there is the output. Fill those 16 bits with a truth table and it becomes any logic function of four inputs: a NOR, an XOR, a 4-to-1 multiplexer, whatever you need. Bigger functions are chained from several LUTs.</p>
+<figure class="fig"><img src="img/logic-cell.png" alt="One FPGA logic cell: a 16-bit truth table, then an optional flip-flop"><figcaption>One FPGA logic cell: a 16-bit truth table, then an optional flip-flop</figcaption></figure>
+<p>The inputs A to D pick one of the 16 stored bits. Here the bits hold a 4-input NOR, like the ULA's gates: only address 0000 (the filled bit) stores a 1. A configuration bit then sends the result straight out or through the flip-flop, and more configuration bits close the routing switches that wire it to other cells.</p>
+<div class="tablewrap"><table class="ref">
+<thead>
+<tr>
+<th>Part</th>
+<th>What it does</th>
+<th>In ZX81 terms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Look-up table (LUT)</td>
+<td>Any logic function of 4 to 6 inputs, set by its stored truth table</td>
+<td>A handful of the ULA's NOR gates rolled into one</td>
+</tr>
+<tr>
+<td>Flip-flop</td>
+<td>Stores one bit, updated on a clock edge</td>
+<td>The ULA's D-types: shift register, latches, counters</td>
+</tr>
+<tr>
+<td>Routing</td>
+<td>Wires with programmable switches joining every cell</td>
+<td>Ferranti's custom metal layer</td>
+</tr>
+<tr>
+<td>Block RAM</td>
+<td>Kilobytes of memory on the chip</td>
+<td>The ZX81's 2114 RAM and its ROM</td>
+</tr>
+<tr>
+<td>Clock network and PLL</td>
+<td>Low-skew clock wiring; a PLL makes new frequencies from one input</td>
+<td>The 6.5 MHz resonator and the ULA's divider</td>
+</tr>
+<tr>
+<td>I/O blocks</td>
+<td>The pins, with selectable voltage standards</td>
+<td>The ULA's pin cells on the 2C158/2 sheet</td>
+</tr>
+<tr>
+<td>DSP blocks</td>
+<td>Hardware multipliers</td>
+<td>(nothing; the ZX81 had none)</td>
+</tr>
+</tbody>
+</table></div>
+<p>For scale: Lattice's iCE40 UltraPlus UP5K has 5,280 LUTs, 120 kbit of block RAM and 1 Mbit of single-port RAM (<a href="https://www.latticesemi.com/Products/FPGAandCPLD/iCE40UltraPlus">Lattice</a>). The Tang Nano 9K board's Gowin GW1NR-9 has 8,640 LUTs, 6,480 flip-flops and 468 kbit of block RAM (<a href="https://wiki.sipeed.com/hardware/en/tang/Tang-Nano-9K/Nano-9K">Sipeed</a>). The whole ZX81 ULA netlist is 216 elements, so either chip has room for the ULA, a Z80 and the RAM besides.</p>
+<p>One caution for later: most current small FPGAs run their pins at 3.3 V or less and are not 5 V tolerant. A drop-in replacement for the 5 V ULA would need level shifters on its pins.</p>
+<h2>How the configuration bits control the hardware</h2>
+<p>Every routing switch is a single transistor between two wires, and its gate is driven by one bit held in a small memory cell right beside it. The cell is the same 6-transistor SRAM cell used in cache memory: two inverters in a loop, each holding the other's output, so the bit stays put while the chip runs.</p>
+<figure class="fig"><img src="img/routing-switch.png" alt="One memory bit opens or closes each routing switch"><figcaption>One memory bit opens or closes each routing switch</figcaption></figure>
+<ul>
+<li><strong>Switches come in groups.</strong> A LUT input usually chooses among a handful of nearby routing wires through a multiplexer, so a few bits (3 for 8 wires, 4 for 16) pick the connection, not one bit per switch. The LUT's 16 truth-table bits are the same kind of memory cell.</li>
+<li><strong>Loading the bits.</strong> The memory cells are laid out in rows and columns across the chip, like a RAM. At power-up a small configuration controller on the FPGA reads the bitstream from the board's flash chip and writes it in, column by column, then lets the design run. SRAM forgets at power-off, so this happens at every power-up.</li>
+<li><strong>Other kinds of FPGA</strong> keep the bits differently: flash-based parts (for example Microchip's PolarFire) remember them and start instantly; antifuse parts burn each switch closed once and can't be reprogrammed.</li>
+</ul>
+<p>This is also why an FPGA is slower and larger than a custom chip like the Ferranti ULA: every connection passes through transistors rather than plain metal, and much of the chip's area is configuration memory.</p>
+<h2>How you program one</h2>
+<p>You don't write a program; you write a description of a circuit, in a hardware description language (HDL), and a chain of tools builds that circuit out of the chip's cells. The two common HDLs are Verilog and VHDL. Verilog is the shorter of the two and is what the ZX81 ULA design uses.</p>
+<p>More exactly, Verilog describes a circuit at the <em>register-transfer level</em> (RTL). You say which registers exist and what each one holds after the next clock edge. You don't say which gates compute that, which cells they sit in, or how they are wired: the tools decide all of that. So a line like <code>count &lt;= count + 1</code> names no gates at all, yet it fully defines the circuit's behaviour, clock by clock. What you do control:</p>
+<ul>
+<li><strong>What the circuit does:</strong> the registers, the logic between them, and the clock that steps them.</li>
+<li><strong>The pins:</strong> a short constraints file maps each signal to a package pin.</li>
+<li><strong>The speed:</strong> you state the clock frequency; the tools report whether the routed circuit meets it, and if not you change the Verilog, never the wiring.</li>
+</ul>
+<p>Everything else (the choice of LUTs and flip-flops, where they sit, which routing wires join them) is the tools' job, and you never see it unless you go looking.</p>
+<p>The steps, each done by a tool:</p>
+<ol>
+<li><strong>Describe</strong> the circuit in Verilog: modules with inputs and outputs, wired together like chips on a board.</li>
+<li><strong>Simulate</strong> it. A testbench (more Verilog, or a program) drives the inputs, and you inspect the outputs as waveforms. Most bugs are found here, long before any hardware. The ULA's <code>tb.js</code> testbench is exactly this.</li>
+<li><strong>Synthesise.</strong> The synthesiser (Yosys, the tool we already used on the ULA) turns the description into LUTs and flip-flops.</li>
+<li><strong>Place and route.</strong> The tool picks a cell for each LUT and flip-flop and routes every wire between them. A constraints file tells it which signal goes to which pin and how fast the clock is.</li>
+<li><strong>Check timing.</strong> Every path from one flip-flop to the next must settle within one clock period. The report gives the fastest clock the design can take.</li>
+<li><strong>Generate the bitstream</strong> and load it over USB: into the FPGA itself for a quick test (lost at power-off), or into the board's flash to keep it.</li>
+</ol>
+<p>The mindset shift is the hard part for software people, and probably easier for you. Every line describes hardware that exists all the time, and everything runs at once. Good FPGA designs are synchronous: one clock, and every change happens on its edge. The tools ignore gate delays, so tricks that use a delay to make a pulse, which the Ferranti ULA relies on, don't survive synthesis. That is why the ULA work has two versions: the gate-level netlist that copies the chip, and <code>2c210_sync.v</code>, the same behaviour rebuilt on one 13 MHz clock for an FPGA.</p>
+<h2>A first example: blinking an LED</h2>
+<p>The "hello world" of FPGAs is a counter whose top bit drives an LED. Here it is in Verilog:</p>
+<pre><code class="language-verilog">module blink (
+    input  wire clk,          // the board's clock, here 12 MHz
+    output wire led           // one pin, wired to an LED
+);
+    reg [23:0] count = 0;     // 24 flip-flops holding a number
+
+    always @(posedge clk)     // at every rising edge of the clock...
+        count &lt;= count + 1;   // ...store the number plus one
+
+    assign led = count[23];   // the LED follows the top bit
+endmodule
+</code></pre>
+<p>Read it as a schematic, not as instructions:</p>
+<ul>
+<li><code>module</code> is a chip with pins: one input, one output.</li>
+<li><code>reg [23:0] count</code> plus <code>always @(posedge clk)</code> makes a <strong>24-bit</strong> register: 24 D flip-flops sharing one clock.</li>
+<li><code>count + 1</code> is a 24-bit adder feeding the flip-flops' D inputs. Nothing "runs": the adder is always there, and every clock edge loads its result.</li>
+<li><code>assign</code> is just a wire from bit 23 to the LED pin.</li>
+</ul>
+<figure class="fig"><img src="img/blinker-cells.png" alt="The blinker uses 24 logic cells chained by a carry line"><figcaption>The blinker uses 24 logic cells chained by a carry line</figcaption></figure>
+<p>Each bit of <code>count</code> takes one logic cell. Its LUT works out the next value of that bit from the bit itself and the carry from the cell before; its flip-flop stores it on the clock edge. Cell 0 only needs an inverter, since bit 0 just toggles. The LED is wired to cell 23's flip-flop.</p>
+<figure class="fig"><img src="img/feedback-routing.png" alt="The feedback goes out to the routing and back through switches"><figcaption>The feedback goes out to the routing and back through switches</figcaption></figure>
+<p>The feedback from each flip-flop to its LUT is ordinary routing. The flip-flop's output goes out onto a routing wire, and a switch set by a configuration bit connects that wire back to one of the LUT's inputs; the place-and-route tool chooses the wire and sets the bits. Two things don't use the general routing: the carry runs on a fixed wire to the next cell, and the clock has its own dedicated network so it reaches every flip-flop at the same moment.</p>
+<p>Run through Yosys for a Lattice iCE40, this becomes 24 flip-flops and an adder of 23 LUTs on the chip's carry chain. At 12 MHz, bit 23 changes every 2^23 / 12,000,000 ≈ 0.7 s, so the LED blinks about once every 1.4 s.</p>
+<p>The ZX81 ULA's <code>2c210_sync.v</code> is written in exactly this style, only longer: counters, a shift register and some decoding, all stepping on one clock.</p>
+<h2>Tools and boards to start with</h2>
+<p>A cheap Lattice or Gowin board and the free open-source tools are enough for everything up to a ZX81 on a chip.</p>
+<p><strong>Software.</strong> <a href="https://github.com/YosysHQ/oss-cad-suite-build">OSS CAD Suite</a> is one download with the whole open toolchain: Yosys (synthesis), nextpnr (place and route), Icarus Verilog and Verilator (simulators), GTKWave (waveform viewer) and openFPGALoader (loads boards). It runs on Windows 10 and 11, though its makers recommend WSL (Linux inside Windows) for the best experience. Each vendor also has its own free tool: Gowin EDA for the Tang Nano boards, AMD Vivado for Xilinx boards such as the Arty. For trying Verilog with no install at all, <a href="https://eda-playground.readthedocs.io/en/latest/intro.html">EDA Playground</a> simulates in the browser and shows waveforms.</p>
+<div class="tablewrap"><table class="ref">
+<thead>
+<tr>
+<th>Board</th>
+<th>FPGA</th>
+<th>Size</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://wiki.sipeed.com/hardware/en/tang/Tang-Nano-9K/Nano-9K">Sipeed Tang Nano 9K</a></td>
+<td>Gowin GW1NR-9</td>
+<td>8,640 LUTs, 468 kbit RAM</td>
+<td>Small and cheap, HDMI socket, Gowin EDA; room for a whole ZX81</td>
+</tr>
+<tr>
+<td><a href="https://github.com/BrunoLevy/learn-fpga/blob/master/FemtoRV/TUTORIALS/IceStick.md">Lattice iCEstick</a></td>
+<td>Lattice iCE40HX1K</td>
+<td>the smallest iCE40</td>
+<td>About US$40; fully open-source tools; the first board of the learn-fpga tutorial</td>
+</tr>
+<tr>
+<td><a href="https://nandland.com/go-board-tutorials/">Nandland Go Board</a></td>
+<td>Lattice</td>
+<td>small</td>
+<td>Made for the Nandland lessons: LEDs, switches, 7-segment displays, VGA</td>
+</tr>
+<tr>
+<td><a href="https://github.com/BrunoLevy/learn-fpga/blob/master/FemtoRV/TUTORIALS/IceStick.md">ULX3S</a></td>
+<td>Lattice ECP5 85K</td>
+<td>85,000 LUTs</td>
+<td>About US$130; the step up when a design outgrows a small chip</td>
+</tr>
+<tr>
+<td>Digilent Arty A7</td>
+<td>AMD Artix-7</td>
+<td>Vivado</td>
+<td>The board the <a href="https://www.github.com/projf/projf-explore">Project F</a> "Hello" series uses</td>
+</tr>
+</tbody>
+</table></div>
+<p>Prices and stock change; check before buying.</p>
+<p><strong>Where the ZX81 ULA fits.</strong> A sensible path, once a board blinks:</p>
+<ol>
+<li>Simulate <code>2c210_sync.v</code> with Icarus Verilog and look at its waveforms in GTKWave, next to the testbench we already have.</li>
+<li>Put it on the board with a Z80 core and the ROM and RAM in block RAM: a ZX81 on one chip. The MiSTer project already has a <a href="https://www.misterfpga.org/viewtopic.php?p=31944">ZX81 core</a> to compare with.</li>
+<li>Only then the replacement chip: the FPGA on a small board in the ULA's 40-pin socket, with level shifters to 5 V. That is a hardware design project of its own.</li>
+</ol>
+<h2>What to read, in order</h2>
+<p>Start with the free Nandland lessons, practise Verilog on HDLBits, then pick one project-based tutorial; the book is the best single reference.</p>
+<div class="tablewrap"><table class="ref">
+<thead>
+<tr>
+<th>#</th>
+<th>Resource</th>
+<th>What it is</th>
+<th>Read it for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="https://nandland.com/lesson-1-what-is-an-fpga/">Nandland: FPGA Fundamentals</a></td>
+<td>17 short free lessons by Russell Merrick: LUTs, flip-flops, setup and hold, metastability, block RAM, Verilog vs VHDL</td>
+<td>The concepts, in the right order, with no maths</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="https://learn.sparkfun.com/tutorials/how-does-an-fpga-work">SparkFun: How Does an FPGA Work?</a></td>
+<td>One illustrated article</td>
+<td>How LUTs and the routing multiplexers really work inside</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="https://hdlbits.01xz.net/">HDLBits</a></td>
+<td>Short Verilog exercises checked in the browser</td>
+<td>Learning Verilog by doing, a few minutes at a time (I couldn't open the site from here; check the link works for you)</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="https://penguinrandomhouse.com/books/719552/getting-started-with-fpgas-by-russell-merrick">Getting Started with FPGAs</a>, Russell Merrick</td>
+<td>Book, No Starch Press, 2023, 320 pages; every example in Verilog and VHDL</td>
+<td>The one book to own: build process, state machines, FIFOs, clock domains, testbenches</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="https://zipcpu.com/tutorial/">ZipCPU beginner's Verilog tutorial</a></td>
+<td>10 free lessons from wires to a complete serial port, using Verilator, GTKWave and formal checking</td>
+<td>Debugging and verification, which most courses skip</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="https://www.github.com/projf/projf-explore">Project F</a></td>
+<td>Free tutorials: Beginning FPGA Graphics, Racing the Beam, Pong, sprites, framebuffers (MIT licence)</td>
+<td>Video timing on an FPGA, the closest thing to what the ULA does</td>
+</tr>
+<tr>
+<td>7</td>
+<td><a href="https://github.com/BrunoLevy/learn-fpga">learn-fpga</a>, Bruno Levy</td>
+<td>Open-source tutorials on Yosys and nextpnr, from a blinker up to your own RISC-V processor</td>
+<td>Seeing how far one small board and free tools go</td>
+</tr>
+<tr>
+<td>8</td>
+<td><a href="https://github.com/YosysHQ/oss-cad-suite-build">OSS CAD Suite</a> and your board's own documentation</td>
+<td>The open toolchain; for example the <a href="https://wiki.sipeed.com/hardware/en/tang/Tang-Nano-9K/Nano-9K">Tang Nano 9K wiki</a> or <a href="https://www.latticesemi.com/Products/FPGAandCPLD/iCE40UltraPlus">Lattice iCE40 UltraPlus</a> pages</td>
+<td>Setting up the tools and mapping pins once you have hardware</td>
+</tr>
+<tr>
+<td>9</td>
+<td><a href="https://www.misterfpga.org/viewtopic.php?p=31944">MiSTer ZX81 core</a></td>
+<td>A working ZX81 on an FPGA, in the MiSTer retro project</td>
+<td>A finished design to compare the ULA work with</td>
+</tr>
+</tbody>
+</table></div>
+<p>Links checked on the as-of date above.</p>
+
+    <footer><a href="../">&larr; Back to Three-Cell FPGA</a> · <a href="../../personal/">Miscellaneous projects</a> · <a href="../../">All projects</a></footer>
+  </main>
+</body>
+</html>
