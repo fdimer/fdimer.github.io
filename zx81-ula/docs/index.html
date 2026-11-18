@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZX81 ULA Test Bench documentation</title>
+  <meta name="description" content="User guide and hardware reference for the ZX81 ULA Test Bench: a ZX81 run from the gate-level logic of its Ferranti 2C210 ULA. Non-commercial use only.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; ZX81 ULA Test Bench</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LIST</p>
+      <h1>ZX81 ULA Test Bench documentation</h1>
+      <p class="lead">How to use the test bench, and how the ULA inside it is put together. The numbers in each list match the numbered markers on the screenshot above it.</p>
+    </header>
+
+    <a class="button" href="../app/">Open the test bench</a>
+
+    <nav class="toc" aria-label="Contents" style="margin-top:24px">
+      <b>Contents</b>
+      <ol>
+        <li><a href="#guide">User guide</a>
+          <ol>
+            <li><a href="#start">Quick start</a></li>
+            <li><a href="#page">The page</a></li>
+            <li><a href="#machine">The machine and the keyboard</a></li>
+            <li><a href="#instruments">The ULA, the meters and the picture check</a></li>
+            <li><a href="#analyser">Logic analyser</a></li>
+            <li><a href="#report">Reporting what you find</a></li>
+          </ol>
+        </li>
+        <li><a href="#hardware">Hardware reference</a>
+          <ol>
+            <li><a href="#hw-what">What is being tested</a></li>
+            <li><a href="#hw-loop">The closed loop</a></li>
+            <li><a href="#hw-engines">The two ULAs</a></li>
+            <li><a href="#hw-frame">Lines, frames and the picture</a></li>
+            <li><a href="#hw-pins">The ULA's pins</a></li>
+            <li><a href="#hw-checked">How far it is checked</a></li>
+            <li><a href="#hw-limits">What is not modelled</a></li>
+            <li><a href="#terms">Sources and terms of use</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+
+    <h2 id="guide">User guide</h2>
+    <p>The test bench is a 16K ZX81 in which nothing of the ULA is modelled: a Z80 core runs the real ROM, and every bus cycle goes onto the pins of the Ferranti 2C210's logic, as transcribed from Ferranti's own drawing. What the Z80 reads during the picture, when it is interrupted, when it waits, which memory chip is selected and every dot of the TV picture all come back from those pins. It is made for checking the ULA against real programs. For simply using a ZX81, the <a href="../../zx80/">ZX80 and ZX81 emulator</a> is quicker and has the debugging tools.</p>
+
+    <h3 id="start">Quick start</h3>
+    <ol>
+      <li>Press <b>Load ROM…</b> and choose your own 8 KB ZX81 ROM image. The ROM is Sinclair's and is not included. Your browser keeps it, so you only load it once.</li>
+      <li>The machine starts at once. The <b>K</b> cursor appears after about 3 seconds of ZX81 time.</li>
+      <li>Click the picture and type, or press the keys drawn under it.</li>
+      <li>To run a program, press <b>Load program (.p)…</b> and choose a <code>.p</code> file. The page types <code>LOAD ""</code> for you; then type <code>RUN</code> (the <b>R</b> key, then <kbd>Enter</kbd>).</li>
+      <li>If the machine does anything a real ZX81 would not, press <b>Write report</b> and send the report with a description of what you saw.</li>
+    </ol>
+
+    <h3 id="page">The page</h3>
+    <figure class="fig">
+      <a href="img/overview.png"><img src="img/overview.png" width="720" alt="The whole test bench page with its four areas numbered"></a>
+      <figcaption>The whole page after a one-line BASIC program has run. Select the picture to see it full size.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>The machine:</b> the ROM and program buttons, the TV picture and the keyboard.</li>
+      <li><b>The instruments:</b> which ULA logic runs, the meters, the picture check and the report.</li>
+      <li><b>Logic analyser:</b> the ULA's pins and some inside signals over the last 16,000 T-states.</li>
+      <li><b>Sources, terms of use and what is not modelled</b>, with the design version the page was built from.</li>
+    </ol>
+
+    <h3 id="machine">The machine and the keyboard</h3>
+    <figure class="fig">
+      <a href="img/machine.png"><img src="img/machine.png" width="620" alt="The machine panel: buttons, a ZX81 picture showing ULA TEST BENCH and report 0/10, and the keyboard, with seven markers"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Load ROM…:</b> takes an 8,192-byte ZX81 ROM image; a file of any other size is refused. The message shows its CRC32. The ROM is saved in your browser and loaded again the next time you open the page.</li>
+      <li><b>Load program (.p)…:</b> puts a ZX81 <code>.p</code> file in the tape player and types <code>LOAD ""</code> at the K cursor. The tape signal itself is not modelled: when the ROM starts reading the tape, the program is put straight into RAM. Programs that need more than the bench's 16K are refused.</li>
+      <li><b>Run / Pause:</b> runs the machine at no more than a real ZX81's speed. Paused, the meters, the picture and the logic analyser show where it stopped.</li>
+      <li><b>Reset:</b> starts the machine again from power-on, as if it had been switched off and on.</li>
+      <li><b>Message:</b> what the page has just done, or why it refused a file.</li>
+      <li><b>Picture:</b> the last whole frame, made from the dots on the ULA's TV pin: white, black or grey where there is no picture (the borders of the frame and the sync). When the machine cannot finish frames quickly enough to look live (the gate-level logic, or stepping), the frame being drawn is laid over the last one, so you can see it build. Click the picture to give it the keyboard.</li>
+      <li><b>Keyboard:</b> the 40 keys, marked as on a ZX81: the keyword above (what the key gives at the K cursor), the red symbol or word with SHIFT, and the function below (after SHIFT + NEW LINE). On screen, SHIFT latches for the next key. On your own keyboard, letters, digits, space and full stop are the ZX81 keys, <kbd>Shift</kbd> is SHIFT, <kbd>Enter</kbd> is NEW LINE and <kbd>Backspace</kbd> is SHIFT + 0 (RUBOUT).</li>
+    </ol>
+
+    <h3 id="instruments">The ULA, the meters and the picture check</h3>
+    <figure class="fig">
+      <a href="img/instruments.png"><img src="img/instruments.png" width="520" alt="The instruments panel: the logic choice, meters, a picture check showing 768 of 768 match, and a written report, with ten markers"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Logic:</b> which ULA runs the machine. <b>Synchronous design</b> is the single-clock version made for an FPGA, and runs at about a real ZX81's speed. <b>Gate-level netlist</b> is every gate and flip-flop of the 2C210 with its own delay, and runs at about a hundredth of full speed: the ROM takes some minutes to reach the cursor. Changing it restarts the machine. See <a href="#hw-engines">The two ULAs</a>.</li>
+      <li><b>Speed:</b> how fast the machine is running, as a share of a real ZX81. Under it, <b>ZX81 time run</b> (the time the machine has run, in ZX81 seconds) and <b>Frames</b>, the vertical syncs seen on the ULA's TV pin.</li>
+      <li><b>Last frame:</b> the lines in the last frame and the length of its vertical sync, in lines. A ZX81 at the cursor gives 304 lines and 6.0 lines of sync.</li>
+      <li><b>Frames whose line count changed:</b> how many frames had a different number of lines from the one before. A key going down or up changes the line count for a few frames; that is the ROM's own timing. A count that keeps rising with nothing being pressed is worth reporting.</li>
+      <li><b>NMIs taken:</b> the non-maskable interrupts the Z80 took from the ULA's NMI pin, one for each line above and below the picture in SLOW mode. Under it, <b>Interrupts</b> (the Z80's interrupt acknowledges, one for each line of the picture) and <b>Wait states</b> (T-states the Z80 was held by the ULA's NMI through the board's WAIT transistor).</li>
+      <li><b>Program counter:</b> where the Z80 is in the ROM or the program.</li>
+      <li><b>Picture check:</b> every half second, the dots on the TV pin are read back as characters, using the ROM's own font, and compared with the display file in RAM. It applies only to ordinary character screens that have stood still for two checks: green is <b>768 of 768 match</b>; red gives the number of character cells that differ. The line beside it counts the checks and gives where the picture starts (dots after line sync, lines after frame sync). It says <b>no picture</b> in FAST mode, LOAD and SAVE, when there is no frame sync.</li>
+      <li><b>Write report:</b> writes a summary of the run into the box (see <a href="#report">Reporting what you find</a>).</li>
+      <li><b>Copy:</b> copies the report, writing it first if the box is empty. If your browser does not allow it, the report is selected so you can copy it yourself.</li>
+      <li><b>Report:</b> the text to paste into an issue or an email.</li>
+    </ol>
+
+    <h3 id="analyser">Logic analyser</h3>
+    <figure class="fig wide">
+      <a href="img/analyser.png"><img src="img/analyser.png" width="900" alt="The logic analyser showing 40 T-states that include a line sync, with eight markers"></a>
+      <figcaption>Paused during a line sync: <b>sync</b> and <b>black</b> are high while the line count runs from 16 to 31, and the row counter steps from 7 to 0.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>Step one instruction:</b> pauses the machine and runs one Z80 instruction.</li>
+      <li><b>Step one frame:</b> pauses and runs until the next vertical sync (at most four frames' worth of T-states), then runs the picture check on the frame.</li>
+      <li><b>Show:</b> how much to draw: 16, 40 or 120 T-states, or two whole lines (414 T-states).</li>
+      <li><b>Back:</b> moves the view back through the recording, up to its start.</li>
+      <li><b>Copy as VCD:</b> copies the whole recording in Value Change Dump format, which logic-analyser viewers such as GTKWave open. Each signal and bus becomes one variable; the time unit is the nanosecond.</li>
+      <li><b>Signals:</b> the ULA's pins and some inside signals, drawn at the level on the pin, so the control lines and selects, which are active low, are low while active. The pins are CLK (the Z80's clock), M1, MREQ, RD, WR, IORQ, HALT, NMI, WAIT, ROM CS and RAM CS. Inside the ULA, drawn high while true: <b>A0'–A8' driven</b> (the ULA is putting the font address on the ROM), <b>NOP forced</b> (the ULA is pulling the data lines to a NOP for a character), <b>character</b> (a character fetch is decoded), <b>latch open</b> (the character latch), <b>shift load</b> (the font byte loaded into the shift register), <b>sync</b>, <b>black</b>, <b>frame sync</b> and <b>NMI on</b>.</li>
+      <li><b>Buses:</b> the data bus as the ULA sees it (D0–D7), the address it drives or sees on A0'–A8', the line counter (0 to 206) and the character row counter (0 to 7), the first two in hexadecimal, the counters in decimal.</li>
+      <li><b>T-states:</b> the faint grid lines mark where each T-state starts, as the Z80's clock rises.</li>
+    </ol>
+    <p>The recording holds 65,536 samples, one per period of the ULA's 13 MHz clock (four to a T-state), so it covers the last 16,000 T-states or so. It records only with the synchronous design; with the gate-level netlist it stays empty. Pause the machine to read it: it is drawn when the machine pauses or steps.</p>
+
+    <h3 id="report">Reporting what you find</h3>
+    <p>The report gives everything needed to repeat the run: the design version the page was built from, which logic ran, the ROM's size and CRC32, the program loaded (name, size and CRC32), the ZX81 time run and speed, the frame, NMI, interrupt and wait-state counts with the program counter, the picture check's results and your browser. It ends with a space for what you saw. Write down what a real ZX81 does differently, and if you can, copy the logic analyser's VCD from the moment it happened.</p>
+    <p>Issues and reports go to the <a href="https://github.com/fdimer/z80-bench/tree/zx81-ULA/ula">zx81-ULA branch of fdimer/z80-bench</a>.</p>
+
+    <h2 id="hardware">Hardware reference</h2>
+
+    <h3 id="hw-what">What is being tested</h3>
+    <p>The ZX81's ULA is a Ferranti uncommitted logic array: a sea of identical bipolar gates on a chip, connected by a final metal layer to make Sinclair's design. Inside a ZX81 it makes the clock, decodes the memory and the keyboard port, times the TV lines, makes the NMIs that run the picture, forces NOPs onto the Z80's data bus while the display file is read, puts the font address on the ROM and shifts out the dots. The ZX81s modelled here have the 2C210, drawn by Ferranti on 12 January 1982 (drawing LD6679/ULA2C210/1).</p>
+    <p>The drawing was transcribed into a netlist, one line per gate, flip-flop or pin with its square on the drawing's grid, so every entry can be checked against the original. Two polarities that the drawing leaves to the circuit diagram (the ROM and RAM select cells, and the clock output) were settled by Ferranti's cell circuits, ULA 2C158/2. The aim is a description accurate enough to build a replacement chip from, for anyone repairing a machine for their own use. The netlist, the Verilog and the notes on how each was checked are in the repository; the drawings themselves are not.</p>
+
+    <h3 id="hw-loop">The closed loop</h3>
+    <p>In an ordinary emulator the ULA is code that behaves like the chip. Here the ULA is only logic, and the rest of the ZX81 is wired to its pins:</p>
+    <ul class="features">
+      <li><b>The Z80</b> runs T-state by T-state, timed from the ULA's own clock pin. Its address, MREQ, IORQ, RD, WR, M1 and HALT go to the ULA's inputs.</li>
+      <li><b>The data bus</b> is what the board makes of it: when the ULA pulls the data lines low (the NOP during a character fetch, the keyboard during a port read), the Z80 reads what the ULA drives, not what the memory holds.</li>
+      <li><b>The memory</b> is selected by the ULA's ROM CS and RAM CS pins, and the ROM's low address lines come from the ULA's A0'–A8' while it reads the font.</li>
+      <li><b>NMI and WAIT</b> come from the ULA's NMI pin. On the board, transistor TR1 turns NMI into WAIT while the Z80 is not halted; the bench does the same.</li>
+      <li><b>The picture</b> is the TV/TAPE pin, read every dot: sync, black or white.</li>
+      <li><b>The keyboard</b> is the five KBD lines, read by the ULA during a port read. The USA/UK link is open (UK, 50 Hz).</li>
+    </ul>
+
+    <h3 id="hw-engines">The two ULAs</h3>
+    <p>The <b>gate-level netlist</b> (<code>2c210.net</code>) is the drawing itself: 189 gates, flip-flops and pin drivers, simulated event by event. Each gate's delay comes from Ferranti's table of gate delays by its power (marked R, R/2 or R/3 on the drawing), its inputs and its load, from 2.8 ns to 26 ns. Like the chip, it makes its latch, load and reset pulses from those delays. It runs at about a hundredth of a real ZX81's speed.</p>
+    <p>The <b>synchronous design</b> (<code>2c210_sync.v</code>) does the same job with one 13 MHz clock, twice the ZX81's 6.5 MHz, so that it can go into an FPGA. A T-state is four clock periods. Every pulse the chip makes from gate delays becomes an edge of that clock:</p>
+    <div class="tablewrap"><table class="ref">
+      <thead><tr><th>In the chip</th><th>Made from</th><th>In the synchronous design</th></tr></thead>
+      <tbody>
+        <tr><td>Character latch open</td><td>Q19 low and OSC high, during M1</td><td>taken on the edge that ends the third quarter of the T-state</td></tr>
+        <tr><td>NOP on the data lines</td><td>M1, a character, latch closed</td><td>the same, combinational</td></tr>
+        <tr><td>Shift register load</td><td>a 35 ns pulse after Q19 rises, if MREQ is high</td><td>the edge that starts a T-state</td></tr>
+        <tr><td>Dot clock</td><td>OSC rising</td><td>two edges in each T-state</td></tr>
+        <tr><td>Line counter</td><td>ripple counter on Q19 falling, cleared at 207 or by the interrupt acknowledge</td><td>0 to 206, stepped once a T-state</td></tr>
+        <tr><td>NMI and frame-sync latches</td><td>cross-coupled gates, and a flip-flop clocked by MREQ</td><td>registers, set on the next clock edge (at most 77 ns later)</td></tr>
+        <tr><td>Memory selects, keyboard port, address enable</td><td>combinational</td><td>combinational</td></tr>
+      </tbody>
+    </table></div>
+    <p>The page builds the Verilog into JavaScript when it is made, so what runs is the text of the design. Its NMI and sync come about 95 ns (0.3 of a T-state) earlier than the gate-level model's, because the ripple counter's delay is gone; everything else matches.</p>
+
+    <h3 id="hw-frame">Lines, frames and the picture</h3>
+    <ul class="features">
+      <li><b>Lines:</b> the ULA's line counter counts T-states from 0 to 206, so a line is 207 T-states (about 64 µs at 3.25 MHz). Line sync, and with NMI on the NMI, is high for counts 16 to 31. An interrupt acknowledge restarts the counter, which is how the ROM lines the picture up with its own timing.</li>
+      <li><b>Frames:</b> a frame sync starts when the ROM reads the keyboard port with the NMI off, and ends with the next OUT. At the cursor, a frame is 304 lines and a sync of 6 lines, 50 a second.</li>
+      <li><b>Characters:</b> while the Z80 "executes" the display file, the ULA sees each character byte as it is fetched, forces a NOP onto the data bus, latches the character's six low bits and, in the refresh cycle, puts them with the row counter on A0'–A8' to read the font byte from the ROM. The byte is loaded into the shift register as the next M1 begins and shifted out at 6.5 MHz, two dots a T-state; bit 7 of the character inverts it.</li>
+      <li><b>Rows:</b> the row counter (0 to 7) steps on each line sync and is held at 0 by the frame sync.</li>
+    </ul>
+
+    <h3 id="hw-pins">The ULA's pins</h3>
+    <p>What the 40 pins do, from Ferranti's drawing, Sinclair's circuit diagram and Timex's specification for the chip (with Ferranti's handwritten replies). These are the electrical facts a board that replaces the chip would have to meet.</p>
+    <div class="tablewrap"><table class="ref">
+      <thead><tr><th>Pins</th><th>Signal</th><th>In the chip</th></tr></thead>
+      <tbody>
+        <tr><td>40, 34</td><td>+5 V, 0 V</td><td>bipolar logic</td></tr>
+        <tr><td>32, 30, 28, 26, 24, 23, 21, 19</td><td>D0–D7</td><td>TTL inputs; open-collector outputs with 5K pull-ups that sink 8 mA (against the 470 Ω resistors to the memory)</td></tr>
+        <tr><td>33, 31, 29, 27, 25</td><td>KBD0–KBD4</td><td>inputs with a higher threshold (high 2.7 V, low 1.0 V) and 16K pull-ups</td></tr>
+        <tr><td>22</td><td>USA/UK</td><td>as the keyboard inputs; the link, when fitted, grounds it</td></tr>
+        <tr><td>20</td><td>TAPE IN</td><td>low 0.2 V, high 1.0 V, no hysteresis ("there is no hysteresis on our i/p", Ferranti)</td></tr>
+        <tr><td>35</td><td>OSC</td><td>on-chip oscillator with a 6.5 MHz ceramic resonator</td></tr>
+        <tr><td>9, 10, 6, 8, 7, 17, 18, 11</td><td>MREQ, M1, RD, WR, IORQ, HALT, A15, A14</td><td>TTL inputs with 16K pull-ups</td></tr>
+        <tr><td>5, 4, 3, 36, 37, 38, 39, 1, 2</td><td>A0'–A8'</td><td>tri-state outputs, driven through the 1K resistors against the Z80 while the font is read; A0' and A1' are also inputs</td></tr>
+        <tr><td>14</td><td>Clock out</td><td>to transistor TR2, which drives the Z80's clock</td></tr>
+        <tr><td>15</td><td>NMI</td><td>open collector, 5K pull-up on the chip</td></tr>
+        <tr><td>13, 12</td><td>ROM CS, RAM CS</td><td>low within 68 ns (ROM) and 56 ns (RAM) of MREQ falling, Ferranti's maxima</td></tr>
+        <tr><td>16</td><td>TV/TAPE</td><td>one pin, three levels: white 4.0 V, black 3.0 V, sync 0.1 V; also the tape output</td></tr>
+      </tbody>
+    </table></div>
+    <p>With the gate delays, the netlist gives RAM CS 48 ns and ROM CS 48 ns after MREQ falls, and A0'–A8' driven 62 ns after M1 rises (Ferranti's maximum: 93 ns). One margin is tight: the font byte is loaded as the next M1 begins, in a pulse that ends about 70 ns after the Z80's clock rises, so the picture depends on the ROM holding the old byte that long. In the netlist the picture is right when the Z80's address delay plus the ROM's output hold is 33 ns or more.</p>
+
+    <h3 id="hw-checked">How far it is checked</h3>
+    <ul class="features">
+      <li><b>Against an emulator:</b> on a 16K ZX81 with the real ROM, a screen of normal and inverse characters and a key held down, every opcode fetch, font address, memory select, port read, row count and dot from the gate-level ULA matches the <a href="../../zx80/">ZX80 and ZX81 emulator</a>, and vertical sync starts and ends within 3 T-states of it. The gate level corrected two of that emulator's constants: the sync starts 20 T-states after the interrupt acknowledge begins, and lasts 16.</li>
+      <li><b>Closed loop:</b> with the ULA in charge, the ROM boots to the cursor on both engines; up to the first NMI the Z80 runs instruction for instruction as in the emulator. Over the first 0.75 s the netlist and the synchronous design give the same frames, NMIs, interrupts, wait states and program counter.</li>
+      <li><b>Programs:</b> <code>.p</code> programs load and run, with the same screens as in the emulator; 3D Monster Maze, which uses machine code, inverse and graphics characters, runs through its opening screens. The picture check gives 768 of 768 on the screens tried.</li>
+      <li><b>The Verilog:</b> both Verilog files compile in Yosys, and the synchronous design gives the same results after Yosys has synthesized it to gates.</li>
+      <li><b>Not yet:</b> no real hardware. The design has not been placed in an FPGA, its pin wrapper (tri-state and open-drain pins) has not been simulated, and nothing has been compared with a working ZX81's signals. That is what this bench is for.</li>
+    </ul>
+
+    <h3 id="hw-limits">What is not modelled</h3>
+    <ul class="features">
+      <li><b>The tape signal:</b> LOAD puts the program straight into RAM; nothing reads TAPE IN or records the tape side of TV/TAPE.</li>
+      <li><b>A RAM pack's own decoding:</b> the 16K is one block on the ULA's RAM CS.</li>
+      <li><b>The analogue side of the pins:</b> levels, thresholds and loading are not simulated; each pin is a logic value.</li>
+      <li><b>The Z80's timing:</b> its bus cycles follow the data sheet's shape with fixed delays.</li>
+      <li><b>60 Hz:</b> the USA/UK link is always open, so the machine is always the 50 Hz UK one.</li>
+      <li><b>The earlier 2C184 chip:</b> its netlist is in the repository, for comparison, but only partly transcribed and not on the bench.</li>
+    </ul>
+
+    <h3 id="terms">Sources and terms of use</h3>
+    <p>Ferranti logic diagram LD6679/ULA2C210/1 (12 January 1982) and the cell circuits ULA 2C158/2, from the Ferranti archive catalogued in 2026 by Happy Little Diodes (<a href="https://youtu.be/jiW3P1rJRMc">watch the video about the archive</a>); Sinclair's ZX81 circuit diagram; and Timex's engineering specification for the chip with Ferranti's replies. The netlist, the Verilog and how they were checked are in the <a href="https://github.com/fdimer/z80-bench/tree/zx81-ULA/ula">zx81-ULA branch of fdimer/z80-bench</a>.</p>
+    <p>The archive's documents are for preserving material of historical interest and for non-commercial, educational and archival research only. Commercial use of them or their contents, including in connection with the manufacture, marketing or sale of goods, is prohibited by Sky UK Limited. The netlist, the Verilog, the test bench and this documentation are made from those contents and carry the same terms: <b>strictly not for commercial use of any kind</b>. The code is under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The ZX81 ROM is not part of this project.</p>
+
+    <footer><a href="../">&larr; Back to ZX81 ULA Test Bench</a> · <a href="../../emulators/">Emulators</a> · <a href="../../">All projects</a></footer>
+  </main>
+</body>
+</html>
