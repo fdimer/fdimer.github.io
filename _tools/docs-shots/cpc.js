@@ -28,7 +28,7 @@ if(nc!==4)throw new Error('expected 4 ROM bands, covered '+nc);
 chk(await S.mark(p,[['#btnReset',1,'tl',0,-2],['#pScreen',2],['#pPinout',3],['#pMemChips',4],['panel:program',5],['panel:i/o',6],['panel:disassembly',7],['section.panel:has(#memView)',8],['#pMemMap',9],['#pRegs',10],['#pDebug',11],['#pTiming',12],['#pMach',13]]));
 await S.snap(p,out+'overview.png',{x:0,y:0,width:1440,height:await p.evaluate(()=>document.documentElement.scrollHeight)});
 // screen and keyboard
-chk(await S.mark(p,[['#cpScreen',1,'tl',18,18],['#cpScrInfo',2,'l',-16,0],['#cpLoadRom',3,'t',0,-2],['#cpRestart',4,'t',0,-2],['#cpDumpBin',5,'t',0,-2],['#cpGa',6,'t',0,-12],['#cpSound',7,'t',0,-12],['#cpTapeIns',8,'t',0,-2],['#cpTapePlay',9,'t',0,-2],['#cpTapeRew',10,'t',0,-2],['#cpTapeRec',11,'t',0,-2],['#cpTapeSave',12,'t',0,-2],['#cpTapeBlk',13,'b',0,12],['#cpTapeFast',14,'l',-14,0],['#cpTapeInfo',15,'l',-16,0],['#cpKb',16,'tl',-2,6]]));
+chk(await S.mark(p,[['#cpScreen',1,'tl',18,18],['#cpScrInfo',2,'l',-16,0],['#cpLoadRom',3,'t',0,-2],['#cpRestart',4,'t',0,-2],['#cpDumpBin',5,'t',0,-2],['#cpGa',6,'t',0,-12],['#cpSound',7,'t',0,-12],['#cpTapeIns',8,'t',0,-2],['#cpTapePlay',9,'t',0,-2],['#cpTapeRew',10,'t',0,-2],['#cpTapeRec',11,'t',0,-2],['#cpTapeSave',12,'t',0,-2],['#cpTapeBlk',13,'tl',150,-6],['label[for=cpTapeInstant]',14,'tl',-4,-8],['label[for=cpTapeFast]',15,'tl',-4,-8],['#cpTapeInfo',16,'l',-16,0],['#cpKb',17,'tl',-2,6]]));
 await S.snap(p,out+'screen.png',await S.clip(p,['#pScreen h2','#cpScreen','#cpKb'],20));
 // the processor, gate array and 6845, with the fault menu of the 6845's VSYNC pin open
 await p.click('#cpChipVdu g.pin[data-pin="VSYNC"]');await p.waitForTimeout(250);
