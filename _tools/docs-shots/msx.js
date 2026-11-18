@@ -26,9 +26,19 @@ await p.click('#mcTiles button:has-text("IC68")');await p.waitForTimeout(200);
 console.log('pins:',await p.evaluate(()=>[...document.querySelectorAll('#mcChip g.pin')].map(g=>g.dataset.pin).join(' ')));
 await p.click('#mcChip g.pin[data-pin="DOUT"]');await p.waitForTimeout(200);await p.check('.mcpop input[type=checkbox]');await p.waitForTimeout(150);await p.click('.mcpop button:has-text("Low")');await p.waitForTimeout(200);
 await p.keyboard.press('Escape');await p.click('#mcChip g.pin[data-pin="A1"]');await p.waitForTimeout(200);await p.evaluate(()=>{const e=document.querySelector('.mcpop, .pinpop');e.style.left=(-e.offsetWidth-14)+'px';e.style.top='0px';});await p.waitForTimeout(100);
-chk(await S.mark(p,[['text:#mcTiles button|IC42',1,'l',-4,0],['text:#mcTiles button|IC68',2,'l',-4,0],['text:#mcTiles button|IC3',3,'l',-4,0],['#mcChip',4,'tr',-30,10],['.mcpop, .pinpop',5,'tr',6,0],['#mcFaults',6,'l',-14,8],['#mcClear',7,'l',-16,0]]));
+chk(await S.mark(p,[['text:#mcTiles button|IC42',1,'l',-4,0],['text:#mcTiles button|IC68',2,'l',-4,0],['text:#mcTiles button|IC3',3,'l',-4,0],['text:#mcTiles button|IC2',4,'l',-4,0],['#mcChip',5,'tr',-30,10],['.mcpop, .pinpop',6,'tr',6,0],['#mcFaults',7,'r',-50,0],['#mcClear',8,'l',-16,0]]));
 await S.snap(p,out+'memchips.png',await S.clip(p,['#mcTiles','#mcFig','#mcInfo'],18));
 await p.keyboard.press('Escape');await p.click('#pMemChips h2');
+// the video processor: CD3 (D4) cut off and low, the picture it makes of the screen, and the menu of its shared INT pin
+await p.click('#mcClearAll');await p.click('#btnRun');await p.waitForTimeout(500);
+await p.click('#mcTiles button:has-text("IC2")');await p.waitForTimeout(200);
+await p.click('#mcChip g.pin[data-pin="CD3"]');await p.waitForTimeout(200);await p.check('.mcpop input[type=checkbox]');await p.waitForTimeout(150);await p.click('.mcpop button:has-text("Low")');await p.waitForTimeout(200);await p.keyboard.press('Escape');
+await p.click('#mxScreen');await p.keyboard.press('Enter');await p.waitForTimeout(400);for(const k of ['L','I','S','T','Enter']){await p.keyboard.press(k,{delay:90});await p.waitForTimeout(120)}await p.waitForTimeout(1500);
+await p.locator('#mxScreen').screenshot({path:out+'vdpfault.png'});
+await p.click('#btnRun');await p.waitForTimeout(300);
+chk(await S.mark(p,[['#mcChip g.pin[data-pin="CD3"] .nm',1,'r',16,0],['#mcChip g.pin[data-pin="CSW"] .nm',2,'l',-16,0],['#mcChip g.pin[data-pin="AD3"] .nm',3,'l',-16,0],['#mcChip g.pin[data-pin="INT"] .nm',4,'l',-16,0]]));
+await S.snap(p,out+'iochip.png',await S.clip(p,['#mcFig'],18));
+await p.keyboard.press('Escape');await p.click('#pMemChips h2');await p.click('#mcClearAll');await p.click('#btnRun');await p.waitForTimeout(1500);await p.click('#btnRun');await p.waitForTimeout(300);
 // MSX hardware panel
 chk(await S.mark(p,[['text:#mxState .hd|Slots',1,'r',-12,0],['text:#mxState .hd|Video processor',2,'r',-12,0],['text:#mxState .hd|PPI port C',3,'r',-12,0],['text:#mxState .hd|Sound',4,'r',-12,0],['text:#mxState .hd|Machine',5,'r',-12,0]]));
 await S.snap(p,out+'hardware.png',await S.clip(p,['#pMach']));

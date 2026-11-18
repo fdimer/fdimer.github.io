@@ -31,7 +31,8 @@
             <li><a href="#machine">The machine, the display and the keyboard</a></li>
             <li><a href="#carts">Cartridges, tape and dumps</a></li>
             <li><a href="#toolbar">Running and stepping</a></li>
-            <li><a href="#memchips">Memory chips and fault simulation</a></li>
+            <li><a href="#memchips">Memory and I/O chips, and fault simulation</a></li>
+            <li><a href="#iochips">The support chips</a></li>
             <li><a href="#hwpanel">MSX hardware panel</a></li>
             <li><a href="#bitmap">Memory bitmap</a></li>
             <li><a href="#tools">The debugging tools</a></li>
@@ -70,7 +71,7 @@
     <ol class="keyed">
       <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
       <li><b>Screen:</b> the picture, the machine choice, cartridges, tape, dumps and the keyboard.</li>
-      <li><b>Memory chips:</b> the ROM, RAM and video RAM chips, with live pins and fault simulation.</li>
+      <li><b>Memory and I/O chips:</b> the ROM, RAM and video RAM chips and the three support chips, with live pins and fault simulation.</li>
       <li><b>Pinout:</b> the Z80, live; its ringed pins take faults.</li>
       <li><b>Program:</b> the assembler and hex loader.</li>
       <li><b>I/O ports</b></li>
@@ -132,14 +133,15 @@
       <li><b>Status:</b> what the machine is doing, or what halted it.</li>
     </ol>
 
-    <h3 id="memchips">Memory chips and fault simulation</h3>
+    <h3 id="memchips">Memory and I/O chips, and fault simulation</h3>
     <figure class="fig wide">
-      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a pin disconnected on RAM chip IC68 and the fault menu of another pin open"></a>
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory and I/O chips panel with a pin disconnected on RAM chip IC68 and the fault menu of another pin open"></a>
     </figure>
     <ol class="keyed">
       <li><b>System ROM and firmware:</b> IC42 (BIOS), IC43 (BASIC) and IC44 (firmware).</li>
       <li><b>Main RAM:</b> IC58–IC61 and IC65–IC68, one chip for each data bit.</li>
       <li><b>Video RAM:</b> IC3–IC6 and IC9–IC12, the eight 4116s that belong to the video processor.</li>
+      <li><b>Support chips:</b> IC2 (the video processor), IC16 (the PPI) and IC48 (the sound chip). See <a href="#iochips">below</a>.</li>
       <li><b>Pinout:</b> click a tile to see that chip's pins, which follow the bus on every clock. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
       <li><b>Fault menu:</b> click a pin. It names the line the pin is on and the other pins that share it. Hold the whole line <b>High</b> or <b>Low</b>, or tick <b>Disconnected from the line</b> for a fault on this pin alone. A pin on a line of its own has the plain choices <b>Disconnected</b>, <b>High</b> and <b>Low</b>.</li>
       <li><b>Faults on this chip</b></li>
@@ -150,7 +152,7 @@
       <li><b>A line held high or low</b> is a short on the wire: every pin on that line, on every chip, sees the level and shows it.</li>
       <li><b>A pin disconnected from its line</b> (tick the box in the menu) is a broken trace or a lifted pin: only that chip is affected. A disconnected input floats high, or can be given a level of its own. A disconnected pin ignores a fault on its line.</li>
     </ul>
-    <p>The lines follow the Sony service manual's schematic. The Z80's data bus D0–D7 goes straight to the three ROMs, to each main RAM chip's DIN and DOUT, and to the video, sound and keyboard chips. Its address goes through the buffers IC47, IC54 and IC56 to AB0–AB15, which feed the ROMs. The main RAM chips share their address lines from the multiplexers IC57 and IC49, and their RAS, CAS and WE lines; the video RAM shares the video processor's address, RAS, CAS and R/W lines. The buffers, multiplexers and support chips are not drawn as chips.</p>
+    <p>The lines follow the Sony service manual's schematic. The Z80's data bus D0–D7 goes straight to the three ROMs, to each main RAM chip's DIN and DOUT, and to the video, sound and keyboard chips. Its address goes through the buffers IC47, IC54 and IC56 to AB0–AB15, which feed the ROMs. The main RAM chips share their address lines from the multiplexers IC57 and IC49, and their RAS, CAS and WE lines; the video RAM shares the video processor's address, RAS, CAS and R/W lines. The buffers, multiplexers and decoders are not drawn as chips.</p>
     <p>The Z80's own pins take faults too: click any ringed pin on the Pinout panel for the same menu (CLK pulses one clock on a click; right-click it for its menu). A fault on an address or data pin acts on everything the processor reads and writes; MREQ, IORQ, RD or WR held high stop those cycles; CLK, RESET, BUSREQ and WAIT hold the processor; INT and NMI act on it; M1 and HALT take faults too.</p>
     <p>The machine then runs with the faults, and the memory view and the disassembly show what the CPU reads through them:</p>
     <div class="tablewrap"><table class="ref">
@@ -162,6 +164,43 @@
       <tr><td>Write enable</td><td>Low</td><td>Every access becomes a write</td></tr>
     </table></div>
     <p>The video RAM's pins are shown for the CPU's reads and writes through port <code>98h</code>, not for the picture being drawn. Cartridge chips are not included. Faults are listed in the Debug pane and cleared there, here, or by Master reset.</p>
+
+    <h3 id="iochips">The support chips</h3>
+    <figure class="fig">
+      <img src="img/iochip.png" width="348" alt="The TMS9929A video processor drawn with 40 pins, its CD3 pin disconnected from the data line at low">
+      <img src="img/vdpfault.png" width="430" alt="The MSX screen with CD3 disconnected: the letters typed afterwards come out wrong and in the wrong places">
+    </figure>
+    <p>The TMS9929ANL video processor (IC2), the µPD8255AC-5 PPI (IC16) and the AY-3-8910 sound chip (IC48) are drawn with every pin live, wired as on the service manual's schematic (MAIN 1/2).</p>
+    <ol class="keyed">
+      <li><b>A pin with a fault:</b> here the video processor's CD3, which is the Z80's D4, cut off from the data line and low. Everything written to the video processor afterwards loses bit 4, so typing <code>LIST</code> puts the wrong letters in the wrong places, as in the picture beside it.</li>
+      <li><b>CSW:</b> its write select, from the I/O decoder for ports <code>98h</code> and <code>99h</code> (CSR is the read select).</li>
+      <li><b>AD3:</b> its address lines reach the video RAM chips (AD1–AD7 on their A0–A6), so a fault here acts on all eight.</li>
+      <li><b>INT:</b> the Z80's only interrupt.</li>
+    </ol>
+    <p>All three sit on the Z80's own data bus. The video processor's CD7–CD0 are D0–D7, in reverse order. AB0 is the PPI's A0 and the video processor's MODE, and AB1 is the PPI's A1. The video processor and the sound chip share the RESET line. The PPI's port A selects the slots, port B reads the keyboard columns, PC0–PC3 pick the keyboard row, PC4 runs the cassette motor, PC5 is the cassette output, PC6 the CAPS lamp and PC7 the key click. The sound chip's BC2 and A8 are tied high and A9 to ground; BC1 and BDIR come from gates on A0 and A1.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pin</th><th>Fault</th><th>Effect</th></tr>
+      <tr><td>CSW, CSR (video), CS (PPI)</td><td>High or disconnected</td><td>The chip never answers</td></tr>
+      <tr><td>CSW, CSR, CS</td><td>Low</td><td>The chip takes every I/O write or answers every I/O read; reads carry the AND of everything that answers</td></tr>
+      <tr><td>MODE, PPI A0 and A1</td><td>Any</td><td>The wrong register or port</td></tr>
+      <tr><td>Data pins</td><td>Any</td><td>That bit is read and written at the fault's level</td></tr>
+      <tr><td>Video XTAL1, XTAL2</td><td>Any</td><td>The video processor stops: the picture freezes and there are no interrupts, so the keyboard is no longer read</td></tr>
+      <tr><td>Video RESET</td><td>Low</td><td>Held in reset: registers cleared, no picture and no interrupt</td></tr>
+      <tr><td>Video INT</td><td>Disconnected</td><td>No interrupts reach the Z80, so the keyboard is no longer read</td></tr>
+      <tr><td>Video RD0–RD7</td><td>Any</td><td>That bit of what it reads from video RAM is fixed</td></tr>
+      <tr><td>Video AD, RAS, CAS, R/W</td><td>Any</td><td>Acts on the video RAM chips through their lines</td></tr>
+      <tr><td>Video Y</td><td>Any</td><td>The picture is black (low) or white (high)</td></tr>
+      <tr><td>PPI RESET</td><td>High or disconnected</td><td>Held in reset (it is active high): every port is an input, and every slot line floats high, so every page shows slot 3</td></tr>
+      <tr><td>PPI PA0–PA7</td><td>Any</td><td>A slot select bit is fixed, so a page shows the wrong slot</td></tr>
+      <tr><td>PPI PB0–PB7, PC0–PC3</td><td>Any</td><td>A keyboard column or the row is fixed: the wrong keys, or none</td></tr>
+      <tr><td>PPI PC7</td><td>Any</td><td>The key click is held at that level</td></tr>
+      <tr><td>Sound BDIR, BC1, BC2</td><td>At the wrong level</td><td>It misses register addresses or writes, or answers every I/O read</td></tr>
+      <tr><td>Sound A8, A9</td><td>A8 low, A9 high</td><td>It never answers</td></tr>
+      <tr><td>Sound RESET</td><td>Low</td><td>Held in reset: silent</td></tr>
+      <tr><td>Sound CLOCK; outputs A, B, C</td><td>Any</td><td>Silent; or that channel silent</td></tr>
+      <tr><td>Sound IOA0–IOA7</td><td>Any</td><td>A bit of its port A is fixed: a joystick line, the keyboard layout bit or the tape input</td></tr>
+    </table></div>
+    <p>The colour-difference outputs (R-Y, B-Y), the PPI's PC4–PC6 and the sound chip's IOB pins drive things the emulator does not model further, so their faults show on the pins only.</p>
 
     <h3 id="hwpanel">MSX hardware panel</h3>
     <figure class="fig">
@@ -283,6 +322,9 @@
       <tr><td class="mono">IC44</td><td>16K ROM</td><td>Firmware: Personal Data Bank</td></tr>
       <tr><td class="mono">IC58–IC61, IC65–IC68</td><td>4116 (HB-55P) or 64K dynamic RAM (HB-75P)</td><td>Main RAM, one chip for each data bit D0–D7</td></tr>
       <tr><td class="mono">IC3–IC6, IC9–IC12</td><td>4116</td><td>Video RAM. IC3 holds the video processor's RD0, which is its most significant bit, and IC12 its RD7</td></tr>
+      <tr><td class="mono">IC2</td><td>TMS9929ANL</td><td>Video processor</td></tr>
+      <tr><td class="mono">IC16</td><td>µPD8255AC-5</td><td>PPI</td></tr>
+      <tr><td class="mono">IC48</td><td>AY-3-8910</td><td>Sound generator</td></tr>
     </table></div>
     <p>These follow the service manual's schematic. They have not been checked against a real board.</p>
 
