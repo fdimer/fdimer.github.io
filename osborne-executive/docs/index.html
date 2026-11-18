@@ -32,7 +32,7 @@
             <li><a href="#disks">Floppy disks</a></li>
             <li><a href="#toolbar">Running and stepping</a></li>
             <li><a href="#chips">Chips</a></li>
-            <li><a href="#memchips">Memory chips and fault simulation</a></li>
+            <li><a href="#memchips">Memory and I/O chips, and fault simulation</a></li>
             <li><a href="#p1">The RAM board connector</a></li>
             <li><a href="#machine">Machine panel</a></li>
             <li><a href="#bitmap">Memory bitmap</a></li>
@@ -76,7 +76,7 @@
     <ol class="keyed">
       <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
       <li><b>Chips:</b> live pinouts of the Z80A, the two PIAs and the SIO.</li>
-      <li><b>Memory chips:</b> every memory chip in the machine, with live pins and fault simulation.</li>
+      <li><b>Memory and I/O chips:</b> every memory chip in the machine and the disk controller, with live pins and fault simulation.</li>
       <li><b>Screen:</b> the Executive's display, the ROM loader, the two disk drives and the keyboard.</li>
       <li><b>Program:</b> the assembler and hex loader.</li>
       <li><b>I/O ports:</b> the last value written to each port, and a log of port reads and writes.</li>
@@ -84,7 +84,7 @@
       <li><b>Memory:</b> what the CPU sees, in hex.</li>
       <li><b>Memory bitmap:</b> all the memory as a picture, tinted by what is switched in.</li>
       <li><b>Registers</b></li>
-      <li><b>Debug:</b> breakpoints, stops, forced pins and faults.</li>
+      <li><b>Debug:</b> breakpoints, stops and faults.</li>
       <li><b>Bus timing</b></li>
       <li><b>Machine:</b> the state of the bank switching, video, interrupts, PIAs and disk controller.</li>
     </ol>
@@ -124,7 +124,7 @@
     </figure>
     <ol class="keyed">
       <li><b>Reset CPU:</b> pulses the reset line: the CPU restarts at <code>0000h</code> and the PIAs are reset, which switches the ROM back in.</li>
-      <li><b>Master reset:</b> also forgets the ROM (load it again to switch on) and clears memory, breakpoints, stops, forced pins and faults. It asks for a second click.</li>
+      <li><b>Master reset:</b> also forgets the ROM (load it again to switch on) and clears memory, breakpoints, stops and faults. It asks for a second click.</li>
       <li><b>Clock 1 T-state</b> (<kbd>C</kbd>): one clock period.</li>
       <li><b>Step instruction</b> (<kbd>S</kbd>): one instruction.</li>
       <li><b>Run / Pause</b> (<kbd>R</kbd>)</li>
@@ -134,29 +134,59 @@
 
     <h3 id="chips">Chips</h3>
     <figure class="fig wide">
-      <a href="img/chips.png"><img src="img/chips.png" width="1080" alt="The Chips panel with four 40-pin chips and a pin menu open"></a>
+      <a href="img/chips.png"><img src="img/chips.png" width="1080" alt="The Chips panel with four 40-pin chips and the fault menu of a PIA pin open"></a>
     </figure>
     <p>The four large chips are drawn with every pin live, wired as on the OCC2 schematic. Amber is high, dark is low and a dashed outline is floating.</p>
     <ol class="keyed">
-      <li><b>UD22, Z80A CPU:</b> the same pinout as in Z80 Bench. Its ringed pins open the fault menu (see <a href="#memchips">fault simulation</a>); CLK pulses one clock on a click.</li>
+      <li><b>UD22, Z80A CPU:</b> the same pinout as in Z80 Bench. Its ringed pins open the fault menu (see <a href="#memchips">fault simulation</a>); CLK pulses one clock on a click, and a right-click opens its menu.</li>
       <li><b>UD12, MC6821 system PIA</b> (ports <code>00h</code>–<code>03h</code>): port A drives the bank select lines, CB1 receives VBLANK, and the chip also handles the speaker and disk select.</li>
       <li><b>UD8, MC6821 IEEE-488 PIA</b> (ports <code>10h</code>–<code>13h</code>): nothing is attached to it.</li>
       <li><b>UD4, Z80A SIO/2</b> (ports <code>0Ch</code>–<code>0Fh</code>): the modem (A) and printer (B) serial ports.</li>
-      <li><b>Pin menu:</b> click a highlighted input pin to toggle it, force it high or low, or release it. A forced pin ignores whatever drives it and is shown with a dashed red ring.</li>
+      <li><b>Fault menu:</b> every pin of the PIAs and the SIO, apart from power and ground, opens the same fault menu as the processor and the memory chips (see <a href="#memchips">fault simulation</a>). Here it is open on CB1 of the system PIA, which has a line of its own (VBLANK).</li>
       <li><b>Connected to bus:</b> untick it to pull a chip off the CPU bus. Its reads return <code>FFh</code>, writes to it are ignored and its interrupt no longer reaches /INT.</li>
       <li><b>Bus readout:</b> the machine cycle, the address bus and the data bus for the current clock.</li>
     </ol>
-    <p>Forced pins and disconnected chips are listed in the Debug pane, where you can release them.</p>
+    <p>Pin faults and disconnected chips are listed in the Debug pane, where you can remove them.</p>
+    <p>The PIAs and the SIO are wired to the board's lines as on the schematic (sheets 4, 12 and 14), so a fault on a shared line reaches every chip on it:</p>
+    <ul class="features">
+      <li><b>Data lines and ADR0, ADR1:</b> shared with the processor, the ROM sockets, the RAM board and the disk controller. ADR0 and ADR1 are the PIAs' RS0 and RS1, the SIO's C/D and B/A and the disk controller's A0 and A1.</li>
+      <li><b>RESET*:</b> the Z80, both PIAs, the SIO and the disk controller (its MR*).</li>
+      <li><b>IRQ*:</b> IRQA and IRQB of both PIAs and the SIO's INT, all open drain, onto the Z80's INT.</li>
+      <li><b>68 ENABLE and IOW*/R:</b> the PIAs' E and R/W. CS0 and CS1 of both PIAs and the SIO's IEI are tied to +5 V.</li>
+      <li><b>The SIO</b> shares the Z80's clock, RD*, IORQ* and M1*.</li>
+      <li><b>PRI1:</b> the system PIA's PA0, to the RAM board's P1. <b>DDEN*:</b> its PB0, to the disk controller. <b>FDC IRQ:</b> the disk controller's INTRQ, to CB1 of the IEEE-488 PIA.</li>
+    </ul>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pin</th><th>Fault</th><th>Effect</th></tr>
+      <tr><td>PIA E</td><td>Any</td><td>The PIA is never clocked, so it never answers</td></tr>
+      <tr><td>CS2* (PIA), CE* (SIO)</td><td>High or disconnected</td><td>The chip never answers</td></tr>
+      <tr><td>CS2*, CE*</td><td>Low</td><td>The chip answers every I/O cycle as well; reads carry the AND of what answers</td></tr>
+      <tr><td>PIA R/W, SIO RD*</td><td>At the wrong level</td><td>A read becomes a write of the floating bus (<code>FFh</code>), or a write becomes a read and is lost</td></tr>
+      <tr><td>RS0, RS1, C/D, B/A</td><td>Any</td><td>The wrong register is read or written</td></tr>
+      <tr><td>D0–D7</td><td>Any</td><td>That bit reads and is written at the fault's level</td></tr>
+      <tr><td>RESET*</td><td>Low</td><td>The chip is held in reset</td></tr>
+      <tr><td>RESET*</td><td>Disconnected or high</td><td>The chip misses the reset</td></tr>
+      <tr><td>Port and control pins</td><td>Any</td><td>Both the chip and its line see the level: on the system PIA, PA7 and PA6 fix the ROM and video RAM banks, PA0 the RAM bank, PB0 the density and PB1, PB2 the drive selects; CB1 no longer sees VBLANK</td></tr>
+      <tr><td>IRQA, IRQB, SIO INT</td><td>Disconnected</td><td>That chip's interrupts no longer reach the Z80</td></tr>
+      <tr><td>SIO CLK</td><td>Any</td><td>The SIO does nothing at all</td></tr>
+      <tr><td>SIO M1*</td><td>Low</td><td>The SIO is kept in reset (M1* low without RD* or IORQ* resets it)</td></tr>
+      <tr><td>SIO M1*</td><td>Disconnected or high</td><td>The SIO misses interrupt acknowledges and RETI, so its vector never reaches the Z80, which reads <code>FEh</code></td></tr>
+      <tr><td>SIO IORQ*</td><td>Disconnected or high</td><td>The SIO never answers, and misses interrupt acknowledges</td></tr>
+      <tr><td>SIO IEI</td><td>Low</td><td>The SIO never interrupts</td></tr>
+      <tr><td>SIO CTS, DCD</td><td>Any</td><td>The channel sees that level from the modem or printer port</td></tr>
+    </table></div>
+    <p>The SIO's serial clocks, data and handshake outputs, and the IEEE-488 port, have nothing attached in the emulator, so faults on them show on the pins but change nothing else.</p>
 
-    <h3 id="memchips">Memory chips and fault simulation</h3>
+    <h3 id="memchips">Memory and I/O chips, and fault simulation</h3>
     <figure class="fig wide">
-      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a pin disconnected on chip U10 and the fault menu of another pin open"></a>
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory and I/O chips panel with a pin disconnected on chip U10 and the fault menu of another pin open"></a>
     </figure>
     <ol class="keyed">
       <li><b>Main logic board:</b> the boot ROM, the scratch RAM, four video RAMs and two font RAMs.</li>
       <li><b>RAM board, bank 0:</b> U8–U15, one chip for each data bit D0–D7. These chips also hold <code>F000h</code>–<code>FFFFh</code> for both banks.</li>
       <li><b>RAM board, bank 1:</b> U17–U24, laid out as on the board.</li>
       <li><b>RAM board connector P1:</b> the 72-way connector between the RAM board and the main logic board, which can be faulted in the same way. See <a href="#p1">below</a>.</li>
+      <li><b>Disk controller UB17:</b> the FD1793. See <a href="#fdcchip">below</a>.</li>
       <li><b>Selected chip:</b> click a tile to see that chip. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red and shows the count.</li>
       <li><b>Pinout:</b> the selected chip's pins, which follow the bus on every clock. The video and font RAMs also show the display circuit's own reads between CPU accesses.</li>
       <li><b>Fault menu:</b> click a pin. It names the line the pin is on and the other pins that share it. Hold the whole line <b>High</b> or <b>Low</b>, or tick <b>Disconnected from the line</b> for a fault on this pin alone. A pin on a line of its own has the plain choices <b>Disconnected</b>, <b>High</b> and <b>Low</b>.</li>
@@ -169,7 +199,7 @@
       <li><b>A pin disconnected from its line</b> (tick the box in the menu) is a broken trace or a lifted pin: only that chip is affected. A disconnected input floats high, or can be given a level of its own. A disconnected pin ignores a fault on its line. On connector P1, it is a bad contact.</li>
     </ul>
     <p>The lines follow the OCC2 schematic (checked against an RD1137 rev 06 board) and the measured RAM board. The Z80 (UD22) has no buffers: its address lines ADR0–ADR15 and data lines DATA0–DATA7 go straight to ROM 0 (UD18), the ROM 1 socket (UD15) and P1, and each data line runs on to the two RAM chips of its bit, whose DIN and DOUT are joined. The RAM board's sixteen chips share their own address lines (from the buffers U25 and U16), the write enable and CAS; each row has its own RAS. The video RAMs and font RAMs have their own multiplexed lines, apart from the processor's buses.</p>
-    <p>The Z80's own pins take faults too: click any ringed pin on the Chips panel for the same menu (CLK pulses one clock on a click; right-click it for its menu). A fault on an address or data pin acts on everything the processor reads and writes; MREQ, IORQ, RD or WR held high stop those cycles; CLK, RESET, BUSREQ and WAIT hold the processor; INT and NMI act on it.</p>
+    <p>The Z80's own pins, and those of the PIAs and the SIO, take faults too: click any ringed pin on the Chips panel for the same menu (CLK pulses one clock on a click; right-click it for its menu). A fault on an address or data pin acts on everything the processor reads and writes; MREQ, IORQ, RD or WR held high stop those cycles; CLK, RESET, BUSREQ and WAIT hold the processor; INT and NMI act on it.</p>
     <p>The machine then runs with the faults, and the memory view and the disassembly show what the CPU reads through them:</p>
     <div class="tablewrap"><table class="ref">
       <tr><th>Pin</th><th>Fault</th><th>Effect</th></tr>
@@ -213,6 +243,34 @@
       <tr><td class="mono">CAE*</td><td>High or disconnected: the column address floats to FFh. Low: the row becomes the AND of the two address bytes</td></tr>
       <tr><td class="mono">RFSH*</td><td>High or disconnected: a refresh cycle only reaches the row of chips its address happens to select, so the bank that is not in use is not refreshed. Low: row address bit 7 is replaced by the board's refresh bit, and half the cells can no longer be reached</td></tr>
       <tr><td class="mono">MREQ*</td><td>No effect: it only clocks a refresh bit the board does not use</td></tr>
+    </table></div>
+    <h3 id="fdcchip">The disk controller</h3>
+    <figure class="fig">
+      <img src="img/fdc.png" width="348" alt="The FD1793 disk controller drawn with 40 pins, STEP disconnected and the menu of TR00* open">
+    </figure>
+    <p>UB17 is drawn with the schematic's pin names (sheet 13), and each pin shows its live level.</p>
+    <ol class="keyed">
+      <li><b>The processor's side:</b> CS* is FDC SEL from the decoder, RE* and WE* the board's DISK RE* and DISK WE* strobes, A0 and A1 are ADR0 and ADR1, D0–D7 the data lines, MR* is RESET*, and CLK the board's 1 MHz.</li>
+      <li><b>The drive's side:</b> STEP and DIR to the drives; INDEX*, TR00* and WPRT* from them; the read data and the write circuits. Here STEP is disconnected, shown with a dashed red ring.</li>
+      <li><b>DDEN*:</b> on a line with the system PIA's PB0, and INTRQ on a line with CB1 of the IEEE-488 PIA.</li>
+      <li><b>Fault menu</b> of TR00*, which has a line of its own.</li>
+    </ol>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pin</th><th>Effect of a fault</th></tr>
+      <tr><td class="mono">CS*, RE*, WE*, A0, A1, D0–D7</td><td>As for the PIAs: CS* high or disconnected and it never answers, low and it answers every I/O cycle; A0, A1 select the wrong register; a data pin puts that bit at the fault's level. WE* low turns a read into a write of <code>FFh</code>; WE* high loses writes; RE* high and reads float to <code>FFh</code>; RE* low during a write puts both strobes low, and the register gets <code>FFh</code></td></tr>
+      <tr><td class="mono">MR*</td><td>Low: held in reset (it keeps starting a Restore). Disconnected or high: it misses the reset</td></tr>
+      <tr><td class="mono">CLK</td><td>A command never finishes; the disk still turns</td></tr>
+      <tr><td class="mono">STEP</td><td>The head never moves; the track register still counts, so a verify fails with a seek error</td></tr>
+      <tr><td class="mono">DIR</td><td>The head always steps one way: high is in, low is out</td></tr>
+      <tr><td class="mono">TR00*</td><td>The controller believes the head is (low) or is never (high, or disconnected) on track 0. A Restore that never sees track 0 gives up after 255 steps</td></tr>
+      <tr><td class="mono">INDEX*</td><td>No index edges at either level, so a missing sector is never given up on, and a Write Track waits for ever</td></tr>
+      <tr><td class="mono">WPRT*</td><td>Low: every disk looks write-protected. High: none does</td></tr>
+      <tr><td class="mono">RDY</td><td>Low: every read and write command ends at once with Not Ready (on the board it is tied high)</td></tr>
+      <tr><td class="mono">RAWRD*, RDCLK</td><td>No data comes off the disk, so no sector is ever found. CP/M then reports that it cannot load a program</td></tr>
+      <tr><td class="mono">WG, WD</td><td>Writes never reach the disk, though the controller reports them as done</td></tr>
+      <tr><td class="mono">DDEN*</td><td>The density is fixed (low is double); at the wrong one the controller finds nothing on the disk</td></tr>
+      <tr><td class="mono">INTRQ</td><td>Its line to the IEEE-488 PIA's CB1: disconnected, CB1 floats high</td></tr>
+      <tr><td class="mono">DRQ, HLD, HLT, TG43, RG, EARLY, LATE, TEST*, WF*/VFOE*</td><td>No effect in the emulation (DRQ goes nowhere on the board: the ROM polls the status register)</td></tr>
     </table></div>
     <p class="note">Rows of RAM that go without refresh lose their data after about two seconds of machine time and then read as <code>FFh</code>. A real chip holds its data for a different and irregular time; the figure is a stand-in.</p>
 

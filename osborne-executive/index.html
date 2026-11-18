@@ -34,7 +34,8 @@
       <li><b>RAM board connector:</b> the 72-way connector between the RAM board and the main logic board, with every pin live. Fault any signal pin to see what a bad contact does: wrong cells, a fixed bank, lost writes, or RAM that forgets because it is no longer refreshed</li>
       <li><b>Real time:</b> 3.99 MHz with 60 Hz video, or full speed</li>
       <li><b>Debugging:</b> all of Z80 Bench's tools, including stepping clock by clock, bus timing, breakpoints and register, memory, pin and bus stops</li>
-      <li><b>Fault finding:</b> force any input pin high or low, or pull a chip off the bus altogether, and watch how the ROM copes</li>
+      <li><b>I/O chips:</b> the two PIAs, the SIO and the FD1793 disk controller take the same faults, wired to the board's lines as on the schematic. Hold a chip select, a strobe, RESET* or the interrupt line, cut a PIA's bank line or the controller's STEP, TR00* or read data, and watch the ROM and CP/M cope, or not</li>
+      <li><b>Fault finding:</b> faults are listed in the Debug pane; you can also pull a chip off the bus altogether</li>
     </ul>
 
     <h2>Coming next</h2>

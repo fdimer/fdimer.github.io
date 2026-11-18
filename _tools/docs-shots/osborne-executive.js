@@ -26,7 +26,7 @@ await p.click('#mcChip g.pin[data-pin="DOUT"]');await p.waitForTimeout(200);
 await p.check('.pinpop input[type=checkbox]');await p.waitForTimeout(150);await p.click('.pinpop button:has-text("Low")').catch(async()=>{console.log('no low button:',await p.evaluate(()=>document.querySelector('.pinpop')&&document.querySelector('.pinpop').innerText))});
 await p.waitForTimeout(200);
 await p.keyboard.press('Escape');await p.click('#mcChip g.pin[data-pin="A1"]');await p.waitForTimeout(200);await p.evaluate(()=>{const e=document.querySelector('.mcpop, .pinpop');e.style.left=(-e.offsetWidth-14)+'px';e.style.top='0px';});await p.waitForTimeout(100);
-chk(await S.mark(p,[['text:#mcTiles button|UD18',1,'l',-4,0],['text:#mcTiles button|U8',2,'l',-4,0],['text:#mcTiles button|U17',3,'l',-4,0],['text:#mcTiles button|P1',4,'l',-4,0],['text:#mcTiles button|U10',5,'b',0,2],['#mcChip',6,'tr',-30,10],['.pinpop',7,'tr',6,0],['#mcFaults',8,'l',-14,8],['#mcClear',9,'l',-16,0]]));
+chk(await S.mark(p,[['text:#mcTiles button|UD18',1,'l',-4,0],['text:#mcTiles button|U8',2,'l',-4,0],['text:#mcTiles button|U17',3,'l',-4,0],['text:#mcTiles button|P1',4,'l',-4,0],['text:#mcTiles button|UB17',5,'l',-4,0],['text:#mcTiles button|U10',6,'b',0,2],['#mcChip',7,'tr',-30,10],['.pinpop',8,'tr',6,0],['#mcFaults',9,'r',-50,0],['#mcClear',10,'l',-16,0]]));
 {const c=await S.clip(p,['#mcTiles','#mcFig','#mcInfo'],18);await S.snap(p,out+'memchips.png',c);}
 await p.keyboard.press('Escape');await p.click('#pMemChips h2');
 // the RAM board connector P1, with a fault and the pin menu open
@@ -36,6 +36,14 @@ await p.click('#mcChip g.pin[data-pin="PRI1"]');await p.waitForTimeout(200);
 chk(await S.mark(p,[['#mcChip g.pin[data-pin="ROMDEC"]',1,'r',34,0],['#mcChip g.pin[data-pin="A14"]',2,'r',22,0],['#mcChip g.pin[data-pin="D6"]',3,'r',22,0],['#mcChip g.pin[data-pin="A5"]',4,'l',-22,0],['.pinpop',5,'tr',6,0]]));
 await S.snap(p,out+'p1.png',await S.clip(p,['#mcFig'],18));
 await p.keyboard.press('Escape');await p.click('#pMemChips h2');
+// the disk controller, with STEP cut off and the menu of TR00* open
+await p.click('#mcTiles button:has-text("UB17")');await p.waitForTimeout(200);
+await p.click('#mcChip g.pin[data-pin="STEP"]');await p.waitForTimeout(200);await p.click('.pinpop button[data-a="z"]');await p.waitForTimeout(200);await p.keyboard.press('Escape');
+await p.click('#mcChip g.pin[data-pin="TR00"]');await p.waitForTimeout(200);
+await p.evaluate(()=>{const e=document.querySelector('.pinpop'),f=e.parentElement.getBoundingClientRect(),t=document.querySelector('#mcChip g.pin[data-pin="EARLY"] .stub').getBoundingClientRect();e.style.top=(t.top-f.top-4)+'px'});await p.waitForTimeout(100);
+chk(await S.mark(p,[['#mcChip g.pin[data-pin="CS"] .nm',1,'l',-16,0],['#mcChip g.pin[data-pin="STEP"] .nm',2,'l',-16,0],['#mcChip g.pin[data-pin="DDEN"] .nm',3,'r',16,0],['.pinpop',4,'tr',6,0]]));
+await S.snap(p,out+'fdc.png',await S.clip(p,['#mcFig'],18));
+await p.keyboard.press('Escape');await p.click('#pMemChips h2');await p.click('#mcClear');
 // debug pane listing the fault
 chk(await S.mark(p,[['#dbgList',1,'tl',-6,16]]));
 await S.snap(p,out+'debug.png',await S.clip(p,['#pDebug']));
