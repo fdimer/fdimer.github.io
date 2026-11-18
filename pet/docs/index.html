@@ -32,7 +32,7 @@
             <li><a href="#roms">ROMs and sockets</a></li>
             <li><a href="#programs">Programs and listings</a></li>
             <li><a href="#toolbar">Running and stepping</a></li>
-            <li><a href="#memchips">Memory chips and fault simulation</a></li>
+            <li><a href="#memchips">Memory and I/O chips, and fault simulation</a></li>
             <li><a href="#hwpanel">PET hardware panel</a></li>
             <li><a href="#bitmap">Memory bitmap</a></li>
             <li><a href="#tools">The debugging tools</a></li>
@@ -71,7 +71,7 @@
     <ol class="keyed">
       <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
       <li><b>Screen:</b> the picture, the BASIC and RAM choices, programs, the ROM sockets and the keyboard.</li>
-      <li><b>Memory chips:</b> every memory chip on the board, with live pins and fault simulation.</li>
+      <li><b>Memory and I/O chips:</b> every memory chip on the board and the three interface chips, with live pins and fault simulation.</li>
       <li><b>Pinout:</b> the 6502, live; its ringed pins take faults.</li>
       <li><b>Program:</b> the assembler and hex loader.</li>
       <li><b>I/O registers:</b> the last value written to the interface chips, and a log.</li>
@@ -146,15 +146,16 @@
       <li><b>Status:</b> what the machine is doing, or what halted it.</li>
     </ol>
 
-    <h3 id="memchips">Memory chips and fault simulation</h3>
+    <h3 id="memchips">Memory and I/O chips, and fault simulation</h3>
     <figure class="fig wide">
-      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a pin disconnected on RAM chip UI2 and the fault menu of another pin open"></a>
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory and I/O chips panel with a pin disconnected on RAM chip UI2 and the fault menu of another pin open"></a>
     </figure>
     <ol class="keyed">
       <li><b>RAM, lower 16K:</b> UI2–UI9, one 4116 for each data bit. Position 9 holds data bit 0 and position 2 holds bit 7.</li>
       <li><b>RAM, upper 16K:</b> UJ2–UJ9, arranged the same way.</li>
       <li><b>Screen RAM and character generator:</b> the two 2114s UF7 and UF8, and the character ROM UF10.</li>
       <li><b>ROM sockets:</b> UD3–UD9.</li>
+      <li><b>Interface chips:</b> UC7 (PIA 1), UC6 (PIA 2) and UC5 (the VIA). See <a href="#iochips">below</a>.</li>
       <li><b>Pinout:</b> click a tile to see that chip's pins, which follow the bus on every clock. The screen RAM and the character generator also show the video circuit's own reads between CPU accesses. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
       <li><b>Fault menu:</b> click a pin. It names the line the pin is on and the other pins that share it. Hold the whole line <b>High</b> or <b>Low</b>, or tick <b>Disconnected from the line</b> for a fault on this pin alone. A pin on a line of its own has the plain choices <b>Disconnected</b>, <b>High</b> and <b>Low</b>.</li>
       <li><b>Faults on this chip</b></li>
@@ -177,6 +178,34 @@
       <tr><td>Write enable</td><td>Low</td><td>Every access becomes a write</td></tr>
     </table></div>
     <p>Faults are listed in the Debug pane and cleared there, here, or by Master reset.</p>
+
+    <h3 id="iochips">The interface chips</h3>
+    <figure class="fig">
+      <img src="img/iochip.png" width="348" alt="The 6522 VIA drawn with 40 pins, CA2 held high and the fault menu of its clock pin open">
+    </figure>
+    <p>The two 6520 PIAs and the 6522 VIA are drawn with every pin live, wired as on sheets 1–3 of the logic diagram. Hover over a pin to see what it is connected to.</p>
+    <ol class="keyed">
+      <li><b>A pin with a fault:</b> here the VIA's CA2, which picks the character set, held high, so the screen shows the second (lower-case) set whatever the program does.</li>
+      <li><b>Chip selects:</b> CS2 (marked) is I/O, low from <code>E800h</code> to <code>EFFFh</code>, on all three. CS1 is BA4 on PIA 1, BA5 on PIA 2, and BA6 AND X8XX on the VIA; the PIAs' CS0 is X8XX (BA8–BA11 = 1000).</li>
+      <li><b>IRQ:</b> both IRQ pins of each PIA and the VIA's IRQ share the 6502's IRQ line.</li>
+      <li><b>Fault menu</b> of φ2. The three chips share BΦ2, the buffered clock, so the menu offers the whole line or this pin alone.</li>
+    </ol>
+    <p>They sit on the 6502's own data bus; BA0–BA3 select their registers; R/W comes straight from the 6502. Their RES comes through a 7417 buffer, so it is a separate line from the 6502's own RES pin.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pin</th><th>Fault</th><th>Effect</th></tr>
+      <tr><td>φ2</td><td>Any</td><td>The chip is never clocked, so it never answers; the VIA's timers stop</td></tr>
+      <tr><td>CS0, CS1</td><td>Low or high</td><td>Low: the chip never answers. High: it answers wherever its other selects agree, as well as at its own address</td></tr>
+      <tr><td>CS2</td><td>High or disconnected</td><td>The chip never answers</td></tr>
+      <tr><td>CS2</td><td>Low</td><td>The chip answers wherever its CS0 and CS1 agree, for example PIA 1 at <code>1810h</code>; reads carry the AND of everything that answers</td></tr>
+      <tr><td>R/W</td><td>At the wrong level</td><td>A read becomes a write of the floating bus (the last address byte), or a write becomes a read and is lost</td></tr>
+      <tr><td>RS0–RS3</td><td>Any</td><td>The wrong register is read or written</td></tr>
+      <tr><td>D0–D7</td><td>Any</td><td>That bit is read and written at the fault's level</td></tr>
+      <tr><td>RESET</td><td>Low</td><td>The chip is held in reset</td></tr>
+      <tr><td>RESET</td><td>Disconnected or high</td><td>The chip misses the reset</td></tr>
+      <tr><td>Port and control pins</td><td>Any</td><td>Both the chip and its line see the level. PIA 1's PA0–PA3 pick the keyboard row and its PB0–PB7 read the columns, so the wrong keys appear or none; its CB1 takes VIDEO ON, so the 60 Hz interrupt stops (and the cursor with it). The VIA's CA2 picks the character set and its CB2 makes the sound</td></tr>
+      <tr><td>IRQA, IRQB, IRQ</td><td>Disconnected</td><td>That chip's interrupts no longer reach the 6502</td></tr>
+    </table></div>
+    <p>The cassettes, the IEEE-488 port and the user port have nothing attached in the emulator, so faults on their pins show on the pins but change nothing else.</p>
 
     <h3 id="hwpanel">PET hardware panel</h3>
     <figure class="fig">
@@ -244,9 +273,9 @@
     <h3 id="hw-io">Interface chips</h3>
     <div class="tablewrap"><table class="ref">
       <tr><th>Chip</th><th>Address</th><th>Use</th></tr>
-      <tr><td>PIA 1 (6520)</td><td class="mono">E810h</td><td>Port A bits 0–3 select a keyboard row; port B reads its eight keys. Cassette 1. CB1 takes VIDEO ON, which gives the 60 Hz interrupt</td></tr>
-      <tr><td>PIA 2 (6520)</td><td class="mono">E820h</td><td>The IEEE-488 data bus: port A in, port B out</td></tr>
-      <tr><td>VIA (6522)</td><td class="mono">E840h</td><td>IEEE-488 control lines, cassette 2, the user port on port A, VIDEO ON on port B bit 5, character set select on CA2, sound on CB2</td></tr>
+      <tr><td>UC7, PIA 1 (6520)</td><td class="mono">E810h</td><td>Port A bits 0–3 select a keyboard row; port B reads its eight keys. Cassette 1. CB1 takes VIDEO ON, which gives the 60 Hz interrupt</td></tr>
+      <tr><td>UC6, PIA 2 (6520)</td><td class="mono">E820h</td><td>The IEEE-488 data bus: port A in, port B out</td></tr>
+      <tr><td>UC5, VIA (6522)</td><td class="mono">E840h</td><td>IEEE-488 control lines, cassette 2, the user port on port A, VIDEO ON on port B bit 5, character set select on CA2, sound on CB2</td></tr>
     </table></div>
 
     <h3 id="hw-video">Video and the 60 Hz interrupt</h3>

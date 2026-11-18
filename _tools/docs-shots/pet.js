@@ -26,9 +26,17 @@ await S.snap(p,out+'screen.png',await S.clip(p,['#ptScreen','#ptKb'],20));
 await p.click('#mcTiles button:has-text("UI2")');await p.waitForTimeout(200);
 await p.click('#mcChip g.pin[data-pin="DOUT"]');await p.waitForTimeout(200);await p.check('.mcpop input[type=checkbox]');await p.waitForTimeout(150);await p.click('.mcpop button:has-text("Low")');await p.waitForTimeout(200);
 await p.keyboard.press('Escape');await p.click('#mcChip g.pin[data-pin="A1"]');await p.waitForTimeout(200);await p.evaluate(()=>{const e=document.querySelector('.mcpop, .pinpop');e.style.left=(-e.offsetWidth-14)+'px';e.style.top='0px';});await p.waitForTimeout(100);
-chk(await S.mark(p,[['text:#mcTiles button|UI',1,'l',-4,0],['text:#mcTiles button|UJ',2,'l',-4,0],['text:#mcTiles button|UF',3,'l',-4,0],['text:#mcTiles button|UD',4,'l',-4,0],['#mcChip',5,'tr',-30,10],['.mcpop, .pinpop',6,'tr',6,0],['#mcFaults',7,'l',-14,8],['#mcClear',8,'l',-16,0]]));
+chk(await S.mark(p,[['text:#mcTiles button|UI',1,'l',-4,0],['text:#mcTiles button|UJ',2,'l',-4,0],['text:#mcTiles button|UF',3,'l',-4,0],['text:#mcTiles button|UD',4,'l',-4,0],['text:#mcTiles button|UC7',5,'l',-4,0],['#mcChip',6,'tr',-30,10],['.mcpop, .pinpop',7,'tr',6,0],['#mcFaults',8,'r',-50,0],['#mcClear',9,'l',-16,0]]));
 await S.snap(p,out+'memchips.png',await S.clip(p,['#mcTiles','#mcFig','#mcInfo'],18));
 await p.keyboard.press('Escape');await p.click('#pMemChips h2');
+// the VIA: CA2 (the character set) held high, and the menu of the shared clock pin open
+await p.click('#mcTiles button:has-text("UC5")');await p.waitForTimeout(200);
+await p.click('#mcChip g.pin[data-pin="CA2"]');await p.waitForTimeout(200);await p.click('.mcpop button[data-a="1"]');await p.waitForTimeout(200);await p.keyboard.press('Escape');
+await p.click('#mcChip g.pin[data-pin="PHI2"]');await p.waitForTimeout(200);
+await p.evaluate(()=>{const e=document.querySelector('.mcpop'),f=e.parentElement.getBoundingClientRect(),t=document.querySelector('#mcChip g.pin[data-pin="PB0"] .stub').getBoundingClientRect();e.style.top=(t.top-f.top-4)+'px';e.style.left='4px'});await p.waitForTimeout(100);
+chk(await S.mark(p,[['#mcChip g.pin[data-pin="CA2"] .nm',1,'r',16,0],['#mcChip g.pin[data-pin="CS2"] .nm',2,'r',16,0],['#mcChip g.pin[data-pin="IRQ"] .nm',3,'r',16,0],['.mcpop',4,'tr',6,0]]));
+await S.snap(p,out+'iochip.png',await S.clip(p,['#mcFig'],18));
+await p.keyboard.press('Escape');await p.click('#pMemChips h2');await p.click('#mcClear');
 // PET hardware panel
 chk(await S.mark(p,[['text:#ptState .hd|PIA 1',1,'r',-12,0],['text:#ptState .hd|PIA 2',2,'r',-12,0],['text:#ptState .hd|VIA',3,'r',-12,0],['text:#ptState .hd|Video',4,'r',-12,0],['text:#ptState .hd|Machine',5,'r',-12,0]]));
 await S.snap(p,out+'hardware.png',await S.clip(p,['#pMach']));
