@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sinclair ZX Spectrum 48K</title>
+  <meta name="description" content="A Sinclair ZX Spectrum 48K emulator built on Z80 Bench from the issue 4A/4B circuit diagram, with the ULA's contention timed T-state by T-state, tapes, snapshots and the ULA laid open beside the Z80. Runs in your browser with your own ROM.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../emulators/">&larr; Emulators</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; RUN</p>
+      <h1>Sinclair ZX Spectrum 48K</h1>
+      <p class="lead">An emulator of Sinclair's 1982 home computer, built on <a href="../z80-bench/">Z80 Bench</a> and modelled from the issue 4A/4B circuit diagram. In a Spectrum one custom chip, the ULA, makes the clock, draws the picture from the lower 16K of RAM and reads the keyboard and the cassette, and holds the Z80 whenever both want that RAM at once. The emulator runs the real ROM and shows what the Z80 and the ULA are doing on every clock.</p>
+    </header>
+
+    <a class="button" href="app/">Open the emulator</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>The real ROM:</b> load your own 48K ROM image, 16 KB (it isn't included); your browser remembers it</li>
+      <li><b>Contention, T-state by T-state:</b> while the ULA reads the screen, a cycle that uses the lower 16K of RAM or an even port is held until the ULA is done, in the 6, 5, 4, 3, 2, 1, 0, 0 pattern of the real machine. Every read and write happens at its true T-state, and every instruction's contention agrees with the Fuse emulator's test suite. The held T-states show in the clock-by-clock bus timing, and you can switch contention off to compare</li>
+      <li><b>Video:</b> 312 lines of 224 T-states, built cell by cell from the screen memory as the ULA reads it, so border effects and screens changed while they are drawn show as they would on a television. Flash, bright and the border from port FE</li>
+      <li><b>Port FE and the floating bus:</b> the keyboard's half-rows, the EAR input with the threshold of issue 3 and later boards, the border, MIC and the speaker; odd ports read whatever the ULA is fetching for the picture</li>
+      <li><b>Cassette:</b> insert a TAP or TZX tape, or a WAV recording of a real cassette, and press Play: the tape is played as a real signal into EAR, so the ROM's loader and the custom loaders of games read it bit by bit, with the loading stripes in the border. Instant loading puts anything the ROM loads straight into memory, and the tape stops by itself afterwards; fast loading runs at full speed while a loader is reading. Record what <code>SAVE</code> writes, load it back, and save it as a TAP or TZX file, or as a WAV file to play into a real Spectrum</li>
+      <li><b>Snapshots:</b> load 48K <code>.sna</code> and <code>.z80</code> snapshots, and save the machine as a <code>.sna</code>. Tapes and snapshots can be chosen inside a <code>.zip</code>, on a computer or a phone</li>
+      <li><b>Sound:</b> the beeper, played in real time</li>
+      <li><b>Keyboard:</b> type on your keyboard (characters become the Spectrum keys that give them) or use the on-screen 48K keyboard, marked with each key's keyword, symbol and extended-mode word</li>
+      <li><b>The ULA beside the Z80:</b> both chips with live pins, numbered as on the circuit diagram: the interrupt, the CPU clock stopping, the ROM select, the keyboard lines and MIC/EAR</li>
+      <li><b>Memory bitmap:</b> every bit of the ROM and the RAM as a pixel, with the screen bitmap, the attributes and BASIC's system variables tinted</li>
+      <li><b>Debugging:</b> Z80 Bench's tools, including bus timing, disassembler, breakpoints and stepping, plus a panel showing where the ULA is in the frame, how long the CPU has been held, and port FE</li>
+      <li><b>Real time:</b> 3.5 MHz, or full speed</li>
+    </ul>
+
+    <h2>Coming next</h2>
+    <p>Faults on the chips, as on the other emulators (a held or disconnected pin on the ULA, the ROM and the RAM chips), the ULA's own screen reads followed clock by clock, and a documentation page.</p>
+
+    <h2>Source</h2>
+    <a class="button secondary" href="https://github.com/fdimer/z80-bench/tree/spectrum">View on GitHub (spectrum branch)</a>
+
+    <h2>Licence</h2>
+    <p>The emulator is free for anyone to use non-commercially under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The Spectrum ROM is not part of this project.</p>
+
+    <footer><a href="../emulators/">&larr; Back to emulators</a> · <a href="../">All projects</a></footer>
+  </main>
+</body>
+</html>
