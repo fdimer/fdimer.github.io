@@ -342,6 +342,7 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
 #chip .pin.forced.fz .ring { stroke-dasharray: 2 3; }
 #cpuFig { position: relative; margin: 0; }
 #cpuFaults { display: block; text-align: center; margin-top: 2px; }
+.dumprow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 </style>
 
 <div class="wrap">
@@ -485,6 +486,11 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
         </div>
         <div class="vscroll" id="memView" tabindex="0" aria-label="Memory"><div class="vspace"><table class="mem vrows" id="mem"></table></div></div>
         <p class="hint">Scroll through all 64 KB as the CPU sees it now, through whichever slots are switched in. Click a byte to edit it (RAM only). Blue marks the instruction being executed, amber marks bytes written by the last instruction, underline marks the top of the stack. With Follow PC ticked, each step brings the current instruction back into view; untick it to keep watching another area.</p>
+        <div class="dumprow">
+          <button id="memDumpBin" type="button" title="All 64 KB as the CPU sees it now, as one binary file (byte 0 is address 0000h)">Dump memory (.bin)</button>
+          <button id="memDumpTxt" type="button" title="A readable listing: the registers and a hex dump with characters, repeated rows collapsed">Memory listing (.txt)</button>
+        </div>
+        <div class="msg" id="memDumpMsg"></div>
       </section>
 
       <section class="panel" id="pMemMap">
@@ -1078,7 +1084,8 @@ function disasm(read, addr, rec) {
 }
 
 if (typeof module !== 'undefined') module.exports = { Z80, disasm, h2, h4 };
-
+</script>
+<script>
 // ---- Z80 assembler (two-pass). Opcode table is generated from the disassembler. ----
 const ASM_TABLE = (() => {
   const table = new Map();
@@ -1321,7 +1328,8 @@ function assemble(source, base = 0) {
 }
 
 if (typeof module !== 'undefined') module.exports = { assemble, ASM_TABLE };
-
+</script>
+<script>
 // Memory chips as objects with pins, for the live pin display and for fault simulation.
 // A MemChip stores some of the bits (dmask) of every byte in part of a machine's memory array: all eight for a
 // byte-wide ROM or RAM, four for a 2114, one for a 4116 or 4164 dynamic RAM. The chips that together make up the
@@ -1350,6 +1358,9 @@ const MEM_PINOUTS = {
     [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'A11', 'i'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'CS2', 'c'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
   '2364': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
     [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'A11', 'i'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'A12', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
+  // 2732 4K EPROM: pin 20 is the output enable (and VPP when programming), pin 18 the chip enable
+  '2732': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
+    [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'CE', 'i'], [19, 'A10', 'i'], [20, 'OE', 'i'], [21, 'A11', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
   '6116': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
     [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'CE', 'i'], [19, 'A10', 'i'], [20, 'OE', 'i'], [21, 'WE', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
   '2114': [[1, 'A6', 'i'], [2, 'A5', 'i'], [3, 'A4', 'i'], [4, 'A3', 'i'], [5, 'A0', 'i'], [6, 'A1', 'i'], [7, 'A2', 'i'], [8, 'CS', 'i'], [9, 'GND', 'g'],
@@ -1368,13 +1379,19 @@ const MEM_ACTIVE_LOW = new Set(['CE', 'CS', 'OE', 'WE', 'RAS', 'CAS', 'PGM']);
 class MemChip {
   // arr/base/abits: where the chip's cells are (arr[base + address], address 0 .. 2^abits - 1)
   // extra: rom, dram (1-bit dynamic RAM: bit, mux = address pins), nib (2114 or 4416: 0 = low nibble, 4 = high),
+  //        dbits (instead of nib: the data bit on each of I/O1-I/O4, when the board does not wire them in order),
   //        mux (multiplexed address pins: pin n carries bits n and n + mux), amap (instead: the address bits each pin carries, as a mask per pin),
   //        en (name of the chip-select pin), plus anything the machine wants
   constructor(id, part, what, range, arr, base, abits, extra) {
     Object.assign(this, { id, part, what, range, arr, base, abits, mask: (1 << abits) - 1, f: {}, en: 'CE', mux: 0, nib: -1 }, extra || {});
-    this.dmask = this.dram ? 1 << this.bit : this.nib >= 0 ? 0x0F << this.nib : 0xFF;
+    this.setDbits(this.dbits);
+  }
+  setDbits(dbits) {
+    this.dbits = dbits || null;
+    this.dmask = this.dram ? 1 << this.bit : this.dbits ? this.dbits.reduce((s, b) => s | 1 << b, 0) : this.nib >= 0 ? 0x0F << this.nib : 0xFF;
     this.recalc();
   }
+  ioBit(n) { return this.dbits ? this.dbits[n - 1] : n - 1 + this.nib; }      // the data bit on pin I/On (or DQn)
   setFault(pin, v) { if (v === null || v === undefined) delete this.f[pin]; else this.f[pin] = v; this.recalc(); }
   recalc() {
     const f = this.f, lvl = k => f[k] === 'z' ? 1 : f[k], high = k => k in f && lvl(k) === 1;
@@ -1382,7 +1399,7 @@ class MemChip {
     for (const k in f) {
       n++; let m;
       if ((m = /^A(\d+)$/.exec(k))) { const b = +m[1], bits = this.amap ? this.amap[b] : this.mux ? (1 << b) | (1 << (b + this.mux)) : 1 << b; if (lvl(k)) aOr |= bits; else aAnd &= ~bits; }
-      else if ((m = /^[DO](\d)$/.exec(k)) || (m = /^(?:I\/O|DQ)(\d)$/.exec(k))) { const b = /^[DO]\d$/.test(k) ? +m[1] : +m[1] - 1 + this.nib; if (lvl(k)) dOr |= 1 << b; else dAnd &= ~(1 << b); }
+      else if ((m = /^[DO](\d)$/.exec(k)) || (m = /^(?:I\/O|DQ)(\d)$/.exec(k))) { const b = /^[DO]\d$/.test(k) ? +m[1] : this.ioBit(+m[1]); if (lvl(k)) dOr |= 1 << b; else dAnd &= ~(1 << b); }
     }
     Object.assign(this, { aAnd, aOr, dAnd, dOr, faulty: n > 0 });
     const strobed = this.mux > 0, off = strobed ? 'RAS' in f || 'CAS' in f : high(this.en);
@@ -1498,7 +1515,8 @@ MEM_PINOUTS.Z80 = [[1, 'A11'], [2, 'A12'], [3, 'A13'], [4, 'A14'], [5, 'A15'], [
   [16, 'INT'], [17, 'NMI'], [18, 'HALT'], [19, 'MREQ'], [20, 'IORQ'], [21, 'RD'], [22, 'WR'], [23, 'BUSACK', 'o'], [24, 'WAIT'], [25, 'BUSREQ'], [26, 'RESET'], [27, 'M1'], [28, 'RFSH', 'o'], [29, 'GND', 'g'],
   ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => [30 + n, 'A' + n])].map(([n, name, k]) => [n, name, k || 'i']);
 if (typeof module !== 'undefined') module.exports = { MemChip, BoardChip, BOARD_FAULTS, MEM_PINOUTS, MEM_ACTIVE_LOW, memBankFlag, memBankRead, memBankWrite, memSetFault, memClearFaults, memFaultList };
-
+</script>
+<script>
 // MSX1 machine model for Z80 Bench, set up as the Sony HB-55P (16K RAM) or HB-75P (64K RAM).
 // An MSX is a Z80A at 3.58 MHz with three support chips:
 //   TMS9929A video processor (ports 98h data, 99h control/status): 16K of its own video RAM, four screen
@@ -2031,7 +2049,6 @@ class MSXMachine {
 }
 Object.assign(MSXMachine.prototype, BOARD_FAULTS);
 if (typeof module !== 'undefined') module.exports = { MSXMachine, MSXCart, MSX, MSX_KEYS, MSX_TOKENS };
-
 </script>
 <script>
 (() => {
@@ -3111,6 +3128,51 @@ $('dbgAdd').onclick = dbgAdd;
 for (const id of ['dbgAddr', 'dbgMemVal', 'dbgBusVal']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); dbgAdd(); } });
 $('dbgList').addEventListener('click', e => { const b = e.target.closest('button[data-key]'); if (!b) return; b.classList.contains('x') ? dbgRemove(b.dataset.key) : dbgGo(b.dataset.key); });
 $('dbgClear').onclick = () => { if (mcReady) { msx.clearFaults(); disDirty = true; } breakpoints.clear(); afterBps.clear(); watches.clear(); memWatches.clear(); pinWatches.clear(); busWatches.clear(); hitReg = null; dbgHit = null; render(); };
+// ---------- dump memory to a file ----------
+// Files leave through the claude.ai viewer's save prompt when this page runs there (it accepts .txt and .zip, so the
+// binary dump goes inside a .zip); anywhere else, through an ordinary browser download.
+const benchSaver = window.claude && typeof window.claude.use === 'function' ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+function benchCrc(b) { let c = ~0; for (const x of b) { c ^= x; for (let k = 0; k < 8; k++) c = c & 1 ? (c >>> 1) ^ 0xEDB88320 : c >>> 1; } return ~c >>> 0; }
+function benchZip(name, bytes) {   // one stored (uncompressed) file
+  const n = new TextEncoder().encode(name), crc = benchCrc(bytes), len = bytes.length, le = (v, w) => Array.from({ length: w }, (_, i) => (v >>> (8 * i)) & 0xFF);
+  const common = [...le(20, 2), 0, 0, 0, 0, 0, 0, 0x21, 0, ...le(crc, 4), ...le(len, 4), ...le(len, 4), ...le(n.length, 2), 0, 0];
+  const local = [0x50, 0x4B, 3, 4, ...common], central = [0x50, 0x4B, 1, 2, 20, 0, ...common, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const end = [0x50, 0x4B, 5, 6, 0, 0, 0, 0, 1, 0, 1, 0, ...le(central.length + n.length, 4), ...le(local.length + n.length + len, 4), 0, 0];
+  return new Blob([new Uint8Array(local), n, bytes, new Uint8Array(central), n, new Uint8Array(end)]);
+}
+async function benchDownload(name, data, type) {   // resolves to the name the file was saved under, or null if declined
+  const saver = await benchSaver;
+  if (saver) {
+    let fname = name, body = data; if (!/\.txt$/i.test(name)) { fname = name + '.zip'; body = benchZip(name, data); }
+    try { await saver.save({ filename: fname, data: body }); return fname; } catch (e) { if (e && e.code === 'declined') return null; throw e; }
+  }
+  const url = URL.createObjectURL(new Blob([data], { type })), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return name;
+}
+function benchStamp() { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`; }
+function memSnapshot() { const b = new Uint8Array(0x10000); for (let a = 0; a < 0x10000; a++) b[a] = peekMem(a); return b; }
+function memListing(b) {
+  const out = ['MSX memory dump: 64 KB as the CPU sees it, ' + new Date().toLocaleString('en-AU'), ''];
+  const rv = regsView(); out.push('Registers', '  ' + REGDEF.map(([n, get]) => n + ' ' + fmtReg(n, get(rv))).join('  '), '');
+  out.push('Hex dump (a row of * stands for rows identical to the one above)');
+  let prev = null, starred = false;
+  for (let r = 0; r < 0x10000; r += 16) {
+    const row = b.subarray(r, r + 16), key = row.join(',');
+    if (key === prev && r + 16 < 0x10000) { if (!starred) { out.push('*'); starred = true; } continue; }
+    prev = key; starred = false;
+    const hex = [...row].map(v => h2(v)), txt = [...row].map(v => v >= 0x20 && v < 0x7F ? String.fromCharCode(v) : '.').join('');
+    out.push(`${h4(r)}  ${hex.slice(0, 8).join(' ')}  ${hex.slice(8).join(' ')}  ${txt}`);
+  }
+  return out.join('\n') + '\n';
+}
+function memDumpDone(p, what) {
+  const m = $('memDumpMsg');
+  p.then(n => { if (n) { m.className = 'msg ok'; m.textContent = `${what} saved as ${n} (look in your downloads).`; } else { m.className = 'msg'; m.textContent = 'Not saved: the download was declined.'; } })
+   .catch(e => { m.className = 'msg err'; m.textContent = 'Could not save the file' + (e && e.message ? ': ' + e.message : '.'); });
+}
+$('memDumpBin').onclick = () => memDumpDone(benchDownload(`msx-memory-${benchStamp()}.bin`, memSnapshot(), 'application/octet-stream'), 'Memory (65,536 bytes, byte 0 is address 0000h)');
+$('memDumpTxt').onclick = () => memDumpDone(benchDownload(`msx-memory-${benchStamp()}.txt`, memListing(memSnapshot()), 'text/plain;charset=utf-8'), 'Memory listing');
 // ---------- master reset: memory, ROMs, every debug point and the input pins ----------
 function masterReset() {
   if (running) stopRun();
@@ -3691,3 +3753,4 @@ setMode(savedMode === 'hex' ? 'hex' : 'asm');
   else { resetCPU(); mxNoRom(); render(); } }
 })();
 </script>
+</html>

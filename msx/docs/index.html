@@ -151,7 +151,7 @@
       <li><b>A pin disconnected from its line</b> (tick the box in the menu) is a broken trace or a lifted pin: only that chip is affected. A disconnected input floats high, or can be given a level of its own. A disconnected pin ignores a fault on its line.</li>
     </ul>
     <p>The lines follow the Sony service manual's schematic. The Z80's data bus D0–D7 goes straight to the three ROMs, to each main RAM chip's DIN and DOUT, and to the video, sound and keyboard chips. Its address goes through the buffers IC47, IC54 and IC56 to AB0–AB15, which feed the ROMs. The main RAM chips share their address lines from the multiplexers IC57 and IC49, and their RAS, CAS and WE lines; the video RAM shares the video processor's address, RAS, CAS and R/W lines. The buffers, multiplexers and support chips are not drawn as chips.</p>
-    <p>The Z80's own pins take faults too: click any ringed pin on the Pinout panel for the same menu (CLK pulses one clock on a click; right-click it for its menu). A fault on an address or data pin acts on everything the processor reads and writes; MREQ, IORQ, RD or WR held high stop those cycles; CLK, RESET, BUSREQ and WAIT hold the processor; INT and NMI act on it.</p>
+    <p>The Z80's own pins take faults too: click any ringed pin on the Pinout panel for the same menu (CLK pulses one clock on a click; right-click it for its menu). A fault on an address or data pin acts on everything the processor reads and writes; MREQ, IORQ, RD or WR held high stop those cycles; CLK, RESET, BUSREQ and WAIT hold the processor; INT and NMI act on it; M1 and HALT take faults too.</p>
     <p>The machine then runs with the faults, and the memory view and the disassembly show what the CPU reads through them:</p>
     <div class="tablewrap"><table class="ref">
       <tr><th>Pin</th><th>Fault</th><th>Effect</th></tr>
@@ -191,7 +191,7 @@
       <li><a href="../../z80-bench/docs/#pinout">Pinout</a>: as described there, except that the input pins open the fault menu here instead of toggling</li>
       <li><a href="../../z80-bench/docs/#program">Loading a program</a>: the sample program loads into RAM at <code>E000h</code></li>
       <li><a href="../../z80-bench/docs/#dis">Disassembly and breakpoints</a></li>
-      <li><a href="../../z80-bench/docs/#memory">Memory</a></li>
+      <li><a href="../../z80-bench/docs/#memory">Memory</a>, with <b>Dump memory (.bin)</b> and <b>Memory listing (.txt)</b> for the 64K the CPU sees through the slots now (the screen panel's dumps save the RAM and video RAM themselves)</li>
       <li><a href="../../z80-bench/docs/#regs">Registers and register stops</a></li>
       <li><a href="../../z80-bench/docs/#debug">Debug pane</a>: memory, pin and bus stops</li>
       <li><a href="../../z80-bench/docs/#timing">Bus timing</a></li>

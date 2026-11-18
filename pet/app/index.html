@@ -877,7 +877,8 @@ function disasm(read, addr) {
 }
 
 if (typeof module !== 'undefined') module.exports = { M6502, OPS6502, MODE_LEN, disasm, h2, h4 };
-
+</script>
+<script>
 // ---- 6502 assembler (two-pass) ----
 // Syntax: LDA #$10 / LDA $10 / LDA $1234,X / LDA ($10),Y / LDA ($10,X) / JMP ($1234) / ASL A
 // Numbers: $1F 0x1F 1Fh %1010 42 'A'; * = current address; <expr low byte, >expr high byte.
@@ -1105,7 +1106,8 @@ function assemble(source, base = 0) {
 }
 
 if (typeof module !== 'undefined') module.exports = { assemble, ASM_OPS };
-
+</script>
+<script>
 // Motorola MC6821 PIA: two 8-bit ports with data direction registers, control lines
 // CA1/CA2/CB1/CB2 and interrupt outputs IRQA/IRQB.
 // Register select rs: 0 = port A data or DDR A, 1 = CRA, 2 = port B data or DDR B, 3 = CRB.
@@ -1203,7 +1205,8 @@ class M6821 {
   }
 }
 if (typeof module !== 'undefined') module.exports = { M6821 };
-
+</script>
+<script>
 // MOS 6522 VIA: two 8-bit ports with data direction registers, two 16-bit timers, a shift register,
 // control lines CA1/CA2/CB1/CB2 and one interrupt output.
 // Registers: 0 ORB, 1 ORA, 2 DDRB, 3 DDRA, 4/5 timer 1 counter, 6/7 timer 1 latch, 8/9 timer 2, 10 shift register,
@@ -1299,7 +1302,8 @@ class M6522 {
   }
 }
 if (typeof module !== 'undefined') module.exports = { M6522 };
-
+</script>
+<script>
 // Memory chips as objects with pins, for the live pin display and for fault simulation.
 // A MemChip stores some of the bits (dmask) of every byte in part of a machine's memory array: all eight for a
 // byte-wide ROM or RAM, four for a 2114, one for a 4116 or 4164 dynamic RAM. The chips that together make up the
@@ -1328,6 +1332,9 @@ const MEM_PINOUTS = {
     [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'A11', 'i'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'CS2', 'c'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
   '2364': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
     [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'A11', 'i'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'A12', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
+  // 2732 4K EPROM: pin 20 is the output enable (and VPP when programming), pin 18 the chip enable
+  '2732': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
+    [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'CE', 'i'], [19, 'A10', 'i'], [20, 'OE', 'i'], [21, 'A11', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
   '6116': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
     [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'CE', 'i'], [19, 'A10', 'i'], [20, 'OE', 'i'], [21, 'WE', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
   '2114': [[1, 'A6', 'i'], [2, 'A5', 'i'], [3, 'A4', 'i'], [4, 'A3', 'i'], [5, 'A0', 'i'], [6, 'A1', 'i'], [7, 'A2', 'i'], [8, 'CS', 'i'], [9, 'GND', 'g'],
@@ -1346,13 +1353,19 @@ const MEM_ACTIVE_LOW = new Set(['CE', 'CS', 'OE', 'WE', 'RAS', 'CAS', 'PGM']);
 class MemChip {
   // arr/base/abits: where the chip's cells are (arr[base + address], address 0 .. 2^abits - 1)
   // extra: rom, dram (1-bit dynamic RAM: bit, mux = address pins), nib (2114 or 4416: 0 = low nibble, 4 = high),
+  //        dbits (instead of nib: the data bit on each of I/O1-I/O4, when the board does not wire them in order),
   //        mux (multiplexed address pins: pin n carries bits n and n + mux), amap (instead: the address bits each pin carries, as a mask per pin),
   //        en (name of the chip-select pin), plus anything the machine wants
   constructor(id, part, what, range, arr, base, abits, extra) {
     Object.assign(this, { id, part, what, range, arr, base, abits, mask: (1 << abits) - 1, f: {}, en: 'CE', mux: 0, nib: -1 }, extra || {});
-    this.dmask = this.dram ? 1 << this.bit : this.nib >= 0 ? 0x0F << this.nib : 0xFF;
+    this.setDbits(this.dbits);
+  }
+  setDbits(dbits) {
+    this.dbits = dbits || null;
+    this.dmask = this.dram ? 1 << this.bit : this.dbits ? this.dbits.reduce((s, b) => s | 1 << b, 0) : this.nib >= 0 ? 0x0F << this.nib : 0xFF;
     this.recalc();
   }
+  ioBit(n) { return this.dbits ? this.dbits[n - 1] : n - 1 + this.nib; }      // the data bit on pin I/On (or DQn)
   setFault(pin, v) { if (v === null || v === undefined) delete this.f[pin]; else this.f[pin] = v; this.recalc(); }
   recalc() {
     const f = this.f, lvl = k => f[k] === 'z' ? 1 : f[k], high = k => k in f && lvl(k) === 1;
@@ -1360,7 +1373,7 @@ class MemChip {
     for (const k in f) {
       n++; let m;
       if ((m = /^A(\d+)$/.exec(k))) { const b = +m[1], bits = this.amap ? this.amap[b] : this.mux ? (1 << b) | (1 << (b + this.mux)) : 1 << b; if (lvl(k)) aOr |= bits; else aAnd &= ~bits; }
-      else if ((m = /^[DO](\d)$/.exec(k)) || (m = /^(?:I\/O|DQ)(\d)$/.exec(k))) { const b = /^[DO]\d$/.test(k) ? +m[1] : +m[1] - 1 + this.nib; if (lvl(k)) dOr |= 1 << b; else dAnd &= ~(1 << b); }
+      else if ((m = /^[DO](\d)$/.exec(k)) || (m = /^(?:I\/O|DQ)(\d)$/.exec(k))) { const b = /^[DO]\d$/.test(k) ? +m[1] : this.ioBit(+m[1]); if (lvl(k)) dOr |= 1 << b; else dAnd &= ~(1 << b); }
     }
     Object.assign(this, { aAnd, aOr, dAnd, dOr, faulty: n > 0 });
     const strobed = this.mux > 0, off = strobed ? 'RAS' in f || 'CAS' in f : high(this.en);
@@ -1476,7 +1489,8 @@ MEM_PINOUTS.Z80 = [[1, 'A11'], [2, 'A12'], [3, 'A13'], [4, 'A14'], [5, 'A15'], [
   [16, 'INT'], [17, 'NMI'], [18, 'HALT'], [19, 'MREQ'], [20, 'IORQ'], [21, 'RD'], [22, 'WR'], [23, 'BUSACK', 'o'], [24, 'WAIT'], [25, 'BUSREQ'], [26, 'RESET'], [27, 'M1'], [28, 'RFSH', 'o'], [29, 'GND', 'g'],
   ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => [30 + n, 'A' + n])].map(([n, name, k]) => [n, name, k || 'i']);
 if (typeof module !== 'undefined') module.exports = { MemChip, BoardChip, BOARD_FAULTS, MEM_PINOUTS, MEM_ACTIVE_LOW, memBankFlag, memBankRead, memBankWrite, memSetFault, memClearFaults, memFaultList };
-
+</script>
+<script>
 // Commodore PET 2001-N / CBM 3000 series ("Dynamic PET", main board assembly 320351) for 6502 Bench.
 // A 6502 at 1 MHz with:
 //   RAM      0000h-7FFFh   8K, 16K or 32K of 4116 dynamic RAM
@@ -1598,6 +1612,8 @@ class PETMachine {
     this.heldWhy = 'PHI0' in z ? 'no clock at the 6502\'s PHI0 pin' : z.RES === 0 ? 'RES is low at the 6502: it is held in reset' : z.RDY === 0 ? 'RDY is low at the 6502: it waits' : null;
     if (z.NMI === 0 && !this.nmiLow && this.cpu) this.cpu.nmiPending = true;
     this.nmiLow = z.NMI === 0;
+    if (z.SO === 0 && !this.soLow && this.cpu) this.cpu.p |= 0x40;             // SO going low sets the overflow flag
+    this.soLow = z.SO === 0;
   }
   held() { return this.heldWhy; }
   busA(a) { return this.fx ? this.cpuC.busA(a) : a; }
@@ -1770,7 +1786,6 @@ class PETMachine {
 }
 Object.assign(PETMachine.prototype, BOARD_FAULTS);
 if (typeof module !== 'undefined') module.exports = { PETMachine, PET, PET_KEYS, PET_SOCKETS, PET_TOKENS };
-
 </script>
 <script>
 (() => {
@@ -3311,7 +3326,7 @@ const MC = {
   }
 };
 // ---------- the processor's pins take faults too ----------
-const CPU_FAULT_PINS = ['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10', 'A11', 'A12', 'A13', 'A14', 'A15', 'D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'RW', 'RDY', 'IRQ', 'NMI', 'RES'], MCCPU = pet.chips.indexOf(pet.chipById['UC4']);
+const CPU_FAULT_PINS = ['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10', 'A11', 'A12', 'A13', 'A14', 'A15', 'D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'RW', 'SYNC', 'RDY', 'IRQ', 'NMI', 'SO', 'RES'], MCCPU = pet.chips.indexOf(pet.chipById['UC4']);
 let cpuFaultsDone = false;
 function cpuFaultPins() {
   cpuFaultsDone = true; const fig = $('cpuFig');
@@ -3479,3 +3494,4 @@ setMode(savedMode === 'hex' ? 'hex' : 'asm');
   else { resetCPU(true); ptNoRom(); render(); } }
 })();
 </script>
+</html>

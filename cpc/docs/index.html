@@ -99,7 +99,7 @@
       <li><b>Picture details:</b> the screen mode and its number of columns, the 6845's scan line, and the frame count.</li>
       <li><b>Load ROM…:</b> takes the firmware and BASIC. The message under the buttons gives each image's CRC and names the ROMs it recognises. With the firmware but no BASIC the machine starts and then stops in the empty half.</li>
       <li><b>Power on / restart:</b> clears the RAM, resets the machine and runs it in real time.</li>
-      <li><b>Dump RAM (.bin):</b> saves all 64K of RAM, <code>0000h</code>–<code>FFFFh</code>, as a raw file.</li>
+      <li><b>Dump RAM (.bin):</b> saves all 64K of RAM, <code>0000h</code>–<code>FFFFh</code>, as a raw file. Beside it, <b>RAM listing (.txt)</b> saves the registers, the state of the gate array, the 6845, the 8255 and the sound chip, any faults, and the RAM as a hex dump.</li>
       <li><b>Gate array:</b> the chip fitted at IC116, a 40010 or a 40007. The two behave alike here; their pins are arranged differently, which matters for the fault menus.</li>
       <li><b>Sound:</b> through the built-in speaker, as from the stereo socket, or off; see <a href="#sound">Sound</a>.</li>
       <li><b>Insert tape (.cdt)…:</b> puts a CDT or TZX tape file in the deck.</li>
@@ -166,7 +166,7 @@
       <a href="img/chips.png"><img src="img/chips.png" width="1080" alt="The Z80, the 40010 gate array and the 6845 with live pins, and the fault menu of the 6845's VSYNC pin open"></a>
     </figure>
     <ol class="keyed">
-      <li><b>Z80A (IC111):</b> the processor. Clicking its CLK pin pulses one clock; right-click it for its fault menu.</li>
+      <li><b>Z80A (IC111):</b> the processor. Its bus pins, M1, HALT and the inputs open a fault menu on a click; clicking its CLK pin pulses one clock, and a right-click opens its menu.</li>
       <li><b>Gate array (IC116):</b> drawn with the pin arrangement chosen on the Screen panel. Its CPU ADDR, CAS ADDR and 244EN pins are shown only.</li>
       <li><b>6845 (IC108):</b> the video controller. Its MA10, MA11, RA3, RA4 and CURSOR pins go nowhere that matters on this board and are shown only.</li>
       <li><b>Fault menu:</b> click any ringed pin. It names the line the pin is on and the other pins that share it; see <a href="#faults">Fault simulation</a>.</li>
@@ -275,7 +275,7 @@
       <li><a href="../../z80-bench/docs/#pinout">Pinout</a>: as described there, except that the input pins open the fault menu here instead of toggling</li>
       <li><a href="../../z80-bench/docs/#program">Loading a program</a>: the sample program loads into RAM at <code>8000h</code> and draws a bar across the top of the screen. From BASIC, load it without <b>Reset CPU after loading</b> and type <code>MEMORY &amp;7FFF:CALL &amp;8000</code></li>
       <li><a href="../../z80-bench/docs/#dis">Disassembly and breakpoints</a></li>
-      <li><a href="../../z80-bench/docs/#memory">Memory</a></li>
+      <li><a href="../../z80-bench/docs/#memory">Memory</a>, with <b>Dump memory (.bin)</b> and <b>Memory listing (.txt)</b> for the 64K the CPU sees now, ROM where a ROM half is switched on</li>
       <li><a href="../../z80-bench/docs/#regs">Registers and register stops</a></li>
       <li><a href="../../z80-bench/docs/#debug">Debug pane</a>: memory, pin and bus stops, and the faults</li>
       <li><a href="../../z80-bench/docs/#timing">Bus timing</a>: shows the wait states the gate array adds</li>

@@ -416,6 +416,8 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
         <div class="row osbbar">
           <button id="osbLoadRom" class="primary" type="button">Load ROM…</button><input type="file" id="osbRomFile" hidden>
           <button id="osbRestart" type="button" title="Reset the machine and run in real time">Power on / restart</button>
+          <button id="osbDumpRam" type="button" title="Both 64K banks of the RAM board as one file: bank 0 (PRI1 low) first, then bank 1">Dump RAM (.bin)</button>
+          <button id="osbDumpVram" type="button" title="The video RAM: characters (C000h-CFFFh), then attributes (D000h-DFFFh), then the font RAM">Dump video RAM (.bin)</button>
           <label class="inline"><input type="checkbox" id="osbAlpha" checked> Alpha Lock</label>
           <span class="osbkeys" id="osbKeys"></span>
         </div>
@@ -1076,7 +1078,8 @@ function disasm(read, addr, rec) {
 }
 
 if (typeof module !== 'undefined') module.exports = { Z80, disasm, h2, h4 };
-
+</script>
+<script>
 // ---- Z80 assembler (two-pass). Opcode table is generated from the disassembler. ----
 const ASM_TABLE = (() => {
   const table = new Map();
@@ -1319,7 +1322,8 @@ function assemble(source, base = 0) {
 }
 
 if (typeof module !== 'undefined') module.exports = { assemble, ASM_TABLE };
-
+</script>
+<script>
 // Motorola MC6821 PIA: two 8-bit ports with data direction registers, control lines
 // CA1/CA2/CB1/CB2 and interrupt outputs IRQA/IRQB.
 // Register select rs: 0 = port A data or DDR A, 1 = CRA, 2 = port B data or DDR B, 3 = CRB.
@@ -1417,7 +1421,8 @@ class M6821 {
   }
 }
 if (typeof module !== 'undefined') module.exports = { M6821 };
-
+</script>
+<script>
 // Z80 SIO/2 (Z8440 family) model: two channels, asynchronous mode.
 // Serial lines are bit-accurate (start, data, parity, stop bits timed in serial clock cycles).
 // Interrupts follow the Z80 daisy-chain scheme: six sources in fixed priority, mode 2 vectors
@@ -1571,7 +1576,8 @@ class Z80SIO {
   m1(op) { if (this.lastM1 === 0xED && op === 0x4D) this.reti(); this.lastM1 = op; }   // RETI is ED 4D, both fetched with /M1 low
 }
 if (typeof module !== 'undefined') module.exports = { Z80SIO };
-
+</script>
+<script>
 // Western Digital FD179x floppy disk controller, with a floppy disk and ImageDisk (.IMD) files.
 // The Osborne Executive's main board has an FD1793 (UB17): true data bus, no side-select output, clocked at 1 MHz
 // for 5.25-inch drives, so every time in the data sheet (which assumes 2 MHz) doubles.
@@ -1903,7 +1909,8 @@ class WD1793 {
   }
 }
 if (typeof module !== 'undefined') module.exports = { WD1793, FloppyDisk, parseIMD, writeIMD, fdcCrc, FDC };
-
+</script>
+<script>
 // Memory chips as objects with pins, for the live pin display and for fault simulation.
 // A MemChip stores some of the bits (dmask) of every byte in part of a machine's memory array: all eight for a
 // byte-wide ROM or RAM, four for a 2114, one for a 4116 or 4164 dynamic RAM. The chips that together make up the
@@ -1932,6 +1939,9 @@ const MEM_PINOUTS = {
     [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'A11', 'i'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'CS2', 'c'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
   '2364': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
     [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'A11', 'i'], [19, 'A10', 'i'], [20, 'CS', 'i'], [21, 'A12', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
+  // 2732 4K EPROM: pin 20 is the output enable (and VPP when programming), pin 18 the chip enable
+  '2732': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
+    [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'CE', 'i'], [19, 'A10', 'i'], [20, 'OE', 'i'], [21, 'A11', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
   '6116': [[1, 'A7', 'i'], [2, 'A6', 'i'], [3, 'A5', 'i'], [4, 'A4', 'i'], [5, 'A3', 'i'], [6, 'A2', 'i'], [7, 'A1', 'i'], [8, 'A0', 'i'], [9, 'D0', 'i'], [10, 'D1', 'i'], [11, 'D2', 'i'], [12, 'GND', 'g'],
     [13, 'D3', 'i'], [14, 'D4', 'i'], [15, 'D5', 'i'], [16, 'D6', 'i'], [17, 'D7', 'i'], [18, 'CE', 'i'], [19, 'A10', 'i'], [20, 'OE', 'i'], [21, 'WE', 'i'], [22, 'A9', 'i'], [23, 'A8', 'i'], [24, 'VCC', 'p']],
   '2114': [[1, 'A6', 'i'], [2, 'A5', 'i'], [3, 'A4', 'i'], [4, 'A3', 'i'], [5, 'A0', 'i'], [6, 'A1', 'i'], [7, 'A2', 'i'], [8, 'CS', 'i'], [9, 'GND', 'g'],
@@ -1950,13 +1960,19 @@ const MEM_ACTIVE_LOW = new Set(['CE', 'CS', 'OE', 'WE', 'RAS', 'CAS', 'PGM']);
 class MemChip {
   // arr/base/abits: where the chip's cells are (arr[base + address], address 0 .. 2^abits - 1)
   // extra: rom, dram (1-bit dynamic RAM: bit, mux = address pins), nib (2114 or 4416: 0 = low nibble, 4 = high),
+  //        dbits (instead of nib: the data bit on each of I/O1-I/O4, when the board does not wire them in order),
   //        mux (multiplexed address pins: pin n carries bits n and n + mux), amap (instead: the address bits each pin carries, as a mask per pin),
   //        en (name of the chip-select pin), plus anything the machine wants
   constructor(id, part, what, range, arr, base, abits, extra) {
     Object.assign(this, { id, part, what, range, arr, base, abits, mask: (1 << abits) - 1, f: {}, en: 'CE', mux: 0, nib: -1 }, extra || {});
-    this.dmask = this.dram ? 1 << this.bit : this.nib >= 0 ? 0x0F << this.nib : 0xFF;
+    this.setDbits(this.dbits);
+  }
+  setDbits(dbits) {
+    this.dbits = dbits || null;
+    this.dmask = this.dram ? 1 << this.bit : this.dbits ? this.dbits.reduce((s, b) => s | 1 << b, 0) : this.nib >= 0 ? 0x0F << this.nib : 0xFF;
     this.recalc();
   }
+  ioBit(n) { return this.dbits ? this.dbits[n - 1] : n - 1 + this.nib; }      // the data bit on pin I/On (or DQn)
   setFault(pin, v) { if (v === null || v === undefined) delete this.f[pin]; else this.f[pin] = v; this.recalc(); }
   recalc() {
     const f = this.f, lvl = k => f[k] === 'z' ? 1 : f[k], high = k => k in f && lvl(k) === 1;
@@ -1964,7 +1980,7 @@ class MemChip {
     for (const k in f) {
       n++; let m;
       if ((m = /^A(\d+)$/.exec(k))) { const b = +m[1], bits = this.amap ? this.amap[b] : this.mux ? (1 << b) | (1 << (b + this.mux)) : 1 << b; if (lvl(k)) aOr |= bits; else aAnd &= ~bits; }
-      else if ((m = /^[DO](\d)$/.exec(k)) || (m = /^(?:I\/O|DQ)(\d)$/.exec(k))) { const b = /^[DO]\d$/.test(k) ? +m[1] : +m[1] - 1 + this.nib; if (lvl(k)) dOr |= 1 << b; else dAnd &= ~(1 << b); }
+      else if ((m = /^[DO](\d)$/.exec(k)) || (m = /^(?:I\/O|DQ)(\d)$/.exec(k))) { const b = /^[DO]\d$/.test(k) ? +m[1] : this.ioBit(+m[1]); if (lvl(k)) dOr |= 1 << b; else dAnd &= ~(1 << b); }
     }
     Object.assign(this, { aAnd, aOr, dAnd, dOr, faulty: n > 0 });
     const strobed = this.mux > 0, off = strobed ? 'RAS' in f || 'CAS' in f : high(this.en);
@@ -2080,7 +2096,8 @@ MEM_PINOUTS.Z80 = [[1, 'A11'], [2, 'A12'], [3, 'A13'], [4, 'A14'], [5, 'A15'], [
   [16, 'INT'], [17, 'NMI'], [18, 'HALT'], [19, 'MREQ'], [20, 'IORQ'], [21, 'RD'], [22, 'WR'], [23, 'BUSACK', 'o'], [24, 'WAIT'], [25, 'BUSREQ'], [26, 'RESET'], [27, 'M1'], [28, 'RFSH', 'o'], [29, 'GND', 'g'],
   ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => [30 + n, 'A' + n])].map(([n, name, k]) => [n, name, k || 'i']);
 if (typeof module !== 'undefined') module.exports = { MemChip, BoardChip, BOARD_FAULTS, MEM_PINOUTS, MEM_ACTIVE_LOW, memBankFlag, memBankRead, memBankWrite, memSetFault, memClearFaults, memFaultList };
-
+</script>
+<script>
 // Osborne Executive (OCC2 main logic board) machine model for Z80 Bench.
 // Based on the OCC2 schematic (1K00035 rev 10), the Osborne Executive Technical Manual and MAME's osbexec driver.
 // Emulated: Z80A at 23.9616 MHz / 6, 128K banked DRAM, boot ROM, font RAM, scratch RAM (XRAM), video RAM with
@@ -2564,7 +2581,6 @@ class Osborne {
 }
 Object.assign(Osborne.prototype, BOARD_FAULTS);
 if (typeof module !== 'undefined') module.exports = { Osborne, OSB, OSB_KEYS, OsbChip, OsbP1, OSB_PINOUTS };
-
 </script>
 <script>
 (() => {
@@ -3777,6 +3793,13 @@ function memDumpDone(p, what) {
   p.then(n => { if (n) { m.className = 'msg ok'; m.textContent = `${what} saved as ${n} (look in your downloads).`; } else { m.className = 'msg'; m.textContent = 'Not saved: the download was declined.'; } })
    .catch(e => { m.className = 'msg err'; m.textContent = 'Could not save the file' + (e && e.message ? ': ' + e.message : '.'); });
 }
+function osbDumped(p, what) {
+  const m = $('osbMsg');
+  p.then(n => { if (n) { m.className = 'msg ok'; m.textContent = `${what} saved as ${n} (look in your downloads).`; } else { m.className = 'msg'; m.textContent = 'Not saved: the download was declined.'; } })
+   .catch(e => { m.className = 'msg err'; m.textContent = 'Could not save the file' + (e && e.message ? ': ' + e.message : '.'); });
+}
+$('osbDumpRam').onclick = () => { const b = new Uint8Array(0x20000); b.set(osb.dram[0], 0); b.set(osb.dram[1], 0x10000); osbDumped(benchDownload(`osborne-ram-${benchStamp()}.bin`, b, 'application/octet-stream'), 'RAM (131,072 bytes: bank 0 at 00000h, bank 1 at 10000h)'); };
+$('osbDumpVram').onclick = () => { const b = new Uint8Array(0x3000); b.set(osb.vchar, 0); b.set(osb.vattr, 0x1000); b.set(osb.font, 0x2000); osbDumped(benchDownload(`osborne-video-ram-${benchStamp()}.bin`, b, 'application/octet-stream'), 'Video RAM (12,288 bytes: characters at 0000h, attributes at 1000h, font at 2000h)'); };
 $('memDumpBin').onclick = () => memDumpDone(benchDownload(`osborne-memory-${benchStamp()}.bin`, memSnapshot(), 'application/octet-stream'), 'Memory (65,536 bytes, byte 0 is address 0000h)');
 $('memDumpTxt').onclick = () => memDumpDone(benchDownload(`osborne-memory-${benchStamp()}.txt`, memListing(memSnapshot()), 'text/plain;charset=utf-8'), 'Memory listing');
 // ---------- master reset: memory, ROM, every debug point and the input pins ----------
@@ -4321,3 +4344,4 @@ setMode(savedMode === 'hex' ? 'hex' : 'asm');
   else { setStatus('Load the Osborne Executive ROM to start'); render(); } }
 })();
 </script>
+</html>
