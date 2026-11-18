@@ -63,7 +63,7 @@
     <ol>
       <li>Press <b>Load ROM…</b> under the screen and choose your own 8 KB Executive ROM image (version 1.2, CRC <code>70798C2F</code>). The ROM is copyrighted and is not included. Your browser keeps it, so you only load it once.</li>
       <li>The machine powers on and runs in real time. The ROM tests the hardware, loads its character set and shows its sign-on screen, ending with "INSERT DISK IN DRIVE A AND PRESS RETURN".</li>
-      <li>Press <b>Insert disk…</b> beside Drive A and choose your own CP/M Plus system disk as an ImageDisk (<code>.imd</code>) file. Disk images are copyrighted and are not included.</li>
+      <li>Press <b>Insert disk…</b> beside Drive A and choose your own CP/M Plus system disk as an ImageDisk (<code>.imd</code>) or Teledisk (<code>.td0</code>) file. Disk images are copyrighted and are not included.</li>
       <li>Click the screen and press <kbd>Enter</kbd>. The drive lamp lights, and about 14 seconds later CP/M Plus shows <code>A&gt;</code>. Type <code>DIR</code>.</li>
       <li>Press <b>Pause</b> (or <kbd>R</kbd>) to stop the machine, then step it one instruction (<kbd>S</kbd>) or one clock (<kbd>C</kbd>) at a time and watch every chip's pins.</li>
     </ol>
@@ -100,9 +100,9 @@
       <li><b>Alpha Lock:</b> the Executive's caps lock key. Caps Lock on your keyboard toggles it too.</li>
       <li><b>Drive lamp:</b> lit while the machine has that drive selected, which is also when its motor runs; brighter while the disk controller is busy.</li>
       <li><b>Eject:</b> takes the disk out. If a program has written to it, the button asks once more before throwing the changes away.</li>
-      <li><b>Save (.imd):</b> downloads the disk as it is now, as a new ImageDisk file.</li>
+      <li><b>Save (.imd):</b> downloads the disk as it is now, as a new ImageDisk file (a Teledisk disk is saved as ImageDisk too).</li>
       <li><b>Disk details:</b> the file name, the format, whether it has been changed, and the track the head is on.</li>
-      <li><b>Insert disk…:</b> puts an ImageDisk file in an empty drive.</li>
+      <li><b>Insert disk…:</b> puts an ImageDisk or Teledisk file in an empty drive. If the image carries a label, the message under the screen shows its first line.</li>
       <li><b>Messages:</b> what was just loaded, inserted or saved.</li>
     </ol>
     <p>Beside <b>Power on / restart</b>, <b>Dump RAM (.bin)</b> saves both 64K banks of the RAM board as one 128K file (bank 0 first, then bank 1), and <b>Dump video RAM (.bin)</b> saves the character, attribute and font RAM (12K). The Memory panel's <b>Dump memory (.bin)</b> and <b>Memory listing (.txt)</b> save the 64K the CPU sees through the current banks.</p>
@@ -111,7 +111,7 @@
     <h3 id="disks">Floppy disks</h3>
     <p>The Executive has two single-sided 5.25-inch drives, A and B. The emulator runs them through the real disk controller chip at real speed: the head steps, the disk turns five times a second and the ROM and CP/M read the bytes as they pass, so loading takes as long as it did in 1983.</p>
     <ul class="features">
-      <li><b>Files:</b> ImageDisk (<code>.imd</code>) images. The usual Executive format is 40 tracks of five 1024-byte sectors in double density (about 185K for files); single-density and other formats recorded in the image work too.</li>
+      <li><b>Files:</b> ImageDisk (<code>.imd</code>) and Teledisk (<code>.td0</code>) images. Teledisk files can be plain or use Teledisk 2's “advanced compression”; the older compression of Teledisk 1 is not supported. The usual Executive format is 40 tracks of five 1024-byte sectors in double density (about 185K for files); single-density and other formats recorded in the image work too.</li>
       <li><b>Booting:</b> with a system disk in drive A, press <kbd>Enter</kbd> at the ROM's prompt. With no disk the ROM keeps waiting; with a disk that has no system on it, it says so.</li>
       <li><b>Changing disks:</b> eject and insert at any time, as on the real machine.</li>
       <li><b>Writing:</b> programs can write to a disk, and CP/M's own tools can copy files between drives. Disks are held in memory only, so use <b>Save (.imd)</b> to keep the result. Master reset ejects both disks.</li>
