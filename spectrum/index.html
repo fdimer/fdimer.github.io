@@ -20,6 +20,7 @@
     </header>
 
     <a class="button" href="app/">Open the emulator</a>
+    <a class="button secondary" href="docs/">Documentation</a>
 
     <h2>Features</h2>
     <ul class="features">
@@ -31,14 +32,15 @@
       <li><b>Snapshots:</b> load 48K <code>.sna</code> and <code>.z80</code> snapshots, and save the machine as a <code>.sna</code>. Tapes and snapshots can be chosen inside a <code>.zip</code>, on a computer or a phone</li>
       <li><b>Sound:</b> the beeper, played in real time</li>
       <li><b>Keyboard:</b> type on your keyboard (characters become the Spectrum keys that give them) or use the on-screen 48K keyboard, marked with each key's keyword, symbol and extended-mode word</li>
-      <li><b>The ULA beside the Z80:</b> both chips with live pins, numbered as on the circuit diagram: the interrupt, the CPU clock stopping, the ROM select, the keyboard lines and MIC/EAR</li>
+      <li><b>The ULA beside the Z80:</b> both chips with live pins, numbered as on the circuit diagram: the interrupt, the CPU clock stopping, the ROM select, the keyboard lines and MIC/EAR, and the lower RAM's pins following the ULA's screen reads T-state by T-state</li>
+      <li><b>Faults, of two kinds:</b> the ULA, the Z80, the ROM and the sixteen RAM chips with live pins and a fault menu on every pin. Hold a whole line high or low, like a short on the wire, and every pin on it sees it; or disconnect one pin, like a broken trace or a lifted pin. A dead lower RAM chip stripes the picture and stops the ROM's memory check, a data line held on the ULA's side spoils the screen and the keyboard, and without the CPU clock the Z80 stands still while the picture goes on</li>
       <li><b>Memory bitmap:</b> every bit of the ROM and the RAM as a pixel, with the screen bitmap, the attributes and BASIC's system variables tinted</li>
       <li><b>Debugging:</b> Z80 Bench's tools, including bus timing, disassembler, breakpoints and stepping, plus a panel showing where the ULA is in the frame, how long the CPU has been held, and port FE</li>
       <li><b>Real time:</b> 3.5 MHz, or full speed</li>
     </ul>
 
     <h2>Coming next</h2>
-    <p>Faults on the chips, as on the other emulators (a held or disconnected pin on the ULA, the ROM and the RAM chips), the ULA's own screen reads followed clock by clock, and a documentation page.</p>
+    <p>A gate-level model of the ULA from Ferranti's logic diagrams of the 6C001, as for the <a href="../zx81-ula/">ZX81 ULA Test Bench</a>.</p>
 
     <h2>Source</h2>
     <a class="button secondary" href="https://github.com/fdimer/z80-bench/tree/spectrum">View on GitHub (spectrum branch)</a>

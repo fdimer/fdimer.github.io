@@ -430,14 +430,28 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
           <figure class="mcfig cpfig" id="zxFigUla"><svg class="chip" id="zxChipUla" role="group" aria-label="ULA pinout"></svg><figcaption><b>IC1 · ULA 6C001</b><br>clocks, video, the lower RAM, the keyboard and the cassette</figcaption></figure>
         </div>
         <div class="legend">
-          <span><i class="lh"></i>High (1)</span><span><i class="ll"></i>Low (0)</span><span><i class="lz"></i>Floating (Z), or not followed (~)</span><span><i class="li"></i>Input: click to toggle</span>
+          <span><i class="lh"></i>High (1)</span><span><i class="ll"></i>Low (0)</span><span><i class="lz"></i>Floating (Z), or analogue (~)</span><span><i class="li"></i>Input: click to toggle</span>
         </div>
         <dl class="busread">
           <dt>Machine cycle</dt><dd id="brCycle">–</dd>
           <dt>Address bus</dt><dd id="brAddr">–</dd>
           <dt>Data bus</dt><dd id="brData">–</dd>
         </dl>
-        <p class="hint">Clicking the Z80's CLK pulses one clock. The pins follow the machine clock by clock. When the ULA holds the CPU (a cycle that uses 4000h–7FFFh or an even port while the picture is being drawn), the bus timing shows the held T-states as TH and the ULA's CPU CLK pin stays high. On the ULA, the data pins show the CPU's data only for an access to the lower RAM or to port FE (they are joined to the CPU's data bus through 470 ohm resistors); the ULA's own screen reads (RAS, CAS and its RAM address A0–A6) and its video outputs U, V and Y are not followed clock by clock and show ~. Pin numbers are from the issue 4A/4B circuit diagram.</p>
+        <p class="hint">Clicking the Z80's CLK pulses one clock. The pins follow the machine clock by clock. When the ULA holds the CPU (a cycle that uses 4000h–7FFFh or an even port while the picture is being drawn), the bus timing shows the held T-states as TH and the ULA's CPU CLK pin stays high. On the ULA, the lower RAM's pins (RAS, CAS, WE, A0–A6, D0–D7) follow whoever uses that RAM at each T-state: during the picture the ULA reads a bitmap byte, its attribute, the next bitmap byte and its attribute in every 8 T-states (RAS and CAS low, the byte's column on A0–A6 and the byte on D0–D7), and the CPU's accesses to 4000h–7FFFh and its refresh cycles there come through the ULA too. They are shown T-state by T-state, not edge by edge. The video outputs U, V and Y are analogue and show ~. Pin numbers are from the issue 4A/4B circuit diagram.</p>
+      </section>
+      <section class="panel" id="pMemChips">
+        <h2>Chips and faults <span class="aside" id="mcInfo">live pins · click a pin to disconnect it or hold it high or low</span></h2>
+        <div class="mcwrap">
+          <div class="mctiles" id="mcTiles"></div>
+          <figure class="mcfig" id="mcFig">
+            <svg class="chip" id="mcChip" role="group" aria-label="Selected chip pinout"></svg>
+            <figcaption id="mcCap"></figcaption>
+            <div class="mcfaults mono" id="mcFaults"></div>
+            <div class="row mcbtns"><button id="mcClear" type="button">Clear this chip's faults</button><button id="mcClearAll" type="button">Clear all faults</button></div>
+          </figure>
+        </div>
+        <p class="hint">The machine's chips, from the issue 4A/4B circuit diagram: IC1 the ULA, IC2 the Z80, IC5 the 16K ROM, IC6–IC13 the lower RAM (eight 4116s, D0 to D7 in order: the ULA's RAM, on its own data bus, joined to the CPU's through R1–R8) and IC15–IC22 the upper RAM (eight 4532s, D0 to D7). A tile's dot lights while its chip is being used. Click a tile to see that chip's pins, which follow the machine on every clock: the lower RAM's pins show the ULA's screen reads as well as the CPU's accesses. The diagram does not show which CPU address lines the multiplexers IC25 and IC26 give the upper RAM as row and as column: A0–A7 are taken as the row and A8–A14 as the column.</p>
+        <p class="hint">To simulate a fault, click a pin for its menu. Hold the whole line high or low and every pin on that line is affected, on every chip: the CPU's address and data buses (the Z80, the ROM and the upper RAM), the ULA's data bus with the lower RAM, the lower RAM's address, RAS, CAS and WE, the upper RAM's, and INT, the CPU clock, ROMCS, MREQ, IORQ, RD and WR. Or tick "Disconnected from the line" for a fault on this chip's pin alone. A data line held on the ULA's side spoils the picture and what the CPU reads from the lower RAM and port FE; a dead RAM chip leaves its bit reading 1; the ULA's A14 and A15 decide what it selects and holds; without the CPU clock the Z80 stands still while the picture goes on; MREQ, IORQ, RD or WR held high cut off the cycles that need them (held low they are not modelled). Every fault is listed in the Debug panel, where it can be removed.</p>
       </section>
   </div>
 
@@ -502,7 +516,7 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
         <div class="mmbands" id="mmBands"></div>
         <div class="mm-legend" id="mmLegend"></div>
         <div class="mm-read" id="mmRead">Point at the bitmap to read a byte; click to show it in Memory.</div>
-        <p class="hint">Every bit of memory is one pixel. Each byte is a row of 8 pixels (bit 7 on the left) and each strip is one 256-byte page, read top to bottom; each band holds 8K. The ROM's two halves come first, then the 64K of RAM; the tint shows what each part of the RAM is used for (the screen memory follows the 6845's start address). The red mark is the program counter and the blue mark the stack pointer, shown on the bands the CPU sees at this moment.</p>
+        <p class="hint">Every bit of memory is one pixel. Each byte is a row of 8 pixels (bit 7 on the left) and each strip is one 256-byte page, read top to bottom; each band holds 8K. The ROM's two halves come first, then the 48K of RAM; the tint shows the screen bitmap (4000h–57FFh), the attributes (5800h–5AFFh) and the printer buffer and BASIC's system variables (5B00h–5CB5h). The red mark is the program counter and the blue mark the stack pointer.</p>
       </section>
     </div>
 
@@ -1779,6 +1793,21 @@ SpecTape.toWav = (tape, rate = 44100, opt = {}) => {
   return out;
 };
 
+// ---- chips with pins, for the live pin display and faults (MemChip, BoardChip and BOARD_FAULTS from memchips.js) ----
+// The ROM (IC5) as the issue 4A/4B diagram numbers it. The diagram contradicts itself on pin 27: the row of pin numbers
+// over the chip gives pin 27 as A12, and the box inside it gives pins 20 and 27 as the two chip selects (CE and CS,
+// swapped between NEC and Hitachi parts). The pins are drawn from the row of numbers, with ROMCS on pin 20 (CE);
+// pins 1 and 2 are not on the diagram.
+const SPEC_PINOUTS = {
+  ROM: [[1, 'NC', 'c'], [2, 'NC', 'c'], [3, 'A7'], [4, 'A6'], [5, 'A5'], [6, 'A4'], [7, 'A3'], [8, 'A2'], [9, 'A1'], [10, 'A0'], [11, 'D0'], [12, 'D1'], [13, 'D2'], [14, 'GND', 'g'],
+    [15, 'D3'], [16, 'D4'], [17, 'D5'], [18, 'D6'], [19, 'D7'], [20, 'CE'], [21, 'A10'], [22, 'OE'], [23, 'A11'], [24, 'A9'], [25, 'A8'], [26, 'A13'], [27, 'A12'], [28, 'VCC', 'p']],
+  // the 4532 (a 4164 with one good half; link DK1 picks the half): pin 9 is the row-only address bit (AR on the diagram)
+  RAM32: [[1, 'NC', 'c'], [2, 'DIN'], [3, 'WE'], [4, 'RAS'], [5, 'A0'], [6, 'A2'], [7, 'A1'], [8, 'VCC', 'p'], [9, 'A7'], [10, 'A5'], [11, 'A4'], [12, 'A3'], [13, 'A6'], [14, 'DOUT'], [15, 'CAS'], [16, 'GND', 'g']],
+  ULA: [[1, 'CAS'], [2, 'WR'], [3, 'RD'], [4, 'WE'], [5, 'A0'], [6, 'A1'], [7, 'A2'], [8, 'A3'], [9, 'A4'], [10, 'A5'], [11, 'A6'], [12, 'INT'], [13, 'VCC2', 'p'], [14, 'VCC1', 'p'], [15, 'U'], [16, 'V'], [17, 'Y'], [18, 'D0'], [19, 'KB0'], [20, 'KB1'],
+    [21, 'D1'], [22, 'D2'], [23, 'KB2'], [24, 'KB3'], [25, 'D3'], [26, 'KB4'], [27, 'D4'], [28, 'MIC/EAR'], [29, 'D5'], [30, 'D6'], [31, 'D7'], [32, 'CPU CLK'], [33, 'IORQ'], [34, 'ROMCS'], [35, 'RAS'], [36, 'A14'], [37, 'A15'], [38, 'MREQ'], [39, 'OSC'], [40, 'GND', 'g']]
+};
+for (const k in SPEC_PINOUTS) SPEC_PINOUTS[k] = SPEC_PINOUTS[k].map(([n, name, kind]) => [n, name, kind || 'i']);
+if (typeof MEM_PINOUTS !== 'undefined') { MEM_PINOUTS['23128'] = SPEC_PINOUTS.ROM; MEM_PINOUTS['4532'] = SPEC_PINOUTS.RAM32; MEM_PINOUTS['6C001'] = SPEC_PINOUTS.ULA; }
 // ---- the machine ----
 class SpecMachine {
   constructor() {
@@ -1790,10 +1819,15 @@ class SpecMachine {
     this.cpu = new Z80(this.bus); this.cpu.log = true; this.cpu.intVector = 0xFF;
     // each instruction starts its own clock count: the ULA's holds are worked out as its cycles happen
     const run = this.cpu.step.bind(this.cpu);
-    this.cpu.step = () => { this.ct = 0; this.done = 0; this.wq = []; this.wqi = 0; this.lastA = this.cpu.pc; return run(); };
+    this.cpu.step = () => {
+      this.ct = 0; this.done = 0; this.wq = []; this.wqi = 0; this.lastA = this.cpu.pc;
+      if (this.faulty && this.fx.clkDead) { this.cpu.lastEvent = null; return this.cpu.cyc = [{ k: 'ID', n: 4 }]; }   // no clock: the CPU stands still, the ULA carries on
+      return run();
+    };
     this.tape = null; this.tapePlay = false; this.tapeIdx = 0; this.tapeRem = 0; this.tapeLevel = 0; this.tapePos = 0; this.rec = null; this.instant = true;
     this.audioRate = 0; this.abuf = new Float32Array(32768); this.aw = 0; this.audioT = 0; this.lvlSum = 0; this.lvlN = 0;
     this.contended = true;                             // the ULA holds the CPU (off: every access runs at full speed)
+    if (typeof BoardChip !== 'undefined') this.buildChips();
     this.issue = 3;                                    // the EAR threshold of issue 3 and later boards (issue 4A/4B included)
     this.reset();
   }
@@ -1836,7 +1870,7 @@ class SpecMachine {
   // the ULA holds the clock if the address is in 4000h-7FFFh and it is reading the screen
   cont(a) {
     if (this.log) this.log.push([this.ct, a]);
-    if (SpecMachine.contendedAddr(a)) { const d = this.delay(this.ftAt(this.ct)); this.ct += d; this.waits += d; }
+    if (SpecMachine.contendedAddr(this.faulty ? this.ulaA(this.z80c.busA(a)) : a)) { const d = this.delay(this.ftAt(this.ct)); this.ct += d; this.waits += d; }
   }
   ftAt(ct) { return (this.ft + ct) % SPEC.FRAME_T; }
   memCycle(a) { this.catchUp(); const t0 = this.ct, h0 = this.waits; this.cont(a); this.wq.push([this.waits - h0, t0]); return this.ct; }
@@ -1853,32 +1887,107 @@ class SpecMachine {
     else { for (let k = 0; k < 4; k++) { c1(); if (k === 1) at = this.ct; this.ct += 1; } }
     this.wq.push([this.waits - h0, t0]); return at;
   }
+  // The chips: IC1 the ULA, IC2 the Z80, IC5 the ROM, IC6-IC13 the lower RAM (4116, D0-D7 in order, row A0-A6 and
+  // column A7-A13 on the same pins), IC15-IC22 the upper RAM (4532, D0-D7 in order). The diagram does not show which
+  // CPU address lines IC25 and IC26 give the upper RAM as row and as column: taken here as A0-A7 the row and A8-A14
+  // the column (pin A7 carries only a row bit; the column's eighth bit is the half picked by link DK1).
+  buildChips() {
+    this.ula = new BoardChip('IC1', '6C001', 'ULA: clocks, video, the lower RAM, keyboard and cassette', 'ports with A0 low; 4000h–7FFFh');
+    this.z80c = new BoardChip('IC2', 'Z80', 'Z80A processor', '3.5 MHz');
+    this.romc = new MemChip('IC5', '23128', 'ROM, 16K', '0000h–3FFFh, D0–D7', this.rom, 0, 14, { rom: true, en: 'CE' });
+    this.lowBank = []; this.upBank = [];
+    for (let k = 0; k < 8; k++) this.lowBank.push(new MemChip('IC' + (6 + k), '4116', 'lower RAM, data bit D' + k, '4000h–7FFFh, D' + k, this.ram, 0, 14, { dram: true, bit: k, mux: 7 }));
+    const amap = [0, 1, 2, 3, 4, 5, 6].map(i => (1 << i) | (1 << (i + 8))).concat([1 << 7]);
+    for (let k = 0; k < 8; k++) this.upBank.push(new MemChip('IC' + (15 + k), '4532', 'upper RAM, data bit D' + k, '8000h–FFFFh, D' + k, this.ram, 0x4000, 15, { dram: true, bit: k, mux: 8, amap }));
+    this.romBank = [this.romc]; this.banks = [this.romBank, this.lowBank, this.upBank];
+    this.chips = [this.ula, this.z80c, this.romc, ...this.lowBank, ...this.upBank];
+    this.chipById = {}; for (const c of this.chips) this.chipById[c.id] = c;
+    this.acc = new Uint32Array(5);                       // accesses, for the chip tiles: ROM, lower RAM, upper RAM, ULA port, CPU
+    this.applyFaults();
+  }
+  // the board's lines: [label, the pin that drives it (index) or -1, pins]
+  nets() {
+    if (this._nets) return this._nets;
+    const N = {}, add = (k, label, d, pins) => { N[k] = { label, d, pins }; };
+    const low = n => this.lowBank.map(c => [c.id, n]), up = n => this.upBank.map(c => [c.id, n]);
+    for (let k = 0; k < 16; k++) add('A' + k, 'Address line A' + k, 0, [['IC2', 'A' + k], ...(k < 14 ? [['IC5', 'A' + k]] : []), ...(k >= 14 ? [['IC1', 'A' + k]] : [])]);
+    for (let k = 0; k < 8; k++) add('D' + k, 'Data line D' + k + ' (CPU side)', -1, [['IC2', 'D' + k], ['IC5', 'D' + k], ['IC' + (15 + k), 'DIN'], ['IC' + (15 + k), 'DOUT']]);
+    for (let k = 0; k < 8; k++) add('UD' + k, 'Data line D' + k + ' of the ULA and the lower RAM (through R' + (k + 1) + ')', -1, [['IC1', 'D' + k], ['IC' + (6 + k), 'DIN'], ['IC' + (6 + k), 'DOUT']]);
+    for (let k = 0; k < 7; k++) add('RA' + k, 'Lower RAM address line A' + k, -1, [['IC1', 'A' + k], ...low('A' + k)]);
+    for (let k = 0; k < 8; k++) add('UA' + k, 'Upper RAM address line A' + k + ' (from IC25, IC26)', -1, up('A' + k));
+    for (const n of ['RAS', 'CAS', 'WE']) { add('L' + n, 'Lower RAM ' + n, 0, [['IC1', n], ...low(n)]); add('U' + n, 'Upper RAM ' + n + ' (from IC23, IC24)', -1, up(n)); }
+    for (const n of ['MREQ', 'IORQ', 'RD', 'WR']) add(n, n, 0, [['IC2', n], ['IC1', n]]);
+    add('INT', 'INT', 0, [['IC1', 'INT'], ['IC2', 'INT']]);
+    add('CLK', 'CPU clock (CPU CLK, through TR6)', 0, [['IC1', 'CPU CLK'], ['IC2', 'CLK']]);
+    add('ROMCS', 'ROMCS', 0, [['IC1', 'ROMCS'], ['IC5', 'CE']]);
+    return this._nets = N;
+  }
+  // what the faults do, worked out once each time they change
+  refault() {
+    const z = this.z80c, u = this.ula, L = (c, k) => c.lv[k];
+    const io = { MREQ: L(z, 'MREQ'), IORQ: L(z, 'IORQ'), RD: L(z, 'RD'), WR: L(z, 'WR') };
+    this.fx = {
+      any: this.faulty,
+      memOff: io.MREQ === 1, rdOff: io.RD === 1, wrOff: io.WR === 1, ioOff: io.IORQ === 1,
+      clkDead: L(z, 'CLK') !== undefined, int: L(z, 'INT'), ulaInt: L(u, 'INT'),
+      kbAnd: [0, 1, 2, 3, 4].reduce((m, k) => L(u, 'KB' + k) === 0 ? m & ~(1 << k) : m, 0x1F), kbOr: [0, 1, 2, 3, 4].reduce((m, k) => L(u, 'KB' + k) === 1 ? m | (1 << k) : m, 0),
+      ear: L(u, 'MIC/EAR'), udHeld: [0, 1, 2, 3, 4, 5, 6, 7].map(k => (this.netF || {})['UD' + k])
+    };
+  }
+  // the address as the ULA sees it (its A14 and A15 pins), for its decoding: contention, ROMCS, the lower RAM
+  ulaA(a) { return this.faulty ? (a & 0x3FFF) | (this.ula.busA(a) & 0xC000) : a; }
+  // the lower RAM through its chips (quiet: the ULA's reads, which leave no trace)
+  lowRead(off, quiet) { return this.faulty && this.lowBank.faulty ? memBankRead(this.lowBank, off, quiet) : this.ram[off]; }
+  // a CPU read of memory: what the chips selected put on the bus (the ROM by the ULA's ROMCS, the lower RAM by the
+  // ULA's decoding, the upper RAM by A15); none, and the 8K2 pull-ups R9-R16 give FFh; two at once, the lower bits win
+  memRead(a) {
+    if (!this.faulty) return a < 0x4000 ? this.rom[a] : this.ram[a - 0x4000];
+    const fx = this.fx; a = this.z80c.busA(a); if (fx.memOff || fx.rdOff) return this.z80c.busD(0xFF);
+    const ua = this.ulaA(a); let v = 0xFF;
+    if (!(ua & 0xC000)) v &= this.romBank.faulty ? memBankRead(this.romBank, a & 0x3FFF) : this.rom[a & 0x3FFF];
+    if ((ua & 0xC000) === 0x4000) { let x = this.lowRead(a & 0x3FFF); fx.udHeld.forEach((h, k) => { if (h !== undefined) x = x & ~(1 << k) | h << k; }); v &= x; }
+    if (a & 0x8000) v &= this.upBank.faulty ? memBankRead(this.upBank, a - 0x4000) : this.ram[a - 0x4000];
+    return this.z80c.busD(v);
+  }
+  memWrite(a, v) {
+    if (!this.faulty) { if (a >= 0x4000) this.ram[a - 0x4000] = v; return; }
+    const fx = this.fx; a = this.z80c.busA(a); v = this.z80c.busD(v); if (fx.memOff || fx.wrOff) return;
+    const ua = this.ulaA(a);
+    if ((ua & 0xC000) === 0x4000) { if (this.lowBank.faulty) memBankWrite(this.lowBank, a & 0x3FFF, v); else this.ram[a & 0x3FFF] = v; }
+    if (a & 0x8000) { if (this.upBank.faulty) memBankWrite(this.upBank, a - 0x4000, v); else this.ram[a - 0x4000] = v; }
+  }
   // ---- memory ----
   read(a) {
-    this.memCycle(a);
-    return a < 0x4000 ? this.rom[a] : this.ram[a - 0x4000];
+    this.memCycle(a); this.acc[a < 0x4000 ? 0 : a < 0x8000 ? 1 : 2]++;
+    return this.memRead(a);
   }
   write(a, v) {
-    const at = this.memCycle(a);
-    if (a < 0x4000) return;                            // the ROM ignores writes
-    if (a < 0x5B00) this.drawTo(this.ftAt(at));         // the picture so far is drawn before the screen memory changes
-    this.ram[a - 0x4000] = v;
+    const at = this.memCycle(a); this.acc[a < 0x4000 ? 0 : a < 0x8000 ? 1 : 2]++;
+    if (a < 0x4000 && !this.faulty) return;             // the ROM ignores writes
+    if (a < 0x8000) this.drawTo(this.ftAt(at));         // the picture so far is drawn before the screen memory changes
+    this.memWrite(a, v);
   }
   peek(a) { a &= 0xFFFF; return a < 0x4000 ? this.rom[a] : this.ram[a - 0x4000]; }
   poke(a, v) { a &= 0xFFFF; if (a >= 0x4000) this.ram[a - 0x4000] = v & 0xFF; }
   // ---- port FE ----
   // EAR: the MIC/TAPE pin carries the outputs (bit 4 strongly, bit 3 weakly) and the tape input; bit 6 reads the
   // pin against a threshold. On issue 3 and later boards bit 4 alone reads high; on issue 2, bit 3 does too.
-  earBit() { const o = this.out; return this.tapeIn() || (o & 0x10) || (this.issue < 3 && (o & 0x08)) ? 0x40 : 0; }
-  keyRows(hi) { let v = 0x1F; for (let r = 0; r < 8; r++) if (!(hi & (1 << r))) v &= ~this.keys[r] & 0x1F; return v; }
+  earBit() { if (this.faulty && this.fx.ear !== undefined) return this.fx.ear ? 0x40 : 0; const o = this.out; return this.tapeIn() || (o & 0x10) || (this.issue < 3 && (o & 0x08)) ? 0x40 : 0; }
+  keyRows(hi) { let v = 0x1F; for (let r = 0; r < 8; r++) if (!(hi & (1 << r))) v &= ~this.keys[r] & 0x1F; return this.faulty ? v & this.fx.kbAnd | this.fx.kbOr : v; }
   input(p) {
     const at = this.ioCycle(p);
-    if (!(p & 1)) { this.feReads++; return this.keyRows(p >> 8) | 0xA0 | this.earBit(); }
-    return this.floating(this.ftAt(at));
+    if (this.faulty) { if (this.fx.ioOff || this.fx.rdOff) return this.z80c.busD(0xFF); p = this.z80c.busA(p); }
+    if (!(p & 1)) {                                     // the ULA drives its data pins, through R1-R8 onto the CPU's bus
+      this.feReads++; this.acc[3]++; let v = this.keyRows(p >> 8) | 0xA0 | this.earBit();
+      if (this.faulty) { v = this.ula.busD(v); this.fx.udHeld.forEach((h, k) => { if (h !== undefined) v = v & ~(1 << k) | h << k; }); v = this.z80c.busD(v); }
+      return v;
+    }
+    const v = this.floating(this.ftAt(at)); return this.faulty ? this.z80c.busD(v) : v;
   }
   output(p, v) {
     const at = this.ioCycle(p);
-    if (p & 1) return;
+    if (this.faulty) { if (this.fx.ioOff || this.fx.wrOff) return; p = this.z80c.busA(p); v = this.ula.busD(this.z80c.busD(v)); }
+    if (p & 1) return; this.acc[3]++;
     this.drawTo(this.ftAt(at));
     this.border = v & 7; const was = this.out; this.out = v & 0x18;
     if ((was ^ this.out) & 0x18) this.soundEdge(at);
@@ -1890,7 +1999,25 @@ class SpecMachine {
     const line = Math.floor(r / SPEC.LINE_T), x = r % SPEC.LINE_T; if (line >= 192 || x >= 128) return 0xFF;
     const ph = x & 7; if (ph > 3) return 0xFF;
     const col = (x >> 3) * 2 + (ph >> 1);
-    return ph & 1 ? this.ram[0x1800 + (line >> 3) * 32 + col] : this.ram[((line & 0xC0) << 5 | (line & 7) << 8 | (line & 0x38) << 2) + col];
+    return this.screenByte(ph & 1 ? 0x1800 + (line >> 3) * 32 + col : ((line & 0xC0) << 5 | (line & 7) << 8 | (line & 0x38) << 2) + col);
+  }
+  // what the ULA reads from the lower RAM at frame T-state ft: in each 8 T-states of a line of the picture, the bitmap
+  // byte, its attribute, the next bitmap byte and its attribute, then 4 T-states left to the CPU (the same timing as
+  // the floating bus). A bitmap byte and its attribute share the low 8 address bits, so one row address (A0-A6) serves
+  // both: two page-mode reads under one RAS. Returns null when the ULA is not reading.
+  ulaFetch(ft) {
+    const r = ft - (SPEC.DISP_T + 2); if (r < 0) return null;
+    const line = Math.floor(r / SPEC.LINE_T), x = r % SPEC.LINE_T; if (line >= 192 || x >= 128) return null;
+    const ph = x & 7; if (ph > 3) return null;
+    const col = (x >> 3) * 2 + (ph >> 1), attr = !!(ph & 1);
+    const off = attr ? 0x1800 + (line >> 3) * 32 + col : ((line & 0xC0) << 5 | (line & 7) << 8 | (line & 0x38) << 2) + col;
+    return { ph, attr, addr: 0x4000 + off, val: this.screenByte(off), line, col };
+  }
+  // a byte of the screen as the ULA reads it: through the lower RAM's chips and the ULA's own data pins
+  screenByte(off) {
+    if (!this.faulty) return this.ram[off];
+    let v = this.lowRead(off, true); this.fx.udHeld.forEach((h, k) => { if (h !== undefined) v = v & ~(1 << k) | h << k; });
+    return this.ula.busD(v);
   }
   // ---- the picture: 44 cells of 8 dots (4 T-states) a line, 6 of border each side of the 32 of the picture ----
   cellT(cell) { const line = SPEC.FIRST + Math.floor(cell / 44), c = cell % 44; return SPEC.DISP_T + (line - 64) * SPEC.LINE_T + (c - 6) * 4; }
@@ -1901,7 +2028,7 @@ class SpecMachine {
   drawCell(cell) {
     const y = Math.floor(cell / 44), c = cell % 44, line = y + SPEC.FIRST - 64, o = y * SPEC.FW + c * 8, fb = this.fb;
     if (line < 0 || line >= 192 || c < 6 || c >= 38) { fb.fill(this.border, o, o + 8); return; }
-    const col = c - 6, bits = this.ram[((line & 0xC0) << 5 | (line & 7) << 8 | (line & 0x38) << 2) + col], at = this.ram[0x1800 + (line >> 3) * 32 + col];
+    const col = c - 6, bits = this.screenByte(((line & 0xC0) << 5 | (line & 7) << 8 | (line & 0x38) << 2) + col), at = this.screenByte(0x1800 + (line >> 3) * 32 + col);
     let ink = (at & 7) | (at & 0x40) >> 3, paper = (at >> 3 & 7) | (at & 0x40) >> 3;
     if (at & 0x80 && this.flash) { const s = ink; ink = paper; paper = s; }
     for (let b = 0; b < 8; b++) fb[o + b] = bits & (0x80 >> b) ? ink : paper;
@@ -1919,7 +2046,7 @@ class SpecMachine {
     return this.afterStep(this.cpu.step());
   }
   afterStep(cyc) {
-    this.catchUp(); const t = this.ct;
+    this.catchUp(); const t = this.ct; this.ftStart = this.ft;       // the frame T-state the instruction started at
     if (this.cpu.lastEvent === 'INT') this.ints++;
     this.tapeMove(t);
     // after an instant load the tape stops by itself once nothing has read it for 2 seconds (a custom loader keeps it going)
@@ -1930,8 +2057,8 @@ class SpecMachine {
     if (this.ft >= SPEC.FRAME_T) { this.ft -= SPEC.FRAME_T; this.endFrame(); this.drawTo(this.ft); }
     return t;
   }
-  intOut() { return this.ft < SPEC.INT_T; }           // INT is low for the first 32 T-states of the frame
-  syncInt() { this.cpu.intLine = this.intOut(); }
+  intOut() { if (this.faulty && this.fx.ulaInt !== undefined) return this.fx.ulaInt === 0; return this.ft < SPEC.INT_T; }   // INT is low for the first 32 T-states of the frame
+  syncInt() { this.cpu.intLine = this.faulty && this.fx.int !== undefined ? this.fx.int === 0 : this.intOut(); }
   // where the beam is: line of the frame and T-state in the line, and as a position in the picture kept (fb)
   beam() { const line = Math.floor(this.ft / SPEC.LINE_T), t = this.ft % SPEC.LINE_T; let x = t < 128 ? 48 + t * 2 : t < 152 ? 304 + (t - 128) * 2 : t >= 200 ? (t - 200) * 2 : -1; const y = (t >= 200 ? line + 1 : line) - SPEC.FIRST; return { line, t, x, y }; }
   // a line of the picture being drawn, and where in it: what the ULA is doing at this moment
@@ -1944,7 +2071,7 @@ class SpecMachine {
   runFrame() { const f = this.frames; let t = 0; while (this.frames === f) t += this.step(); return t; }
   key(name, down) { const p = SPEC.KEYPOS[name]; if (!p) return; if (down) this.keys[p[0]] |= 1 << p[1]; else this.keys[p[0]] &= ~(1 << p[1]); }
   // ---- sound: the speaker follows bit 4 (and a little of bit 3, and the tape signal, through the MIC/TAPE pin) ----
-  level() { return (this.out & 0x10 ? 0.75 : 0) + (this.out & 0x08 ? 0.1 : 0) + (this.tapePlay && this.tapeIn() ? 0.15 : 0); }
+  level() { if (this.faulty && this.fx.ear !== undefined) return this.fx.ear ? 0.75 : 0; return (this.out & 0x10 ? 0.75 : 0) + (this.out & 0x08 ? 0.1 : 0) + (this.tapePlay && this.tapeIn() ? 0.15 : 0); }
   soundEdge() { }
   audioRun(t) {
     const lv = this.level(); let left = t;
@@ -2066,7 +2193,8 @@ class SpecMachine {
     return out;
   }
 }
-if (typeof module !== 'undefined') module.exports = { SpecMachine, SpecTape, SPEC, specCrc32 };
+if (typeof BOARD_FAULTS !== 'undefined') Object.assign(SpecMachine.prototype, BOARD_FAULTS);
+if (typeof module !== 'undefined') module.exports = { SpecMachine, SpecTape, SPEC, SPEC_PINOUTS, specCrc32 };
 </script>
 <script>
 (() => {
@@ -3141,7 +3269,7 @@ $('dbgType').onchange = dbgFields; $('dbgMemCond').onchange = dbgFields;
 $('dbgAdd').onclick = dbgAdd;
 for (const id of ['dbgAddr', 'dbgMemVal', 'dbgBusVal']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); dbgAdd(); } });
 $('dbgList').addEventListener('click', e => { const b = e.target.closest('button[data-key]'); if (!b) return; b.classList.contains('x') ? dbgRemove(b.dataset.key) : dbgGo(b.dataset.key); });
-$('dbgClear').onclick = () => { breakpoints.clear(); afterBps.clear(); watches.clear(); memWatches.clear(); pinWatches.clear(); busWatches.clear(); hitReg = null; dbgHit = null; render(); };
+$('dbgClear').onclick = () => { if (mcReady) { zx.clearFaults(); disDirty = true; } breakpoints.clear(); afterBps.clear(); watches.clear(); memWatches.clear(); pinWatches.clear(); busWatches.clear(); hitReg = null; dbgHit = null; render(); };
 // ---------- dump memory to a file ----------
 // Files leave through the claude.ai viewer's save prompt when this page runs there (it accepts .txt and .zip, so the
 // binary dump goes inside a .zip); anywhere else, through an ordinary browser download.
@@ -3251,7 +3379,7 @@ const ULA_TIP = { CAS: 'Column address strobe of the lower 16K RAM (IC6–IC13)'
   U: 'Colour difference U, to the LM1889 (IC14)', V: 'Colour difference V, to the LM1889', Y: 'Brightness and sync, to the LM1889', 'MIC/EAR': 'MIC/TAPE: the outputs of port FE bits 3 and 4 (MIC and speaker), and the EAR input read on bit 6',
   'CPU CLK': 'The Z80\'s 3.5 MHz clock, through TR6. The ULA stops it (holds it high) while it needs the lower RAM', ROMCS: 'Select of the ROM (IC5): an access to 0000h–3FFFh',
   RAS: 'Row address strobe of the lower RAM', OSC: '14 MHz crystal oscillator', KB0: 'Keyboard KB0 (half-row bit 0), 10K pull-up', A14: 'CPU address A14', A15: 'CPU address A15' };
-for (let i = 0; i < 7; i++) ULA_TIP['A' + i] = 'Address line A' + i + ' of the lower RAM: the ULA\'s own address for the screen, or the CPU\'s through IC3 and IC4 (330 ohm)';
+for (let i = 0; i < 7; i++) ULA_TIP['A' + i] = 'Address line A' + i + ' of the lower RAM (IC6-IC13): the column of the screen byte the ULA is reading, or the CPU\'s row then column through IC3 and IC4 (330 ohm); Z when nobody is using that RAM';
 for (let i = 0; i < 8; i++) ULA_TIP['D' + i] = 'Data line D' + i + ' of the lower RAM and the ULA: joined to the CPU\'s D' + i + ' through 470 ohm (R' + (i + 1) + ')';
 for (let i = 1; i < 5; i++) ULA_TIP['KB' + i] = 'Keyboard KB' + i + ' (half-row bit ' + i + '), 10K pull-up';
 const ulaEls = {};
@@ -3274,11 +3402,19 @@ function buildUla() {
     ulaEls[name] = { g, sv, prev: null };
   }
 }
-// what each ULA pin carries during the CPU's current T-state. The ULA's own screen reads (RAS, CAS, its RAM address)
-// and the analogue outputs are not followed clock by clock: they show '~'.
+// what each ULA pin carries during the CPU's current T-state. The lower RAM's pins follow whoever uses it at that
+// T-state: the ULA reading the screen (RAS and CAS low, its column address on A0-A6 and the byte on D0-D7), or the
+// CPU (an access to 4000h-7FFFh: RAS, then CAS with the column, and WE for a write; its refresh cycles in that range
+// are RAS-only refreshes). Shown T-state by T-state: the edges within a T-state are not modelled. The video outputs
+// U, V and Y are analogue and show ~.
+function ulaNow() {
+  const T = curT, f = T && T.at !== undefined && zx.ftStart !== undefined ? (zx.ftStart + T.at) % SPEC.FRAME_T : zx.ft;
+  return zx.ulaFetch(f);
+}
 function ulaPin(name) {
-  const T = curT, a = T.a === null || T.a === 'z' ? null : T.a, lower = a !== null && (a & 0xC000) === 0x4000 && T.mreq === 0 && T.rfsh !== 0;
-  const port = a !== null && T.iorq === 0 && !(a & 1);
+  const T = curT, a = T.a === null || T.a === 'z' ? null : T.a, mem = a !== null && T.mreq === 0 && (a & 0xC000) === 0x4000;
+  const lower = mem && T.rfsh !== 0, refresh = mem && T.rfsh === 0, port = a !== null && T.iorq === 0 && !(a & 1), u = ulaNow();
+  const cas = u || (lower && (T.rd === 0 || T.wr === 0)) ? 0 : 1;
   switch (name) {
     case 'VCC1': case 'VCC2': return 'p'; case 'GND': return 'g';
     case 'INT': return pins.int === 0 || zx.intOut() ? 0 : 1;
@@ -3286,11 +3422,26 @@ function ulaPin(name) {
     case 'RD': return T.rd; case 'WR': return T.wr; case 'MREQ': return T.mreq; case 'IORQ': return T.iorq;
     case 'A14': return a === null ? 'z' : a >> 14 & 1; case 'A15': return a === null ? 'z' : a >> 15 & 1;
     case 'ROMCS': return a !== null && T.mreq === 0 && T.rfsh !== 0 && !(a & 0xC000) ? 0 : 1;
-    case 'WE': return lower && T.wr === 0 ? 0 : 1;
+    case 'RAS': return u || lower || refresh ? 0 : 1;
+    case 'CAS': return cas;
+    case 'WE': return !u && lower && T.wr === 0 ? 0 : 1;
     case 'MIC/EAR': return zx.out & 0x10 || zx.tapeIn() ? 1 : 0;
+    case 'OSC': return clk;
+    case 'U': case 'V': case 'Y': return '~';
   }
   if (/^KB\d$/.test(name)) return zx.keyRows(a === null ? 0xFF : a >> 8) >> +name[2] & 1;
-  if (/^D\d$/.test(name)) { if ((lower || port) && T.d !== null && T.d !== undefined) return T.d >> +name[1] & 1; return '~'; }
+  if (/^A\d$/.test(name)) {
+    const k = +name[1];
+    if (u) return (u.addr >> 7) >> k & 1;                                   // the column of the byte the ULA reads
+    if (lower || refresh) return (cas === 0 ? a >> 7 : a) >> k & 1;           // the CPU's row, then its column (through IC3, IC4)
+    return 'z';
+  }
+  if (/^D\d$/.test(name)) {
+    const k = +name[1];
+    if (u) return u.val >> k & 1;
+    if ((lower || port) && T.d !== null && T.d !== undefined) return T.d >> k & 1;
+    return 'z';
+  }
   return '~';
 }
 function renderUla() {
@@ -3663,11 +3814,159 @@ function cpListing() {
   return out.join('\n') + '\n';
 }
 
-// ---------- memory chips and faults: to come on this machine ----------
-var mcReady = false;
-function mcDebugItems() { return []; }
-function mcDebugRemove() {}
-function renderMemChips() {}
+// ---------- chips and faults: what this machine has, and what each pin is doing ----------
+const MC = {
+  m: zx,
+  groups() { return [['Processor and ULA', [1, 0]], ['ROM · 16K' + (zx.hasRom ? '' : ' · empty'), [2]], ['Lower RAM · 16K · one 4116 per data bit · the ULA\'s', [3, 4, 5, 6, 7, 8, 9, 10]], ['Upper RAM · 32K · one 4532 per data bit', [11, 12, 13, 14, 15, 16, 17, 18]]]; },
+  tile(c, i) { return i === 0 ? ['IC1', 'ULA 6C001'] : i === 1 ? ['IC2', 'Z80A'] : i === 2 ? ['IC5', 'ROM · D0–D7'] : [c.id, c.part + ' · D' + c.bit]; },
+  acc(i) { return i === 0 ? 3 : i === 1 ? -1 : i === 2 ? 0 : i <= 10 ? 1 : 2; },
+  bus() {
+    const T = curT, A = T.a === null || T.a === 'z' ? null : zx.faulty ? zx.z80c.busA(T.a) : T.a, mem = T.mreq === 0 && T.rfsh !== 0 && A !== null;
+    return { T, A, mem, rd: mem && T.rd === 0, wr: mem && T.wr === 0, rom: mem && T.rd === 0 && !(zx.ulaA(A) & 0xC000), up: mem && A >= 0x8000 };
+  },
+  net(c, i, name, B) {
+    if (i === 0) return ulaPin(name);
+    if (i === 1) return pinValue(name);
+    let m = /^A(\d+)$/.exec(name), d;
+    if (i === 2) {                      // the ROM: CE is the ULA's ROMCS; OE is taken as tied low
+      if (m) return B.A === null ? 'z' : (B.A >> +m[1]) & 1;
+      if ((d = /^D(\d)$/.exec(name))) return B.rom ? pinValue('D' + d[1]) : 'z';
+      return name === 'CE' ? ulaPin('ROMCS') : name === 'OE' ? 0 : 1;
+    }
+    if (i <= 10) {                      // the lower RAM: its address, RAS, CAS and WE are the ULA's; its data line one of the ULA's
+      if (m) return ulaPin('A' + m[1]);
+      if (name === 'RAS' || name === 'CAS' || name === 'WE') return ulaPin(name);
+      const dv = ulaPin('D' + c.bit);
+      if (name === 'DIN') return dv;
+      if (name === 'DOUT') return ulaPin('CAS') === 0 && ulaPin('WE') === 1 ? dv : 'z';
+      return 'z';
+    }
+    // the upper RAM: A0-A7 the row, then A8-A14 the column once CAS is low (pin A7 carries only the row)
+    const cas = B.up && (B.rd || B.wr) && B.T.t !== 'T1';
+    if (m) { const k = +m[1]; return B.A === null || !B.up ? 'z' : cas && k < 7 ? (B.A >> (k + 8)) & 1 : (B.A >> k) & 1; }
+    switch (name) {
+      case 'RAS': return B.up ? 0 : 1; case 'CAS': return cas ? 0 : 1; case 'WE': return B.up && B.wr ? 0 : 1;
+      case 'DIN': return B.up ? pinValue('D' + c.bit) : 'z'; case 'DOUT': return cas && B.rd ? pinValue('D' + c.bit) : 'z';
+    }
+    return 'z';
+  }
+};
+// ---------- memory chips: tiles, a live pinout of the selected chip, and pin faults ----------
+// The page supplies MC: { m (the machine: chips, acc, faulty), groups(), tile(c, i), acc(i), bus(), net(c, i, name, B) }.
+let mcSel = 0, mcEls = {}, mcDrawn = '', mcPrevAcc = null, mcSeen = null, mcTileSig = '', mcPop = null;
+const mcFaultText = v => v === 'z' ? 'disconnected' : v ? 'stuck high' : 'stuck low';
+function mcSetFault(id, pin, v) { zx.setPinFault(id, pin, v); disDirty = true; }
+function mcClosePop() { if (mcPop) { mcPop.remove(); mcPop = null; } }
+document.addEventListener('click', e => { if (mcPop && !mcPop.contains(e.target) && !e.target.closest('.pin.input') && !e.target.closest('.mcpop')) mcClosePop(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') mcClosePop(); });
+// debug-pane entries for the faults
+function mcDebugItems() { return zx.faultList().map(([id, pin, text]) => ['mfault:' + id + ':' + pin, id === 'net' ? 'line fault' : 'pin fault', text]); }
+function mcDebugRemove(t, v) { if (t !== 'mfault') return false; const i = v.lastIndexOf(':'); mcSetFault(v.slice(0, i), v.slice(i + 1), null); return true; }
+// a DIP of any size, drawn the same way as the CPU
+function mcDraw() {
+  const ch = MC.m.chips; if (mcSel >= ch.length) mcSel = 0;
+  const c = ch[mcSel], list = MEM_PINOUTS[c.part], half = list.length / 2, s = $('mcChip');
+  const top = 26, pitch = 24, bx = 128, bw = 124, bh = half * pitch + 12;
+  s.innerHTML = ''; s.setAttribute('viewBox', `0 0 380 ${bh + 34}`); mcEls = {}; mcDrawn = c.id + '/' + c.part;
+  svg('rect', { class: 'body-rect', x: bx, y: top - 6, width: bw, height: bh, rx: 5 }, s);
+  svg('path', { d: `M ${bx + bw / 2 - 12} ${top - 6} a 12 12 0 0 0 24 0`, fill: 'var(--bg)' }, s);
+  const ttl = c.part === '6C001' ? 'ULA' : c.part;
+  const t1 = svg('text', { class: 'chiptitle', x: bx + bw / 2, y: top + bh / 2 - 8, 'text-anchor': 'middle', 'font-size': ttl.length > 7 ? 17 : 24 }, s); t1.textContent = ttl;
+  const t2 = svg('text', { class: 'chipsub', x: bx + bw / 2, y: top + bh / 2 + 12, 'text-anchor': 'middle' }, s); t2.textContent = c.id;
+  for (const [n, name, kind] of list) {
+    const left = n <= half, idx = left ? n - 1 : list.length - n, y = top + idx * pitch + 6, sx = left ? bx - 30 : bx + bw + 4;
+    const g = svg('g', { class: 'pin' + (kind === 'i' ? ' input' : ''), 'data-pin': name }, s);
+    if (kind === 'i') { svg('rect', { x: left ? sx - 70 : sx - 4, y: y - 11, width: 104, height: 22, fill: 'transparent' }, g); svg('rect', { class: 'ring', x: sx - 3, y: y - 9, width: 32, height: 18, rx: 3 }, g); }
+    svg('rect', { class: 'stub', x: sx, y: y - 6, width: 26, height: 12, rx: 2 }, g);
+    const sv = svg('text', { class: 'sv', x: sx + 13, y: y + 0.5 }, g);
+    const num = svg('text', { class: 'num', x: left ? bx + 7 : bx + bw - 7, y, 'text-anchor': left ? 'start' : 'end' }, g); num.textContent = n;
+    const nm = svg('text', { class: 'nm', x: left ? sx - 8 : sx + 34, y, 'text-anchor': left ? 'end' : 'start' }, g);
+    if (MEM_ACTIVE_LOW.has(name) || ULA_LOW.has(name) && c.part !== '4116' && c.part !== '4532' || ['MREQ', 'IORQ', 'M1', 'HALT', 'NMI', 'BUSREQ', 'BUSACK', 'RESET'].includes(name)) { const ov = svg('tspan', { class: 'ov' }, nm); ov.textContent = name; } else nm.textContent = name;
+    const title = svg('title', {}, g); title.textContent = kind === 'i' ? `${c.id} pin ${n}, ${name}: click to disconnect it or hold it high or low` : `${c.id} pin ${n}, ${name}`;
+    if (kind === 'i') {
+      g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button');
+      g.addEventListener('click', ev => mcMenu(name, ev));
+      g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const r = g.getBoundingClientRect(); mcMenu(name, { clientX: r.left, clientY: r.top }); } });
+    }
+    mcEls[name] = { g, sv, prev: null, kind };
+  }
+  $('mcCap').innerHTML = `<b>${esc(c.id)} · ${esc(c.part)}</b><br>${esc(c.what)}<br>${esc(c.range)}`;
+}
+// The fault menu of a pin. A pin on a shared line gets a tick box, "disconnected from the line (this pin only)":
+// without the tick the level buttons hold the whole line (every pin on it, on every chip); with it they set what
+// this pin alone sees. A pin with a line of its own keeps the plain choices.
+function mcMenu(name, ev, ci, host) {
+  mcClosePop();
+  const c = MC.m.chips[ci === undefined ? mcSel : ci], fig = host || $('mcFig'), r = fig.getBoundingClientRect(), key = c.id + '.' + name;
+  const net = zx.netOf(c.id, name), N = net && zx.lines()[net], shared = !!N && N.pins.length > 1, out = zx.isDriver(c.id, name);
+  const el = document.createElement('div'); el.className = 'mcpop'; fig.appendChild(el); mcPop = el;
+  const lv = v => v ? 'high' : 'low', btn = (a, label, on) => `<button type="button" data-a="${a}"${on ? ' class="primary" aria-pressed="true"' : ''}>${label}</button>`;
+  const draw = () => {
+    const own = key in zx.pinF ? zx.pinF[key] : null, line = shared && net in zx.netF ? zx.netF[net] : null, cut = own !== null;
+    let h = `<div class="ttl">${esc(c.id)} · ${esc(name)}</div>`;
+    if (shared) {
+      const others = N.pins.filter(([i2, p2]) => i2 !== c.id || p2 !== name).map(([i2, p2]) => i2 + ' ' + p2), ids = [...new Set(others.map(o => o.split(' ')[0]))];
+      h += `<div class="sub">${esc(N.label)}: shared with ${others.length > 4 ? ids.length + ' chips (' + esc(ids[0]) + '…' + esc(ids[ids.length - 1]) + ')' : esc(others.join(', '))}</div>`;
+      h += `<label class="cut"><input type="checkbox" data-a="cut"${cut ? ' checked' : ''}> Disconnected from the line (this pin only)</label>`;
+      if (!cut) h += `<div class="cap">Hold the whole line:</div><div class="btns">${btn('n', 'Normal', line === null)}${btn('1', 'High', line === 1)}${btn('0', 'Low', line === 0)}</div><div class="note">${line === null ? 'No fault on the line.' : `Every pin on this line sees it ${lv(line)}.`}</div>`;
+      else if (out) h += `<div class="note">This pin no longer drives the line, which floats high for the other pins${line !== null ? ' (but the line is held ' + lv(line) + ')' : ''}.</div>`;
+      else h += `<div class="cap">This pin then sees:</div><div class="btns">${btn('z', 'Floating', own === 'z')}${btn('1', 'High', own === 1)}${btn('0', 'Low', own === 0)}</div><div class="note">Only ${esc(c.id)} is affected${line !== null ? '; the rest of the line is held ' + lv(line) : ''}. A floating input reads high.</div>`;
+    } else {
+      h += `<div class="sub">a line of its own on this board</div><div class="btns">${btn('n', 'Normal', own === null)}${btn('z', 'Disconnected', own === 'z')}${btn('1', 'High', own === 1)}${btn('0', 'Low', own === 0)}</div>`;
+    }
+    el.innerHTML = h;
+  };
+  const act = a => {
+    const cut = key in zx.pinF;
+    if (a === 'cut') { zx.setPinFault(c.id, name, cut ? null : 'z'); }
+    else if (!shared || cut) zx.setPinFault(c.id, name, a === 'n' ? null : a === 'z' ? 'z' : +a);
+    else zx.setNetFault(net, a === 'n' ? null : +a);
+    disDirty = true; draw(); render();
+  };
+  draw();
+  el.style.left = Math.max(4, Math.min(ev.clientX - r.left, r.width - el.offsetWidth - 4)) + 'px'; el.style.top = (ev.clientY - r.top + 10) + 'px';
+  el.addEventListener('click', e2 => { e2.stopPropagation(); const b = e2.target.closest('button'); if (b && b.dataset.a) act(b.dataset.a); });
+  el.addEventListener('change', e2 => { if (e2.target.dataset.a === 'cut') act('cut'); });
+  el.addEventListener('keydown', e2 => { if (e2.key === 'Escape') mcClosePop(); });
+  const b0 = el.querySelector('input, button'); if (b0) b0.focus();
+}
+function mcTiles() {
+  const ch = MC.m.chips, groups = MC.groups();
+  const sig = mcSel + '|' + groups.map(g => g[0] + g[1].join(',')).join(';') + '|' + ch.map(c => c.id + Object.keys(c.f).length).join('');
+  if (sig === mcTileSig) return; mcTileSig = sig;
+  const q = t => esc(t).replace(/"/g, '&quot;');
+  const tile = i => { const c = ch[i], n = Object.keys(c.f).length, [lab, sub] = MC.tile(c, i); return `<button type="button" class="mctile${i === mcSel ? ' sel' : ''}${n ? ' fault' : ''}" data-i="${i}" title="${q(c.id + ': ' + c.part + ', ' + c.what + '. ' + c.range + '.')}"><i class="dot"></i><b>${esc(lab)}</b><span>${esc(sub)}</span>${n ? `<span class="nf">${n} fault${n === 1 ? '' : 's'}</span>` : ''}</button>`; };
+  $('mcTiles').innerHTML = groups.map(([title, idx]) => `<div><h3>${esc(title)}</h3><div class="grp">${idx.map(tile).join('')}</div></div>`).join('');
+}
+$('mcTiles').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; mcSel = +b.dataset.i; mcClosePop(); mcDraw(); render(); });
+$('mcClear').onclick = () => { zx.clearChip(MC.m.chips[mcSel].id); disDirty = true; render(); };
+$('mcClearAll').onclick = () => { zx.clearFaults(); disDirty = true; render(); };
+function renderMemChips() {
+  const ch = MC.m.chips; if (mcSel >= ch.length) mcSel = 0;
+  if (mcDrawn !== ch[mcSel].id + '/' + ch[mcSel].part) mcDraw();
+  mcTiles();
+  // a tile's dot stays lit for half a second after its chip was last accessed
+  const acc = MC.m.acc, now = performance.now(); if (!mcPrevAcc || mcPrevAcc.length !== acc.length) { mcPrevAcc = new Uint32Array(acc.length); mcSeen = new Float64Array(acc.length).fill(-1e9); }
+  for (let k = 0; k < acc.length; k++) if (acc[k] !== mcPrevAcc[k]) { mcSeen[k] = now; mcPrevAcc[k] = acc[k]; }
+  for (const t of $('mcTiles').querySelectorAll('.mctile')) { const k = MC.acc(+t.dataset.i); t.classList.toggle('act', k >= 0 && now - mcSeen[k] < 500); }
+  const c = ch[mcSel], B = MC.bus();
+  for (const [, name, kind] of MEM_PINOUTS[c.part]) {
+    const el = mcEls[name], f = name in c.f;
+    const v = kind === 'p' ? 'p' : kind === 'g' ? 'g' : f ? c.f[name] : MC.net(c, mcSel, name, B);
+    const cls = v === 'z' ? 'vz' : v === 'p' ? 'vp' : v === 'g' ? 'vg' : v ? 'v1' : 'v0';
+    const changed = el.prev !== null && el.prev !== v && v !== 'p' && v !== 'g';
+    el.g.classList.remove('v1', 'v0', 'vz', 'vp', 'vg', 'changed'); el.g.classList.add(cls);
+    if (changed && !running) el.g.classList.add('changed');
+    el.g.classList.toggle('forced', f); el.g.classList.toggle('fz', f && c.f[name] === 'z');
+    el.sv.textContent = v === 'z' ? 'Z' : v === 'p' ? '+' : v === 'g' ? '⏚' : v; el.prev = v;
+  }
+  const fl = zx.chipFaults(c.id), total = zx.faultList().length;
+  $('mcFaults').textContent = fl.join(' · ');
+  $('mcClear').disabled = !fl.length; $('mcClearAll').disabled = !total;
+  $('mcInfo').textContent = total ? `${total} fault${total === 1 ? '' : 's'} set` : 'live pins · click a pin for its fault menu';
+}
+mcDraw();
+var mcReady = true;      // (var: render can run before this point)
 
 // ---------- collapsible side panels ----------
 for (const sec of document.querySelectorAll('.side .panel')) {

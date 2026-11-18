@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZX Spectrum 48K documentation</title>
+  <meta name="description" content="User guide and hardware reference for the Sinclair ZX Spectrum 48K emulator built on Z80 Bench.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; Sinclair ZX Spectrum 48K</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LIST</p>
+      <h1>ZX Spectrum 48K documentation</h1>
+      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it.</p>
+    </header>
+
+    <a class="button" href="../app/">Open the emulator</a>
+
+    <nav class="toc" aria-label="Contents" style="margin-top:24px">
+      <b>Contents</b>
+      <ol>
+        <li><a href="#guide">User guide</a>
+          <ol>
+            <li><a href="#start">Quick start</a></li>
+            <li><a href="#page">The page</a></li>
+            <li><a href="#screen">The screen, the keyboard and the cassette</a></li>
+            <li><a href="#snap">Snapshots</a></li>
+            <li><a href="#sound">Sound and contention</a></li>
+            <li><a href="#chips">Processor and ULA</a></li>
+            <li><a href="#timing">Bus timing: the held clock</a></li>
+            <li><a href="#memchips">Chips and faults</a></li>
+            <li><a href="#hwpanel">Spectrum hardware panel</a></li>
+            <li><a href="#bitmap">Memory bitmap</a></li>
+            <li><a href="#tools">The debugging tools</a></li>
+          </ol>
+        </li>
+        <li><a href="#hardware">Hardware reference</a>
+          <ol>
+            <li><a href="#hw-overview">The machine</a></li>
+            <li><a href="#hw-frame">Lines, frames and the interrupt</a></li>
+            <li><a href="#hw-cont">Contention</a></li>
+            <li><a href="#hw-mem">Memory</a></li>
+            <li><a href="#hw-ports">Port FE, the keyboard and the floating bus</a></li>
+            <li><a href="#hw-video">Video</a></li>
+            <li><a href="#hw-tape">Cassette</a></li>
+            <li><a href="#hw-lines">The board's lines and what faults do</a></li>
+            <li><a href="#hw-limits">What is not emulated yet</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+
+    <h2 id="guide">User guide</h2>
+    <p>The emulator is <a href="../../z80-bench/">Z80 Bench</a> with a Sinclair ZX Spectrum 48K (the issue 4A/4B board) built around the CPU from the machine's circuit diagram. Everything Z80 Bench does still works here; this guide covers what the machine adds, and points to the <a href="../../z80-bench/docs/">Z80 Bench documentation</a> for the shared debugging tools.</p>
+
+    <h3 id="start">Quick start</h3>
+    <ol>
+      <li>Press <b>Load ROM…</b> and choose your own 48K ROM image (16,384 bytes). It is Sinclair's and is not included. Your browser keeps it, so you only load it once; the standard ROM is recognised by its CRC, DDEE531F.</li>
+      <li>The machine switches on and shows <code>© 1982 Sinclair Research Ltd</code>.</li>
+      <li>Click the picture and type. Keywords come from single keys, as on the real machine: at the K cursor, <kbd>P</kbd> gives PRINT and <kbd>J</kbd> gives LOAD.</li>
+      <li>To load a tape, press <b>Insert tape</b> and choose a <code>.tap</code>, <code>.tzx</code> or <code>.wav</code> file (or a <code>.zip</code> holding one), type <code>LOAD ""</code> and <kbd>Enter</kbd>, then press <b>Play</b>.</li>
+    </ol>
+
+    <h3 id="page">The page</h3>
+    <figure class="fig">
+      <a href="img/overview.png"><img src="img/overview.png" width="720" alt="The whole emulator page with its panels numbered"></a>
+      <figcaption>The whole page, paused in a two-instruction loop in the lower RAM. The ROM's part of the memory bitmap is covered: the ROM is copyrighted. Select the picture to see it full size.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>Toolbar:</b> reset, master reset, clock, step, run and speed, as in Z80 Bench.</li>
+      <li><b>Screen:</b> the television picture, the ROM, snapshot and tape controls, and the keyboard.</li>
+      <li><b>Processor and ULA:</b> the Z80 and the ULA with live pins.</li>
+      <li><b>Chips and faults:</b> every chip on the board, with live pins and a fault menu on each pin.</li>
+      <li><b>Program:</b> assemble or type hex and load it into memory.</li>
+      <li><b>I/O ports:</b> the last value written to each port, and a log of the port reads and writes (reads of port FE, the keyboard, are left out).</li>
+      <li><b>Disassembly</b> with breakpoints.</li>
+      <li><b>Memory:</b> a hex view of the 64K the CPU sees.</li>
+      <li><b>Memory bitmap:</b> every bit of memory as a pixel.</li>
+      <li><b>Registers</b> and register stops.</li>
+      <li><b>Debug:</b> stops of every kind, and the faults that are set.</li>
+      <li><b>Bus timing</b> of the current instruction, clock by clock.</li>
+      <li><b>Spectrum hardware:</b> where the ULA is in the frame, contention and port FE.</li>
+    </ol>
+
+    <h3 id="screen">The screen, the keyboard and the cassette</h3>
+    <figure class="fig">
+      <a href="img/screen.png"><img src="img/screen.png" width="720" alt="The screen panel with a line of text, the controls and the keyboard, with nineteen markers"></a>
+      <figcaption>After <code>PRINT "Z80 Bench on the ZX Spectrum"</code> and <code>BORDER 1</code>, paused: the white line and red mark show where the beam is. The deck holds a <code>SAVE</code> recorded on the page.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>The picture:</b> 352 by 296 dots: the 256 by 192 of the screen with 48 dots of border at each side, 48 lines above and 56 below. It is built as the ULA builds it, cell by cell from the screen memory at the moment each cell is drawn (see <a href="#hw-video">Video</a>). While the machine is paused, a white line and a red mark show where the beam is. Click the picture to give it the keyboard.</li>
+      <li><b>Beam position:</b> the line of the frame (0 to 311), the T-state in the line (0 to 223) and the number of frames drawn.</li>
+      <li><b>Load ROM…:</b> takes a 16,384-byte ROM image; any other size is refused. The message gives its CRC32.</li>
+      <li><b>Power on / restart:</b> clears the RAM, resets the CPU and runs in real time, as if the machine had been switched off and on.</li>
+      <li><b>Load snapshot…:</b> see <a href="#snap">Snapshots</a>.</li>
+      <li><b>Save snapshot (.sna):</b> see <a href="#snap">Snapshots</a>.</li>
+      <li><b>Sound:</b> the beeper on or off (see <a href="#sound">Sound and contention</a>). The choice is remembered.</li>
+      <li><b>Contention:</b> untick it to run the machine without the ULA holding the CPU (see <a href="#sound">Sound and contention</a>).</li>
+      <li><b>Insert tape:</b> a TAP or TZX file, a WAV recording of a cassette, or a <code>.zip</code> holding one of them. The page says how many blocks it holds and how long the tape is. A WAV file is turned into pulses (the edges are found after the DC drift is removed, with a threshold that follows the signal and stays above the hiss); the tape blocks in it in the ROM's format are listed, and <b>Save tape</b> keeps it as a TZX file.</li>
+      <li><b>Play:</b> PLAY on the deck. While it is down the tape moves with the machine's time and its signal reaches EAR (bit 6 of port FE), so the ROM's loader and the loaders of games read it bit by bit, with the loading stripes in the border. A "stop the tape" block in a TZX file releases it. Press it again to stop.</li>
+      <li><b>Rewind</b> to the start of the tape.</li>
+      <li><b>Record:</b> records what the computer writes to MIC (bit 3 of port FE). Press it, type <code>SAVE "name"</code>, press a key when the Spectrum says "Start tape", and press <b>Stop recording</b> when it says <code>0 OK</code>. The recording becomes the tape in the deck, rewound: as a TAP file when every block in it is in the ROM's format, otherwise as a TZX file of pulses.</li>
+      <li><b>Save tape:</b> downloads the tape in the deck (<code>.tap</code> or <code>.tzx</code>).</li>
+      <li><b>Save .wav:</b> downloads the tape's signal as sound (44.1 kHz, 8-bit, mono), to play into a real Spectrum's EAR socket.</li>
+      <li><b>Block:</b> the blocks on the tape with their start times; choosing one winds the tape to it. The line under the buttons follows the tape as it plays.</li>
+      <li><b>Instant loading:</b> when the ROM's loader (LD-BYTES, at 0556h) is about to read a block, the next block is taken straight from the tape file, checked as the ROM would check it (its flag byte, its length and its checksum), copied into memory and the tape wound past it, with no waiting. Programs with loaders of their own do not use LD-BYTES and still load from the signal, so keep PLAY down. After an instant load the tape stops by itself once nothing has read it for 2 seconds. The choice is remembered.</li>
+      <li><b>Fast loading:</b> runs at full speed while a loader is reading the playing tape (more than 200 reads of port FE in a frame within the last half second; the keyboard takes at most 8) or while <code>SAVE</code> writes to a recording, then back to real time.</li>
+      <li><b>Tape:</b> the tape's name, the block under the head, the time and PLAY's state, or the recording's length.</li>
+      <li><b>Keyboard:</b> the 48K's forty keys. Each shows the keyword it gives at the K cursor above it (on the digits, the CAPS SHIFT function), the SYMBOL SHIFT symbol in red and the extended-mode word in green below. CAPS SHIFT and SYMBOL SHIFT stay down for the next key.</li>
+    </ol>
+    <p>On your own keyboard, characters come out as typed: the page presses the Spectrum keys that give each one, so <kbd>"</kbd> is SYMBOL SHIFT and P, and a capital letter is CAPS SHIFT and the letter. <kbd>Shift</kbd> is CAPS SHIFT, <kbd>Ctrl</kbd> or <kbd>Alt</kbd> is SYMBOL SHIFT, <kbd>Backspace</kbd> is DELETE (CAPS SHIFT and 0), the arrow keys are CAPS SHIFT and 5 to 8, and <kbd>Esc</kbd> is BREAK (CAPS SHIFT and SPACE). Presses are queued and each is held for at least 1.2 frames, so that the ROM, which reads the keyboard once a frame, sees every one however fast you type.</p>
+
+    <h3 id="snap">Snapshots</h3>
+    <p><b>Load snapshot…</b> takes a 48K <code>.sna</code> file (49,179 bytes) or a <code>.z80</code> file of version 1, 2 or 3 made for a 48K machine (a snapshot of a 128K is refused), or a <code>.zip</code> holding one, and runs it at once. <b>Save snapshot (.sna)</b> saves the machine as a 48K <code>.sna</code> file, between two instructions (step to the end of an instruction first if you are clocking T-states).</p>
+
+    <h3 id="sound">Sound and contention</h3>
+    <p>The speaker follows bit 4 of port FE, with a little of bit 3 (MIC) and of the tape's signal, as they share the ULA's MIC/EAR pin. It plays only while the machine runs in real time; browsers let it start only after a click or a key press.</p>
+    <p>With <b>Contention</b> ticked (the normal state), the ULA holds the CPU's clock whenever both want the lower 16K of RAM at once, as on the real machine. Untick it and every access runs at full speed: programs whose timing depends on contention (border effects, some loaders and music) then run differently, which shows what the real machine's timing does.</p>
+
+    <h3 id="chips">Processor and ULA</h3>
+    <figure class="fig wide">
+      <a href="img/chips.png"><img src="img/chips.png" width="900" alt="The Z80 and the ULA side by side with their pins, with four markers"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>IC2, the Z80A,</b> with every pin live, as in Z80 Bench. Its input pins (INT, NMI, WAIT, BUSREQ, RESET) toggle when clicked, as in Z80 Bench; their faults are in the Chips and faults panel. Clicking CLK pulses one clock.</li>
+      <li><b>IC1, the ULA</b> (6C001), with its pins numbered as on the issue 4A/4B diagram. INT, the control lines, A14, A15, ROMCS, the keyboard lines and MIC/EAR follow the machine on every clock. The CPU CLK pin stays high while the ULA holds the clock. The lower RAM's pins (RAS, CAS, WE, A0–A6, D0–D7) show whoever uses that RAM at each T-state: the ULA reading the screen, or the CPU (see <a href="#hw-video">Video</a>). They are shown T-state by T-state, not edge by edge. U, V and Y are the analogue colour outputs and show ~; OSC follows the clock.</li>
+      <li><b>Legend:</b> high, low, floating (Z) or analogue (~), and the inputs you can click.</li>
+      <li><b>Bus read-out:</b> the machine cycle and T-state, and what is on the address and data buses. A T-state held by the ULA is marked "clock held by the ULA".</li>
+    </ol>
+
+    <h3 id="timing">Bus timing: the held clock</h3>
+    <figure class="fig">
+      <a href="img/timing.png"><img src="img/timing.png" width="300" alt="The bus timing panel showing an opcode fetch followed by three T-states marked TH"></a>
+      <figcaption><code>LD (4000h),A</code> at 6000h, in the lower RAM, while the picture is drawn: it takes 26 T-states instead of 13.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>TH:</b> a T-state in which the ULA holds the CPU's clock before a cycle can start. On the Spectrum the ULA stops the clock rather than using WAIT, so the Z80's WAIT pin stays high.</li>
+    </ol>
+
+    <h3 id="memchips">Chips and faults</h3>
+    <figure class="fig wide">
+      <a href="img/memchips.png"><img src="img/memchips.png" width="900" alt="The chips panel with IC9 marked faulty, its pinout, and a fault menu open, with eight markers"></a>
+      <figcaption>IC9, the lower RAM's D3, with its output disconnected, and the fault menu of its DIN pin.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>Processor and ULA:</b> IC2 and IC1.</li>
+      <li><b>ROM:</b> IC5, 16K.</li>
+      <li><b>Lower RAM:</b> IC6 to IC13, eight 4116s, one per data bit, D0 to D7 in order. This is the ULA's RAM.</li>
+      <li><b>Upper RAM:</b> IC15 to IC22, eight 4532s, D0 to D7 in order. A tile's dot lights while its chip is being used; a chip with a fault turns red.</li>
+      <li><b>The chosen chip's pins,</b> live on every clock. Click a pin for its menu.</li>
+      <li><b>The fault menu.</b> For a pin on a line shared with other pins, the buttons hold the whole line high or low, and every pin on it sees that level, on every chip. Tick <b>Disconnected from the line</b> for a fault on this pin alone: an input then floats (reads high) or takes the level you choose; a disconnected output no longer drives the line. A pin on a line of its own has plain choices: normal, disconnected, high or low.</li>
+      <li><b>The chip's faults,</b> listed. Every fault also appears in the Debug panel, where it can be removed.</li>
+      <li><b>Clear this chip's faults</b> and <b>Clear all faults</b>.</li>
+    </ol>
+    <figure class="fig">
+      <a href="img/fault.png"><img src="img/fault.png" width="520" alt="The Spectrum's picture filled with blue and red vertical stripes"></a>
+      <figcaption>Power on with IC9's output disconnected. Every byte read from the lower RAM has bit 3 set, the ROM's memory check (at 11DCh) cannot get past the lower RAM, and the machine never reaches the copyright message: the screen memory is left full of stripes.</figcaption>
+    </figure>
+    <figure class="fig">
+      <a href="img/linemenu.png"><img src="img/linemenu.png" width="420" alt="The Z80's CLK pin menu, offering to hold the CPU clock line high or low"></a>
+      <figcaption>The Z80's CLK pin is on one line with the ULA's CPU CLK pin. Held high or low, the Z80 stands still while the ULA goes on drawing the picture.</figcaption>
+    </figure>
+    <p>What each fault does is set out in <a href="#hw-lines">The board's lines and what faults do</a>.</p>
+
+    <h3 id="hwpanel">Spectrum hardware panel</h3>
+    <figure class="fig">
+      <a href="img/hardware.png"><img src="img/hardware.png" width="380" alt="The Spectrum hardware panel with four markers"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Memory:</b> the memory map and which chips hold it.</li>
+      <li><b>ULA:</b> the T-state of the frame (of 69,888), the line and the T-state in the line, what is being drawn, whether INT is asking, how many interrupts were taken, the frame number and the flash phase.</li>
+      <li><b>Contention:</b> how many T-states a cycle starting now would be held, and how much of the time the CPU has been held since power on.</li>
+      <li><b>Port FE:</b> the border colour, MIC and the speaker as last written, the EAR bit as it reads now, the tape's level while it plays, and the keys down.</li>
+    </ol>
+
+    <h3 id="bitmap">Memory bitmap</h3>
+    <figure class="fig">
+      <a href="img/bitmap.png"><img src="img/bitmap.png" width="300" alt="The memory bitmap panel with the ROM bands covered, with three markers"></a>
+      <figcaption>The ROM bands are covered in this picture: the bitmap would show the ROM's contents.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>The bands:</b> the ROM in two bands of 8K, then the RAM in six. Each byte is a row of 8 pixels (bit 7 on the left) and each strip is one 256-byte page. The red mark is the program counter and the blue mark the stack pointer.</li>
+      <li><b>The tint:</b> the screen bitmap (4000h–57FFh), the attributes (5800h–5AFFh), and the printer buffer and BASIC's system variables (5B00h–5CB5h).</li>
+      <li><b>Point at a byte</b> to read its address, value and disassembly; click it to show it in the Memory panel.</li>
+    </ol>
+
+    <h3 id="tools">The debugging tools</h3>
+    <p>The remaining panels are Z80 Bench's own and work the same way here.</p>
+    <ul class="features">
+      <li><a href="../../z80-bench/docs/#program">Loading a program</a>: the sample program loads at <code>8000h</code> and paints the top row of the screen red. From BASIC, load it without <b>Reset CPU after loading</b> and type <code>RANDOMIZE USR 32768</code>; type <code>CLEAR 32767</code> first so BASIC keeps below 8000h</li>
+      <li><a href="../../z80-bench/docs/#dis">Disassembly and breakpoints</a></li>
+      <li><a href="../../z80-bench/docs/#memory">Memory</a>, with <b>Dump memory (.bin)</b> and <b>Memory listing (.txt)</b> for the 64K the CPU sees. A byte you edit in the ROM's range is not kept: the ROM cannot be written</li>
+      <li><a href="../../z80-bench/docs/#regs">Registers and register stops</a></li>
+      <li><a href="../../z80-bench/docs/#debug">Debug pane</a>: memory, pin and bus stops, and the faults</li>
+      <li><a href="../../z80-bench/docs/#timing">Bus timing</a>: shows the T-states the ULA holds (<a href="#timing">above</a>)</li>
+    </ul>
+
+    <h2 id="hardware">Hardware reference</h2>
+    <p>The model follows Sinclair's circuit diagram of the issue 4A/4B board. Its timing has been checked against the Fuse emulator's Z80 test suite.</p>
+
+    <h3 id="hw-overview">The machine</h3>
+    <ul class="features">
+      <li><b>IC1, the ULA</b> (Ferranti 6C001): from a 14 MHz crystal it makes the CPU's 3.5 MHz clock and the 7 MHz dot clock; it draws the picture from the lower RAM, which it owns; it decodes the ROM's select (ROMCS) from A14, A15 and MREQ; it answers every even port; it asks for an interrupt once a frame; and it stops the CPU's clock while it needs the lower RAM. Its picture leaves as Y, U and V for the LM1889 encoder (IC14).</li>
+      <li><b>IC2, the Z80A.</b></li>
+      <li><b>IC5, the 16K ROM.</b></li>
+      <li><b>IC6–IC13,</b> eight 4116 dynamic RAMs (16K by 1): 4000h–7FFFh, D0 to D7. Their address pins carry a row (A0–A6) then a column (A7–A13), from the ULA, or from the CPU through the 74LS157 multiplexers IC3 and IC4 and 330 ohm resistors, so the ULA's own address wins when it reads the screen. Their data lines are the ULA's data bus, joined to the CPU's through 470 ohm resistors (R1–R8), so the ULA can read them while the CPU uses the ROM or the upper RAM.</li>
+      <li><b>IC15–IC22,</b> eight 4532s (half-good 4164s; link DK1 picks the half): 8000h–FFFFh, D0 to D7, addressed through the 74LS157s IC25 and IC26, with RAS, CAS and WRITE made by IC23 (74LS32) and IC24 (74LS00).</li>
+      <li><b>R9–R16,</b> 8K2 pull-ups on the CPU's data bus: a read that nothing answers gives FFh.</li>
+    </ul>
+
+    <h3 id="hw-frame">Lines, frames and the interrupt</h3>
+    <ul class="features">
+      <li><b>A line</b> is 224 T-states: 128 for the 256 dots of the picture (two dots a T-state), 24 of right border, 48 of blanking and sync, and 24 of left border.</li>
+      <li><b>A frame</b> is 312 lines, 69,888 T-states: about 50.08 frames a second.</li>
+      <li><b>The interrupt:</b> INT is low for the first 32 T-states of every frame; if interrupts are enabled, the interrupt is taken before the first instruction that would start in that time.</li>
+      <li><b>The picture</b> starts 14,336 T-states after INT does, at line 64; it is 192 lines. Lines 0–15 are not kept in the emulator's picture; lines 16–63 are the top border and 256–311 the bottom.</li>
+    </ul>
+
+    <h3 id="hw-cont">Contention</h3>
+    <p>While a line of the picture is drawn, the ULA reads the screen memory, and the CPU must wait for the lower RAM. From T-state 14,335 of the frame, for 128 T-states of each of the 192 lines, a CPU cycle that needs the ULA is held for 6, 5, 4, 3, 2, 1, 0 or 0 T-states, by where in each group of 8 T-states it starts. The ULA sees only the address, so it holds:</p>
+    <ul class="features">
+      <li><b>a memory cycle</b> (opcode fetch, read or write) to 4000h–7FFFh, held at its first T-state;</li>
+      <li><b>an internal cycle</b> of the Z80 that leaves such an address on the bus (after an opcode fetch, the refresh address, from I and R), held one T-state at a time;</li>
+      <li><b>an I/O cycle</b> to an even port (the ULA's), held at its second T-state; one with an address in 4000h–7FFFh is held at its first T-state as well, and if the port is odd, at each of its four.</li>
+    </ul>
+    <p>The hold is worked out as each access happens, so every read and write takes place at its true T-state: the picture, the border and the floating bus see them when the real machine would. The points at which every instruction can be held agree with the 1,335 tests of the Fuse emulator's Z80 test suite.</p>
+
+    <h3 id="hw-mem">Memory</h3>
+    <ul class="features">
+      <li><b>0000h–3FFFh:</b> the ROM. Writes there are ignored.</li>
+      <li><b>4000h–7FFFh:</b> the lower RAM, shared with the ULA: the screen bitmap at 4000h–57FFh (6,144 bytes), the attributes at 5800h–5AFFh (768 bytes), then the printer buffer and BASIC's system variables from 5B00h.</li>
+      <li><b>8000h–FFFFh:</b> the upper RAM.</li>
+    </ul>
+
+    <h3 id="hw-ports">Port FE, the keyboard and the floating bus</h3>
+    <p>The ULA answers any port with A0 low (port FE). Written, bits 0–2 set the border colour, bit 3 MIC (the tape output) and bit 4 EAR (the speaker). Read, bits 0–4 are the keyboard (0 for a key down), bit 6 is the EAR input and bits 5 and 7 read 1. The keyboard is eight half-rows of five keys, each chosen by one of A8–A15 low; several can be read at once:</p>
+    <div class="tablewrap"><table class="ref">
+      <thead><tr><th>Address line low</th><th>Bit 0</th><th>Bit 1</th><th>Bit 2</th><th>Bit 3</th><th>Bit 4</th></tr></thead>
+      <tbody>
+        <tr><td>A8 (FEFEh)</td><td>CAPS SHIFT</td><td>Z</td><td>X</td><td>C</td><td>V</td></tr>
+        <tr><td>A9 (FDFEh)</td><td>A</td><td>S</td><td>D</td><td>F</td><td>G</td></tr>
+        <tr><td>A10 (FBFEh)</td><td>Q</td><td>W</td><td>E</td><td>R</td><td>T</td></tr>
+        <tr><td>A11 (F7FEh)</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+        <tr><td>A12 (EFFEh)</td><td>0</td><td>9</td><td>8</td><td>7</td><td>6</td></tr>
+        <tr><td>A13 (DFFEh)</td><td>P</td><td>O</td><td>I</td><td>U</td><td>Y</td></tr>
+        <tr><td>A14 (BFFEh)</td><td>ENTER</td><td>L</td><td>K</td><td>J</td><td>H</td></tr>
+        <tr><td>A15 (7FFEh)</td><td>SPACE</td><td>SYMBOL SHIFT</td><td>M</td><td>N</td><td>B</td></tr>
+      </tbody>
+    </table></div>
+    <ul class="features">
+      <li><b>EAR:</b> MIC, the speaker and the tape input share the ULA's MIC/EAR pin, and bit 6 reads that pin against a threshold. On issue 3 and later boards (the 4A/4B included) bit 6 reads 1 when the tape signal is high or bit 4 was last written as 1; bit 3 alone does not lift it.</li>
+      <li><b>The floating bus:</b> nothing answers an odd port, and the data bus holds what the ULA is reading for the picture at that moment: from T-state 14,338 of the frame, in each 8 T-states of a picture line, a bitmap byte, its attribute, the next bitmap byte and its attribute, then 4 T-states of nothing (FFh). Outside the picture an odd port reads FFh.</li>
+    </ul>
+
+    <h3 id="hw-video">Video</h3>
+    <ul class="features">
+      <li><b>Cells:</b> the picture is drawn in cells of 8 dots (4 T-states). For a cell of the screen, the bitmap byte and its attribute are read from the memory at the moment the cell is drawn; before the CPU writes to the screen or changes the border, the picture is drawn up to that moment. Border changes therefore show to the nearest cell.</li>
+      <li><b>The screen's layout:</b> line <i>y</i> (0–191) of the picture is at <code>4000h + (y AND C0h)·32 + (y AND 7)·256 + (y AND 38h)·4</code>, 32 bytes a line; the attribute of character row <i>r</i>, column <i>c</i> at <code>5800h + 32·r + c</code>.</li>
+      <li><b>Attributes:</b> bits 0–2 ink, bits 3–5 paper, bit 6 bright, bit 7 flash. Flash swaps ink and paper, changing every 16 frames.</li>
+      <li><b>The ULA's reads:</b> a bitmap byte and its attribute share the low 8 bits of their addresses, so one row address (A0–A6) serves both: the ULA reads them in page mode, two reads under one RAS. On the ULA's and the lower RAM's pins, those T-states show RAS and CAS low, the byte's column on A0–A6 and the byte on D0–D7.</li>
+    </ul>
+
+    <h3 id="hw-tape">Cassette</h3>
+    <ul class="features">
+      <li><b>The ROM's format:</b> a leader of pulses of 2,168 T-states (8,063 of them before a header, 3,223 before data), two sync pulses of 667 and 735, then each bit as two equal pulses, 855 T-states for a 0 and 1,710 for a 1. A block is a flag byte (00h for a header, FFh for data), the bytes, and a checksum (all of them XORed).</li>
+      <li><b>TZX blocks</b> understood: standard and turbo speed data, pure tones, pulse sequences, pure data, direct recordings, pauses and "stop the tape", groups, jumps and loops, and text descriptions (shown as notes). Archive information is skipped; blocks of type 18h and 19h are skipped with a note.</li>
+      <li><b>Recording:</b> the times between the edges of MIC while REC is down. Blocks in the ROM's format are found in them (a steady leader, two short sync pulses, then pairs of pulses, kept only if the checksum is right).</li>
+    </ul>
+
+    <h3 id="hw-lines">The board's lines and what faults do</h3>
+    <p>The lines a fault can hold, from the diagram:</p>
+    <ul class="features">
+      <li><b>A0–A15:</b> the CPU's address bus, to the ROM (A0–A13) and the ULA (A14, A15).</li>
+      <li><b>D0–D7 on the CPU's side:</b> the Z80, the ROM and the upper RAM chips.</li>
+      <li><b>D0–D7 on the ULA's side:</b> the ULA and the lower RAM chips (each through its resistor, R1–R8).</li>
+      <li><b>The lower RAM's A0–A6, RAS, CAS and WE</b> (the ULA's pins and the eight 4116s), and <b>the upper RAM's A0–A7, RAS, CAS and WE</b> (the eight 4532s).</li>
+      <li><b>INT, the CPU clock, ROMCS, MREQ, IORQ, RD and WR</b> between the ULA and the Z80 (ROMCS to the ROM's CE).</li>
+      <li>Every other pin, such as the keyboard lines, MIC/EAR, M1 and the Z80's inputs, is a line of its own.</li>
+    </ul>
+    <p>What they do:</p>
+    <ul class="features">
+      <li><b>A data line held on the CPU's side</b> spoils what the CPU reads and writes; <b>on the ULA's side</b>, it spoils the picture and what the CPU reads from the lower RAM and from port FE.</li>
+      <li><b>A RAM or ROM data pin</b> held or disconnected spoils that bit of what the chip stores and gives. A chip whose RAS or CAS is held or disconnected (or the ROM whose CE is held high) is out of circuit: its bits read 1 and writes to it are lost. A write enable held high loses the writes.</li>
+      <li><b>An address line held</b> moves every access that crosses it. On a RAM chip's multiplexed address pin, a fault changes both the row bit and the column bit it carries: on the lower RAM, pin A<i>n</i> carries A<i>n</i> and A<i>n</i>+7.</li>
+      <li><b>The ULA's A14 and A15</b> decide, as the ULA sees them, whether it selects the ROM, whether the lower RAM answers and whether a cycle is held. Two chips answering at once give the AND of their bytes; none gives FFh.</li>
+      <li><b>MREQ, IORQ, RD or WR held high</b> cut off the memory or I/O cycles that need them: a read gives FFh and a write is lost. Held low they are not modelled.</li>
+      <li><b>INT</b> held high stops the interrupts (and so the keyboard scan and the clock in BASIC); held low, the CPU is interrupted whenever interrupts are enabled.</li>
+      <li><b>The CPU clock</b> held: the Z80 stands still; the ULA goes on drawing the picture.</li>
+      <li><b>A keyboard line</b> held low reads as a key down in every half-row; <b>MIC/EAR</b> held fixes bit 6 and the speaker.</li>
+    </ul>
+    <p>Two things the diagram leaves open are filled in here. The multiplexers IC25 and IC26 are drawn without showing which CPU address lines go to the upper RAM's row and which to its column: A0–A7 are taken as the row and A8–A14 as the column (this decides only which addresses an upper RAM address fault moves). And the diagram contradicts itself on the ROM's pin 27: the row of pin numbers over the chip gives it as A12, the box inside the chip as a chip select. The ROM is drawn with the row of numbers, ROMCS on pin 20 (CE) and OE taken as tied low.</p>
+
+    <h3 id="hw-limits">What is not emulated yet</h3>
+    <ul class="features">
+      <li><b>Other models and boards:</b> the 16K, the issue 1 to 3 boards (their EAR threshold differs) and the 128K machines.</li>
+      <li><b>The ULA's edges within a T-state,</b> its analogue outputs, and the "snow" some programs cause by pointing the I register at 4000h–7FFFh.</li>
+      <li><b>MREQ, IORQ, RD or WR held low,</b> and a ROM selected all the time.</li>
+      <li><b>The ULA itself, gate by gate:</b> it is modelled by its behaviour. A gate-level model from Ferranti's logic diagrams of the 6C001, as for the <a href="../../zx81-ula/">ZX81's ULA</a>, is planned.</li>
+      <li><b>Peripherals:</b> joysticks, the printer, the Interface 1 and microdrives.</li>
+    </ul>
+
+    <footer><a href="../">&larr; Back to Sinclair ZX Spectrum 48K</a> · <a href="../../emulators/">Emulators</a> · <a href="../../">All projects</a></footer>
+  </main>
+</body>
+</html>
