@@ -16,7 +16,7 @@
     <header class="site" style="margin-top:20px">
       <p class="prompt">&gt; LIST</p>
       <h1>Amstrad CPC 464 documentation</h1>
-      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it. The emulator is work in progress: sound and the cassette are still to come.</p>
+      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it. The emulator is work in progress: the 8255, the sound chip and the address selectors are not yet drawn as chips.</p>
     </header>
 
     <a class="button" href="../app/">Open the emulator</a>
@@ -29,6 +29,8 @@
             <li><a href="#start">Quick start</a></li>
             <li><a href="#screen">The screen</a></li>
             <li><a href="#machine">The picture and the keyboard</a></li>
+            <li><a href="#sound">Sound</a></li>
+            <li><a href="#tape">The cassette</a></li>
             <li><a href="#toolbar">Running and stepping</a></li>
             <li><a href="#chips">Processor, gate array and 6845</a></li>
             <li><a href="#memchips">Memory chips</a></li>
@@ -48,6 +50,8 @@
             <li><a href="#hw-video">Video</a></li>
             <li><a href="#hw-int">Interrupts</a></li>
             <li><a href="#hw-ppi">8255 and keyboard</a></li>
+            <li><a href="#hw-sound">Sound chip</a></li>
+            <li><a href="#hw-tape">Cassette</a></li>
             <li><a href="#hw-chips">Chips</a></li>
             <li><a href="#hw-limits">What is not emulated yet</a></li>
           </ol>
@@ -97,6 +101,15 @@
       <li><b>Power on / restart:</b> clears the RAM, resets the machine and runs it in real time.</li>
       <li><b>Dump RAM (.bin):</b> saves all 64K of RAM, <code>0000h</code>–<code>FFFFh</code>, as a raw file.</li>
       <li><b>Gate array:</b> the chip fitted at IC116, a 40010 or a 40007. The two behave alike here; their pins are arranged differently, which matters for the fault menus.</li>
+      <li><b>Sound:</b> through the built-in speaker, as from the stereo socket, or off; see <a href="#sound">Sound</a>.</li>
+      <li><b>Insert tape (.cdt)…:</b> puts a CDT or TZX tape file in the deck.</li>
+      <li><b>Play</b> (<b>Stop</b> while it is down): the cassette's PLAY key.</li>
+      <li><b>Rewind:</b> back to the start of the tape.</li>
+      <li><b>Record</b> (<b>Stop recording</b> while recording): REC and PLAY on a blank tape.</li>
+      <li><b>Save tape (.cdt):</b> saves the tape in the deck as a file, such as a recording you made.</li>
+      <li><b>Block:</b> the blocks on the tape, with where each starts; pick one to wind the tape there.</li>
+      <li><b>Fast loading:</b> runs at full speed while the tape moves, and back to real time when the motor stops.</li>
+      <li><b>Tape:</b> the file, the block under the head, the time on the tape, PLAY and the motor.</li>
       <li><b>Keyboard:</b> the CPC 464 layout. SHIFT and CTRL stay down for the next key.</li>
     </ol>
     <p>Characters you type come out as typed: the page presses the CPC key, with or without SHIFT, that gives that character, whatever your own keyboard layout. A few keys go by position:</p>
@@ -110,6 +123,27 @@
       <tr><td>Numeric keypad <kbd>Enter</kbd></td><td>The small ENTER key</td></tr>
       <tr><td>Arrow keys, <kbd>Tab</kbd>, <kbd>Esc</kbd>, <kbd>Caps Lock</kbd>, <kbd>Ctrl</kbd></td><td>The same keys</td></tr>
     </table></div>
+
+    <h3 id="sound">Sound</h3>
+    <p>The sound chip plays while the machine runs in real time. Browsers only let a page make sound after a click or a key press, so it starts with your first one. Choose <b>Speaker</b> to hear all three channels together, as from the CPC's built-in speaker, or <b>Stereo socket</b> to hear channel A on the left, C on the right and B in both, as from the stereo socket at the back. The choice is remembered. The sound goes quiet while the machine is paused, runs at another speed, or loads at full speed. Try <code>SOUND 1,142,200,15</code>: channel A at 440 Hz, the A above middle C.</p>
+    <p>A fault that stops CCLK (no 16 MHz clock, or the gate array's CCLK pin or line held or disconnected) stops the sound chip too, so the sound stops.</p>
+
+    <h3 id="tape">The cassette</h3>
+    <p>The deck plays CDT files, the tape format used for CPC tapes (the TZX format of the Spectrum, with the same blocks). The file is turned into the signal it holds, and the computer reads that signal from the cassette input bit by bit, as it would from a real tape. So both the firmware's own loader and the custom loaders of games, such as Speedlock, work.</p>
+    <p><b>To load a program:</b></p>
+    <ol>
+      <li>Press <b>Insert tape (.cdt)…</b> and choose the file.</li>
+      <li>Type <code>RUN""</code> (or <code>LOAD""</code>) and press RETURN. The CPC says <b>Press PLAY then any key:</b>.</li>
+      <li>Press <b>Play</b> under the picture, then any key on the CPC.</li>
+    </ol>
+    <p>The tape moves only while PLAY is down and the computer has the motor on, so it stops where a program switches the motor off between files, as a real deck would. Some tapes hold a "stop the tape" block, which releases PLAY: press it again when the program asks. With <b>Fast loading</b> ticked a long tape loads in a fraction of its running time; untick it to load in real time.</p>
+    <p><b>To save a program:</b></p>
+    <ol>
+      <li>Type <code>SAVE "name"</code> and press RETURN. The CPC says <b>Press REC and PLAY then any key:</b>.</li>
+      <li>Press <b>Record</b>, then any key on the CPC.</li>
+      <li>When it says <b>Ready</b>, press <b>Stop recording</b>.</li>
+    </ol>
+    <p>What the computer wrote while the motor was on becomes a new tape in the deck, rewound, so you can <code>LOAD</code> it back straight away; <b>Save tape (.cdt)</b> keeps it as a file you can load later or in another emulator. A recording is kept as the pulses it holds, not decoded, so anything a program writes to tape is kept as it was written.</p>
 
     <h3 id="toolbar">Running and stepping</h3>
     <figure class="fig">
@@ -195,7 +229,8 @@
       <li><b>READY:</b> the clocks run and the wait states added, as a count and a share; or why the Z80 is held, if a fault holds it.</li>
       <li><b>6845:</b> registers R0–R15, the character, row, line and scan line being drawn, the display address, DISPEN, HSYNC and VSYNC, and where the screen memory is.</li>
       <li><b>Monitor:</b> where the beam is, counted from the last HSYNC and VSYNC, the pictures drawn, and the colour being sent.</li>
-      <li><b>8255:</b> ports A and C, the keyboard row selected, the cassette motor, the sound chip bus state and register, and the keys held down.</li>
+      <li><b>Sound chip:</b> each channel's tone, as a frequency and the nearest note, or off; whether noise is mixed in; its volume or the envelope. Then the noise period, the envelope period and shape, and the register selected.</li>
+      <li><b>8255:</b> ports A and C, the keyboard row selected, the cassette motor, the cassette input level, the state of the sound chip's bus, and the keys held down.</li>
     </ol>
 
     <h3 id="bitmap">Memory bitmap</h3>
@@ -231,7 +266,8 @@
       <tr><td>Gate array</td><td>40007, 40008 or 40010, with a 16 MHz crystal: the clocks, the RAM's timing, the ROM switching, the interrupts and the dots of the picture</td></tr>
       <tr><td>Video controller</td><td>6845: the display address and the sync timing</td></tr>
       <tr><td>PPI</td><td>8255: keyboard row, the sound chip's bus, cassette motor, and a port of status bits</td></tr>
-      <tr><td>Sound chip</td><td>AY-3-8912: here only its registers, and its I/O port, which reads the keyboard</td></tr>
+      <tr><td>Sound chip</td><td>AY-3-8912: three tone channels, noise and an envelope, and an I/O port that reads the keyboard</td></tr>
+      <tr><td>Cassette</td><td>A motor switch, a data output and a data input, all through the 8255</td></tr>
       <tr><td>ROM</td><td>32K: firmware and Locomotive BASIC 1.0</td></tr>
       <tr><td>RAM</td><td>64K, shared by the CPU and the display</td></tr>
     </table></div>
@@ -300,8 +336,30 @@
       <li>The Z80 runs in interrupt mode 1. The firmware's handler starts at <code>0038h</code> in ROM and continues in RAM at <code>B939h</code>.</li>
     </ul>
 
+    <h3 id="hw-sound">Sound chip</h3>
+    <p>The AY-3-8912 is the AY-3-8910 with one I/O port instead of two. The CPU reaches it only through the 8255 (see <a href="#hw-ppi">8255 and keyboard</a>), and it runs on the gate array's CCLK at 1 MHz.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Register</th><th>Use</th></tr>
+      <tr><td class="mono">0–5</td><td>Tone periods of channels A, B and C, 12 bits each: the tone is 62,500 / period Hz</td></tr>
+      <tr><td class="mono">6</td><td>Noise period, 5 bits</td></tr>
+      <tr><td class="mono">7</td><td>Mixer: bits 2–0 switch the tones of C, B, A off; bits 5–3 the noise; bit 6 sets the I/O port's direction</td></tr>
+      <tr><td class="mono">8–10</td><td>Volumes of A, B and C, 0–15, each step about 3 dB; bit 4 set uses the envelope instead</td></tr>
+      <tr><td class="mono">11–12</td><td>Envelope period, 16 bits: one sweep of 16 steps takes 256 × period µs</td></tr>
+      <tr><td class="mono">13</td><td>Envelope shape: continue, attack, alternate, hold. Writing it restarts the envelope</td></tr>
+      <tr><td class="mono">14</td><td>The I/O port: on the CPC it reads the keyboard row</td></tr>
+    </table></div>
+    <p>Each channel is a square wave, or noise, or both, at its volume. The built-in speaker gets all three channels; the stereo socket gives A on the left and C on the right, with B in both. The chip's RESET is the board's reset line, so a reset silences it.</p>
+
+    <h3 id="hw-tape">Cassette</h3>
+    <ul class="features">
+      <li><b>Motor:</b> port C bit 4 switches the cassette motor on.</li>
+      <li><b>Writing:</b> port C bit 5 is the signal to the tape. The firmware writes each bit as a pulse and its return, a 1 twice as long as a 0, after a long leader of pulses for the loader to time.</li>
+      <li><b>Reading:</b> port B bit 7 is the signal from the tape. Loaders time the gaps between its edges with counting loops, which is why the wait states have to be right for a tape to load.</li>
+    </ul>
+    <p>A CDT file describes the signal as blocks: leaders, sync pulses and data bits with their lengths, plain pulses, and pauses, all timed in 3.5 MHz T-states; the emulator scales them to the CPC's 4 MHz clock. A pause starts with 1 ms at the opposite level, which ends the last pulse, then stays low. A recording is written as blocks of pulses (TZX block 13h), with a pause block (20h) for each gap longer than about 19 ms.</p>
+
     <h3 id="hw-ppi">8255 and keyboard</h3>
-    <p>Port C bits 3–0 select a keyboard row, decoded to ten rows. The row is read through the sound chip's own I/O port, register 14: port C bits 7–6 drive the sound chip's bus (address, write or read) and port A carries the data. A pressed key reads low. Port C bit 4 turns the cassette motor on.</p>
+    <p>Port C bits 3–0 select a keyboard row, decoded to ten rows. The row is read through the sound chip's own I/O port, register 14: port C bits 7–6 drive the sound chip's bus (address, write or read) and port A carries the data. A pressed key reads low. Port C bit 4 turns the cassette motor on and bit 5 writes to the tape.</p>
     <p>Port B reads status bits:</p>
     <div class="tablewrap"><table class="ref">
       <tr><th>Bit</th><th>Meaning</th></tr>
@@ -349,8 +407,7 @@
 
     <h3 id="hw-limits">What is not emulated yet</h3>
     <ul class="features">
-      <li><b>Sound:</b> the sound chip's registers are kept, but it makes no sound.</li>
-      <li><b>Cassette:</b> no tape loading or saving.</li>
+      <li><b>Cassette:</b> tapes as WAV sound files; only CDT and TZX files are read.</li>
       <li><b>The 8255, the sound chip and the address selectors as live chips:</b> they work, but are not drawn with pins and faults.</li>
       <li><b>Printer, joysticks and expansion ROMs or disc drives</b></li>
     </ul>

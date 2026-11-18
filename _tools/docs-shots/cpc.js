@@ -6,7 +6,13 @@ const dir=process.env.CPC_ROMS;if(!dir){console.error('set CPC_ROMS');process.ex
 const roms=[path.join(dir,'OS_464.ROM'),path.join(dir,'BASIC_1.0.ROM')];
 const url='file://'+root+'/cpc/app/index.html';
 const boot=async(p,prog)=>{await p.setInputFiles('#cpRomFile',roms);await p.waitForTimeout(5000);if(!prog)return;await p.click('#cpScreen');
-  await p.keyboard.type('10 for i=1 to 8\n20 print "z80 bench on the cpc 464"\n30 next\nrun\n',{delay:140});await p.waitForTimeout(3000)};
+  // save a line to tape first, so the deck holds a recording (no game tapes in these pictures)
+  await p.keyboard.type('10 print "saved to tape"\nsave "demo"\n',{delay:140});await p.waitForTimeout(1000);
+  await p.click('#cpTapeRec');await p.click('#cpScreen');await p.keyboard.press('Space');
+  for(let i=0;i<60;i++){await p.waitForTimeout(2000);if(/motor off/.test(await p.textContent('#cpTapeInfo'))&&i>1)break}
+  await p.click('#cpTapeRec');await p.click('#cpScreen');await p.keyboard.type('cls\nnew\n',{delay:140});
+  await p.keyboard.type('10 for i=1 to 8\n20 print "z80 bench on the cpc 464"\n30 next\nrun\n',{delay:140});await p.waitForTimeout(3000);
+  await p.keyboard.type('sound 1,142,2000,15\n',{delay:140});await p.waitForTimeout(800)};
 const chk=m=>{if(m.length)console.log('MISSING',m)};
 (async()=>{const {b,p}=await S.open(url,{width:1440,height:1000});
 await boot(p,true);
@@ -22,7 +28,7 @@ if(nc!==4)throw new Error('expected 4 ROM bands, covered '+nc);
 chk(await S.mark(p,[['#btnReset',1,'tl',0,-2],['#pScreen',2],['#pPinout',3],['#pMemChips',4],['panel:program',5],['panel:i/o',6],['panel:disassembly',7],['section.panel:has(#memView)',8],['#pMemMap',9],['#pRegs',10],['#pDebug',11],['#pTiming',12],['#pMach',13]]));
 await S.snap(p,out+'overview.png',{x:0,y:0,width:1440,height:await p.evaluate(()=>document.documentElement.scrollHeight)});
 // screen and keyboard
-chk(await S.mark(p,[['#cpScreen',1,'tl',18,18],['#cpScrInfo',2,'l',-16,0],['#cpLoadRom',3,'t',0,-2],['#cpRestart',4,'t',0,-2],['#cpDumpBin',5,'t',0,-2],['#cpGa',6,'t',0,-12],['#cpKb',7,'tl',-2,6]]));
+chk(await S.mark(p,[['#cpScreen',1,'tl',18,18],['#cpScrInfo',2,'l',-16,0],['#cpLoadRom',3,'t',0,-2],['#cpRestart',4,'t',0,-2],['#cpDumpBin',5,'t',0,-2],['#cpGa',6,'t',0,-12],['#cpSound',7,'t',0,-12],['#cpTapeIns',8,'t',0,-2],['#cpTapePlay',9,'t',0,-2],['#cpTapeRew',10,'t',0,-2],['#cpTapeRec',11,'t',0,-2],['#cpTapeSave',12,'t',0,-2],['#cpTapeBlk',13,'b',0,12],['#cpTapeFast',14,'l',-14,0],['#cpTapeInfo',15,'l',-16,0],['#cpKb',16,'tl',-2,6]]));
 await S.snap(p,out+'screen.png',await S.clip(p,['#pScreen h2','#cpScreen','#cpKb'],20));
 // the processor, gate array and 6845, with the fault menu of the 6845's VSYNC pin open
 await p.click('#cpChipVdu g.pin[data-pin="VSYNC"]');await p.waitForTimeout(250);
@@ -30,7 +36,7 @@ chk(await S.mark(p,[['#cpFigZ80',1,'tl',8,8],['#cpFigGa',2,'tl',8,8],['#cpFigVdu
 await S.snap(p,out+'chips.png',await S.clip(p,['#pPinout h2','.cpchips','#pPinout .busread'],16));
 await p.keyboard.press('Escape');await p.click('#pPinout h2');
 // CPC hardware panel
-chk(await S.mark(p,[['text:#cpState .hd|Memory now',1,'r',-12,0],['text:#cpState .hd|Gate array',2,'r',-12,0],['text:#cpState .hd|READY',3,'r',-12,0],['text:#cpState .hd|6845',4,'r',-12,0],['text:#cpState .hd|Monitor',5,'r',-12,0],['text:#cpState .hd|8255',6,'r',-12,0]]));
+chk(await S.mark(p,[['text:#cpState .hd|Memory now',1,'r',-12,0],['text:#cpState .hd|Gate array',2,'r',-12,0],['text:#cpState .hd|READY',3,'r',-12,0],['text:#cpState .hd|6845',4,'r',-12,0],['text:#cpState .hd|Monitor',5,'r',-12,0],['text:#cpState .hd|Sound chip',6,'r',-12,0],['text:#cpState .hd|8255',7,'r',-12,0]]));
 await S.snap(p,out+'hardware.png',await S.clip(p,['#pMach']));
 // memory bitmap, scrolled to the screen memory (RAM at C000h)
 await p.evaluate(()=>{const b=document.querySelector('#mmBands'),c=b.children[10];b.scrollTop+=c.getBoundingClientRect().top-b.getBoundingClientRect().top-4});await p.waitForTimeout(300);

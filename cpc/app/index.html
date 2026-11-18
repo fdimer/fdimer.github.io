@@ -52,6 +52,7 @@ body { background: var(--bg); color: var(--ink); font-family: var(--font-ui); fo
 .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 28px; max-width: 1920px; margin: 0 auto; }
 #btnMaster { color: var(--warn); }
 #btnMaster.armed { background: var(--warn); border-color: var(--warn); color: #fff; }
+#cpTapeRec.armed { background: var(--warn); border-color: var(--warn); color: #fff; }
 .mono, input.mono, textarea { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-bottom: 12px; }
 header.top h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.02em; margin: 0; }
@@ -198,6 +199,8 @@ textarea { width: 100%; min-height: 210px; resize: vertical; font-size: 12.5px; 
 .tapeinfo { font-size: 12px; color: var(--muted, #666); }
 .msg { font-size: 12.5px; margin-top: 8px; font-family: var(--font-mono); min-height: 1.4em; }
 .msg.err { color: var(--warn); } .msg.ok { color: var(--ok); }
+#cpTapeBlk { max-width: min(380px, 70vw); }
+#cpTapeInfo { margin-top: 4px; color: var(--muted, inherit); }
 .fieldgrid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: center; }
 .fieldgrid label { color: var(--muted); font-size: 13px; }
 .fieldgrid select, .fieldgrid input { min-width: 0; width: 100%; }
@@ -383,12 +386,23 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
           <button id="cpRestart" type="button">Power on / restart</button>
           <button id="cpDumpBin" type="button">Dump RAM (.bin)</button>
           <label class="inline" for="cpGa" title="The gate array fitted at IC116. The two types behave alike; their pins are arranged differently.">Gate array <select id="cpGa"><option value="40010">40010</option><option value="40007">40007</option></select></label>
+          <label class="inline" for="cpSound" title="The AY-3-8912 sound chip, played while the machine runs in real time: through the built-in speaker (all three channels together), or as from the stereo socket (A left, C right, B in both).">Sound <select id="cpSound"><option value="speaker" selected>Speaker</option><option value="stereo">Stereo socket</option><option value="off">Off</option></select></label>
           <span class="osbkeys mono" id="cpKeysDown"></span>
         </div>
+        <div class="row cptape" id="cpTape">
+          <button id="cpTapeIns" type="button" title="A CDT (or TZX) tape file. It is played as the signal it describes, into the cassette input.">Insert tape (.cdt)…</button><input type="file" id="cpTapeFile" accept=".cdt,.tzx" hidden>
+          <button id="cpTapePlay" type="button" title="Press PLAY on the cassette. The tape moves while PLAY is down and the computer has the motor on." disabled>▶ Play</button>
+          <button id="cpTapeRew" type="button" title="Rewind to the start of the tape" disabled>⏮ Rewind</button>
+          <button id="cpTapeRec" type="button" title="Press REC and PLAY on a blank tape: what the computer writes to the cassette (SAVE) is recorded while it has the motor on. Press again to stop; the recording is then the tape in the deck, ready to load back or save as a file.">● Record</button>
+          <button id="cpTapeSave" type="button" title="Save the tape in the deck as a CDT file" disabled>Save tape (.cdt)</button>
+          <label class="inline" for="cpTapeBlk" title="Wind the tape to the start of a block">Block <select id="cpTapeBlk" disabled><option>no tape</option></select></label>
+          <label class="inline" for="cpTapeFast" title="Run at full speed while the tape is playing and the motor is on, then back to real time."><input type="checkbox" id="cpTapeFast" checked> Fast loading</label>
+        </div>
+        <div class="msg mono" id="cpTapeInfo"></div>
         <div class="msg" id="cpMsg"></div>
         <div class="cpkb" id="cpKb" aria-label="Keyboard"></div>
         <p class="hint" id="cpHint">Click the picture and type: letters, digits and symbols come out as typed (the page presses the CPC key, with or without SHIFT, that gives that character). Backspace is DEL, Delete is CLR, Alt is COPY, the numeric keypad gives the function keys f0–f9 and its Enter is the small ENTER key. On the keyboard above, SHIFT and CTRL stay down for the next key. Load ROM takes the 464's two 16 KB images, the firmware (OS_464, CRC 815752DF) and BASIC 1.0 (CRC 7D9A3BAC), together or one at a time, or one 32 KB image of both. They are not included; your browser keeps them, so you only load them once.</p>
-        <p class="hint">The picture is built the way the machine builds it: the 6845 counts characters and lines, the gate array turns two bytes of RAM into dots for each character, in the screen mode and colours it holds at that moment, with the border outside the display and black during the sync pulses. The monitor starts a new line at every HSYNC and a new picture at every VSYNC. When the machine is paused, the white mark shows where the beam is. Sound and the cassette are not emulated yet.</p>
+        <p class="hint">The picture is built the way the machine builds it: the 6845 counts characters and lines, the gate array turns two bytes of RAM into dots for each character, in the screen mode and colours it holds at that moment, with the border outside the display and black during the sync pulses. The monitor starts a new line at every HSYNC and a new picture at every VSYNC. When the machine is paused, the white mark shows where the beam is. The cassette input is port B bit 7 and the motor port C bit 4.</p>
       </section>
       <section class="panel" id="pPinout">
         <h2>Processor, gate array and 6845 <span class="aside">top view · live pins · ringed pins can be given a fault</span></h2>
@@ -529,9 +543,9 @@ table.mem td.b.mw { box-shadow: inset 0 0 0 1.5px var(--warn); }
       </section>
 
       <section class="panel" id="pMach">
-        <h2>CPC hardware<button class="fold" type="button" aria-expanded="true" title="Collapse">»</button> <span class="aside">memory · gate array · 6845 · 8255</span></h2>
+        <h2>CPC hardware<button class="fold" type="button" aria-expanded="true" title="Collapse">»</button> <span class="aside">memory · gate array · 6845 · sound · 8255</span></h2>
         <div class="zxstate" id="cpState"></div>
-        <p class="hint">The gate array (IC116) decides what the CPU reads: the 32K ROM lies over the RAM at 0000h–3FFFh (firmware) and C000h–FFFFh (BASIC), and two bits of its mode register switch each half off to reach the RAM underneath. It also makes READY, which holds the Z80 in wait states so that every bus cycle lines up with the video circuit: instructions take whole microseconds. I/O devices are picked by single address lines, so the port numbers are 16 bits: 7Fxxh gate array, BCxxh–BFxxh 6845, F4xxh–F7xxh 8255. The 6845 (IC108) times the picture: its HSYNC also feeds the gate array's interrupt counter, which asks for an interrupt every 52 lines, 300 times a second. Sound and the cassette are not emulated yet.</p>
+        <p class="hint">The gate array (IC116) decides what the CPU reads: the 32K ROM lies over the RAM at 0000h–3FFFh (firmware) and C000h–FFFFh (BASIC), and two bits of its mode register switch each half off to reach the RAM underneath. It also makes READY, which holds the Z80 in wait states so that every bus cycle lines up with the video circuit: instructions take whole microseconds. I/O devices are picked by single address lines, so the port numbers are 16 bits: 7Fxxh gate array, BCxxh–BFxxh 6845, F4xxh–F7xxh 8255. The 6845 (IC108) times the picture: its HSYNC also feeds the gate array's interrupt counter, which asks for an interrupt every 52 lines, 300 times a second. The sound chip (AY-3-8912) is written through the 8255: port A carries the data and two bits of port C drive the chip's bus. It runs on the gate array's 1 MHz CCLK, so a tone period p gives 62,500 / p Hz, and it also reads the keyboard through its own port. The cassette input is port B bit 7 and the motor port C bit 4.</p>
       </section>
 
       <section class="panel" id="pSystem" hidden>
@@ -1066,7 +1080,8 @@ function disasm(read, addr, rec) {
 }
 
 if (typeof module !== 'undefined') module.exports = { Z80, disasm, h2, h4 };
-
+</script>
+<script>
 // ---- Z80 assembler (two-pass). Opcode table is generated from the disassembler. ----
 const ASM_TABLE = (() => {
   const table = new Map();
@@ -1309,7 +1324,8 @@ function assemble(source, base = 0) {
 }
 
 if (typeof module !== 'undefined') module.exports = { assemble, ASM_TABLE };
-
+</script>
+<script>
 // Memory chips as objects with pins, for the live pin display and for fault simulation.
 // A MemChip stores some of the bits (dmask) of every byte in part of a machine's memory array: all eight for a
 // byte-wide ROM or RAM, four for a 2114, one for a 4116 or 4164 dynamic RAM. The chips that together make up the
@@ -1409,10 +1425,10 @@ function memSetFault(m, id, pin, v) { m.chipById[id].setFault(pin, v); for (cons
 function memClearFaults(m) { for (const c of m.chips) { c.f = {}; c.recalc(); } for (const b of m.banks) memBankFlag(b); m.faulty = false; }
 function memFaultList(m) { const out = []; for (const c of m.chips) for (const k in c.f) out.push([c.id, k, c.f[k]]); return out; }
 if (typeof module !== 'undefined') module.exports = { MemChip, MEM_PINOUTS, MEM_ACTIVE_LOW, memBankFlag, memBankRead, memBankWrite, memSetFault, memClearFaults, memFaultList };
-
+</script>
+<script>
 // Amstrad CPC 464 machine model for Z80 Bench: the processor, the memory, the 6845 and the gate array's video,
-// with enough of the rest (8255, sound chip registers, keyboard matrix) for the firmware and BASIC to run.
-// No sound or cassette yet.
+// with the 8255, the sound chip, the keyboard matrix and the cassette.
 // From the CPC 464 circuit diagram:
 //   IC111  Z80A, 4 MHz clock from the gate array.
 //   IC116  gate array (40007, 40008 or 40010; 16 MHz crystal). It makes the CPU clock, the RAM's RAS, CAS and MWE,
@@ -1467,6 +1483,7 @@ if (typeof module !== 'undefined') module.exports = { MemChip, MEM_PINOUTS, MEM_
 // is lost. That last part is an approximation of what the board would do.
 const CPC = {
   CPU_HZ: 4000000,
+  PSG_TICK_HZ: 125000,      // the sound chip runs on CCLK (1 MHz); a tone output flips every (period) of these ticks, noise and envelope step every 2 x period
   ROM_LO: 0x815752DF, ROM_HI: 0x7D9A3BAC,          // CRC32 of the 464's firmware (OS_464) and BASIC 1.0
   // keyboard matrix: row (PPI port C bits 0-3, through the 74LS145), bit (sound chip port A), active low
   KEYS: [
@@ -1557,6 +1574,103 @@ class CPCChip {
   }
 }
 function cpcCrc32(b) { let c = ~0; for (let i = 0; i < b.length; i++) { c ^= b[i]; for (let k = 0; k < 8; k++) c = c >>> 1 ^ (c & 1 ? 0xEDB88320 : 0); } return ~c >>> 0; }
+// Sound: the AY-3-8912 (the 8910 with one I/O port) is clocked by the gate array's CCLK, 1 MHz,
+// so a tone period p gives 62,500 / p Hz. Its three square-wave channels, noise generator and envelope are computed
+// sample by sample as emulated time passes (when audioRate is set), into two ring buffers the page plays: the
+// stereo socket's left (A, with half of B) and right (C, with half of B); the built-in speaker gets all three.
+// Without CCLK (no 16 MHz, or a fault on the CCLK line or the gate array's CCLK pin) the sound chip stands still.
+const CPC_PSG_VOL = [0, 0.0078, 0.011, 0.0156, 0.0221, 0.0313, 0.0442, 0.0625, 0.0884, 0.125, 0.1768, 0.25, 0.3536, 0.5, 0.7071, 1];
+// Cassette: a CDT file (the TZX format) is turned into the signal it describes, a list of stretches of tape at one
+// level with their lengths in CPC clocks (TZX times are 3.5 MHz T-states; the CPC runs at 4 MHz). While Play is
+// pressed and the 8255 has the motor on (port C bit 4), the tape moves with emulated time, and its level is what
+// port B bit 7 reads. So the firmware's own loader, and the custom loaders of games, read it bit by bit as they
+// would from a real cassette. A "stop the tape" block (a pause of 0) releases Play.
+class CPCTape {
+  constructor(bytes) {
+    const b = bytes, sig = 'ZXTape!';
+    for (let i = 0; i < 7; i++) if (b[i] !== sig.charCodeAt(i)) throw new Error('Not a CDT or TZX tape file (no ZXTape! signature)');
+    let cap = 1 << 16, n = 0, dur = new Uint32Array(cap), lvl = new Uint8Array(cap), level = 0, frac = 0;
+    const blocks = [], stops = new Set(), notes = [];
+    const push = (t35, l) => {      // a stretch of t35 T-states (3.5 MHz) at level l
+      frac += t35 * 8 / 7; const c = Math.floor(frac); frac -= c; if (!c) return;
+      if (n && lvl[n - 1] === l && dur[n - 1] + c < 0xFFFFFFFF) { dur[n - 1] += c; return; }
+      if (n === cap) { cap *= 2; const d2 = new Uint32Array(cap), l2 = new Uint8Array(cap); d2.set(dur); l2.set(lvl); dur = d2; lvl = l2; }
+      dur[n] = c; lvl[n] = l; n++;
+    };
+    const pulse = t => { level ^= 1; push(t, level); };
+    // a pause: 1 ms at the opposite level first, to finish the last pulse, then low (as the TZX format says)
+    const pause = ms => { if (ms > 0) { level ^= 1; push(3500, level); if (ms > 1) { level = 0; push((ms - 1) * 3500, 0); } } };
+    const data = (off, len, zero, one, last) => {
+      for (let i = 0; i < len; i++) { const v = b[off + i], bits = i === len - 1 ? last || 8 : 8; for (let k = 0; k < bits; k++) { const t = v & (0x80 >> k) ? one : zero; pulse(t); pulse(t); } }
+    };
+    const w = i => b[i] | b[i + 1] << 8, w3 = i => b[i] | b[i + 1] << 8 | b[i + 2] << 16, dw = i => (b[i] | b[i + 1] << 8 | b[i + 2] << 16 | b[i + 3] << 24) >>> 0;
+    const text = (i, len) => String.fromCharCode(...b.subarray(i, i + len)).replace(/[^\x20-\x7E]/g, ' ').trim();
+    // what a data block holds: a CPC header record (sync byte 2Ch) names the file
+    const what = (off, len) => {
+      if (b[off] === 0x2C && len > 20) { const name = text(off + 1, 16); return `header "${name || '(no name)'}" block ${b[off + 17]}`; }
+      return (b[off] === 0x16 ? 'data' : 'block') + `, ${len} bytes`;
+    };
+    // first pass: where each block starts
+    const offs = []; let i = 10;
+    const size = (t, i) => {
+      switch (t) {
+        case 0x10: return 4 + w(i + 2); case 0x11: return 18 + w3(i + 15); case 0x12: return 4; case 0x13: return 1 + 2 * b[i];
+        case 0x14: return 10 + w3(i + 7); case 0x15: return 8 + w3(i + 5); case 0x18: case 0x19: return 4 + dw(i);
+        case 0x20: case 0x23: case 0x24: return 2; case 0x21: return 1 + b[i]; case 0x22: case 0x25: case 0x27: return 0;
+        case 0x26: return 2 + 2 * w(i); case 0x28: return 2 + w(i); case 0x2A: return 4; case 0x2B: return 5;
+        case 0x30: return 1 + b[i]; case 0x31: return 2 + b[i + 1]; case 0x32: return 2 + w(i); case 0x33: return 1 + 3 * b[i];
+        case 0x35: return 20 + dw(i + 16); case 0x5A: return 9; default: return 4 + dw(i);     // later blocks start with their length
+      }
+    };
+    while (i < b.length) { const t = b[i]; offs.push(i); i += 1 + size(t, i + 1); }
+    if (i > b.length + 0) notes.push('the last block is cut short');
+    // second pass: the signal
+    let group = '', loopAt = -1, loopN = 0, fresh = true;     // fresh: at the start or after a pause or data block, so a run of plain pulses is listed as a block
+    for (let k = 0; k < offs.length; k++) {
+      const o = offs[k], t = b[o], j = o + 1; if (j >= b.length) break;
+      const start = n, mark = d => blocks.push({ seg: start, block: k, desc: (group ? group + ': ' : '') + d });
+      const wasFresh = fresh; if (t === 0x12 || t === 0x13) fresh = false; else if ([0x10, 0x11, 0x14, 0x15, 0x20].includes(t)) fresh = true;
+      switch (t) {
+        case 0x10: { const len = w(j + 2), off = j + 4; mark('standard ' + what(off, len)); for (let p = b[off] < 128 ? 8063 : 3223; p > 0; p--) pulse(2168); pulse(667); pulse(735); data(off, len, 855, 1710, 8); pause(w(j)); break; }
+        case 0x11: { const len = w3(j + 15), off = j + 18; mark('turbo ' + what(off, len)); for (let p = w(j + 10); p > 0; p--) pulse(w(j)); pulse(w(j + 2)); pulse(w(j + 4)); data(off, len, w(j + 6), w(j + 8), b[j + 12]); pause(w(j + 13)); break; }
+        case 0x12: { if (wasFresh) mark('tone and pulses'); for (let p = w(j + 2); p > 0; p--) pulse(w(j)); break; }
+        case 0x13: { if (wasFresh) mark('pulses'); for (let p = 0; p < b[j]; p++) pulse(w(j + 1 + 2 * p)); break; }
+        case 0x14: { const len = w3(j + 7), off = j + 10; mark('pure ' + what(off, len)); data(off, len, w(j), w(j + 2), b[j + 4]); pause(w(j + 5)); break; }
+        case 0x15: { const tps = w(j), len = w3(j + 5), off = j + 8, last = b[j + 4] || 8; mark(`direct recording, ${len} bytes`);
+          for (let q = 0; q < len; q++) for (let r = 0; r < (q === len - 1 ? last : 8); r++) { level = b[off + q] & (0x80 >> r) ? 1 : 0; push(tps, level); }
+          pause(w(j + 2)); break; }
+        case 0x20: { const ms = w(j); if (ms) pause(ms); else { stops.add(n); mark('stop the tape'); } break; }
+        case 0x21: group = text(j + 1, b[j]); break;
+        case 0x22: group = ''; break;
+        case 0x23: { const rel = (w(j) << 16) >> 16; if (rel) k += rel - 1; break; }
+        case 0x24: loopAt = k; loopN = w(j); break;
+        case 0x25: if (loopAt >= 0 && --loopN > 0) k = loopAt; else loopAt = -1; break;
+        case 0x2B: level = b[j + 4] ? 1 : 0; break;
+        case 0x30: notes.push(text(j + 1, b[j])); break;
+        case 0x18: case 0x19: notes.push(`block type ${t.toString(16).toUpperCase()}h is not supported and was skipped`); break;
+        default: break;      // information only, or not needed for a CPC
+      }
+    }
+    this.dur = dur.subarray(0, n); this.lvl = lvl.subarray(0, n); this.n = n; this.blocks = blocks; this.stops = stops; this.notes = notes;
+    this.total = 0; for (let q = 0; q < n; q++) this.total += this.dur[q];
+  }
+}
+// A recording as a CDT file: the pulses (in CPC clocks) as TZX pulse-sequence blocks, at 3.5 MHz T-states; a gap
+// longer than a pulse can be becomes a pause block. Returns null if nothing was recorded.
+CPCTape.fromPulses = (pulses, note = 'Recorded on the Z80 Bench Amstrad CPC 464 emulator') => {
+  const out = [...'ZXTape!'].map(c => c.charCodeAt(0)).concat([0x1A, 1, 20]);
+  const t = [...note].map(c => c.charCodeAt(0) & 0x7F).slice(0, 255); out.push(0x30, t.length, ...t);
+  let run = [], frac = 0, any = false;
+  const flush = () => { while (run.length) { const n = Math.min(255, run.length); out.push(0x13, n); for (const v of run.splice(0, n)) out.push(v & 255, v >> 8); } };
+  for (let i = 0; i < pulses.length; i++) {
+    frac += pulses[i] * 7 / 8; const v = Math.round(frac); frac -= v;
+    if (i === 0 && v > 65535) continue;                    // silence before the first edge
+    if (v > 65535) { flush(); const ms = Math.min(65535, Math.max(1, Math.round(v / 3500))); out.push(0x20, ms & 255, ms >> 8); continue; }
+    if (v > 0) { run.push(v); any = true; }
+  }
+  flush();
+  return any ? new Uint8Array(out) : null;
+};
 class CPCMachine {
   constructor() {
     this.rom = new Uint8Array(0x8000).fill(0xFF); this.hasLo = false; this.hasHi = false;
@@ -1576,6 +1690,9 @@ class CPCMachine {
     this.acc = new Uint32Array(3);                    // accesses: 0 ROM, 1 RAM, 2 writes to the gate array
     this.crtc = new Uint8Array(18); this.crtcSel = 0;
     this.psg = new Uint8Array(16); this.keys = new Uint8Array(10);      // keys: bit set = key down
+    this.rec = null;     // a recording: { pulses: clocks between edges, clock: tape time while recording, last: time of the last edge, level }
+    this.tape = null; this.tapePlay = false; this.tapeIdx = 0; this.tapeRem = 0; this.tapeLevel = 0; this.tapePos = 0;
+    this.audioRate = 0; this.abufL = new Float32Array(32768); this.abufR = new Float32Array(32768); this.aw = 0; this.audioT = 0;
     this.pens = new Uint8Array(17);                   // gate array colours for pens 0-15 and the border
     this.fb = new Uint8Array(CPC.FW * CPC.FH).fill(20);   // the picture, as gate array colour numbers
     this.bus = { read: a => this.read(a), write: (a, v) => this.write(a, v), input: p => this.input(p), output: (p, v) => this.output(p, v) };
@@ -1606,6 +1723,7 @@ class CPCMachine {
     if (this.ga.lv.RESET !== 1) { this.gaMode = 0; this.gaPen = 0; this.intCnt = 0; this.intReq = false; this.vsDelay = 0; }
     if (this.vdu.lv.RESET !== 1) { this.hcc = 0; this.vcc = 0; this.vlc = 0; this.adj = -1; this.maRow = 0; this.vde = true; this.hs = false; this.hsw = 0; this.vsw = 0; this.de = false; this.vsync = false; this.line = 0; }
     this.ppiA = 0; this.ppiC = 0; this.ppiCtl = 0x9B; this.psgSel = 0; this.printer = 0; this.romSel = 0;
+    this.psg.fill(0); this.toneCnt = [0, 0, 0]; this.toneOut = [0, 0, 0]; this.noiseCnt = 0; this.lfsr = 1; this.envCnt = 0; this.envPos = 0;   // the sound chip's RESET is on the line too
     this.cpu.intLine = false;
   }
   // a reset from the bench: the RESET line, and the bench's own clocks and counters back to zero
@@ -1739,7 +1857,7 @@ class CPCMachine {
   psgBus() {                                           // PPI port C bits 7-6 are the sound chip's BDIR and BC1
     switch (this.ppiC >> 6) {
       case 3: this.psgSel = this.ppiA & 15; break;                               // latch address
-      case 2: this.psg[this.psgSel] = this.ppiA; break;                          // write
+      case 2: this.psg[this.psgSel] = this.ppiA; if (this.psgSel === 13) { this.envPos = 0; this.envCnt = 0; } break;   // write; writing the envelope shape restarts it
     }
   }
   keyRow() { const r = this.ppiC & 15; return r < 10 ? ~this.keys[r] & 0xFF : 0xFF; }
@@ -1760,7 +1878,7 @@ class CPCMachine {
         case 0: v &= this.ppiCtl & 0x10 ? ((this.ppiC >> 6) === 1 ? (this.psgSel === 14 ? this.keyRow() : this.psg[this.psgSel]) : 0xFF) : this.ppiA; break;
         // port B: bit 0 VSYNC, bits 3-1 maker links (111 Amstrad), bit 4 50 Hz link, bit 5 expansion (high: none),
         // bit 6 printer busy (high: no printer), bit 7 cassette data in
-        case 1: v &= 0xFE | (this.vsOut() ? 1 : 0); break;
+        case 1: v &= 0x7E | (this.vsOut() ? 1 : 0) | (this.tapeIn() ? 0x80 : 0); break;
         case 2: v &= this.ppiC; break;
       }
     }
@@ -1781,10 +1899,11 @@ class CPCMachine {
     if (!(p & 0x0800)) {
       switch (p >> 8 & 3) {
         case 0: this.ppiA = v; this.psgBus(); break;
-        case 2: this.ppiC = v; this.psgBus(); break;
+        case 2: this.ppiC = v; this.psgBus(); this.recEdge(); break;
         case 3:
           if (v & 0x80) { this.ppiCtl = v; this.ppiA = 0; this.ppiC = 0; }
           else { const b = 1 << (v >> 1 & 7); this.ppiC = v & 1 ? this.ppiC | b : this.ppiC & ~b; this.psgBus(); }
+          this.recEdge();
           break;
       }
     }
@@ -1892,6 +2011,9 @@ class CPCMachine {
       c.w = w; c.t0 = this.t + t; this.waits += w; t += len + w;
     }
     this.t += t;
+    if (this.tapePlay) this.tapeMove(t);
+    if (this.rec && this.motorOn()) this.rec.clock += t;
+    if (this.audioRate) { this.audioT += t * this.audioRate; while (this.audioT >= CPC.CPU_HZ) { this.audioT -= CPC.CPU_HZ; this.audioSample(); } }
     // the gate array recognises the acknowledge by IORQ and M1 both low
     if (this.cpu.lastEvent === 'INT') { this.ints++; if (!(this.gf && (this.gv.IORQ === 1 || this.gv.M1 === 1))) { this.intCnt &= 31; this.intReq = false; } }
     // keep the last recorded character: the first clocks of this instruction still belong to it
@@ -1901,6 +2023,60 @@ class CPCMachine {
     return t;
   }
   preStep() {}
+  // ---- cassette ----
+  insertTape(bytes) { this.tape = new CPCTape(bytes); this.tapePlay = false; this.tapeSeek(0); return this.tape; }
+  ejectTape() { this.tape = null; this.tapePlay = false; this.tapeLevel = 0; }
+  tapeSeek(seg) { const tp = this.tape; if (!tp) return; this.tapeIdx = Math.min(seg, tp.n); this.tapeRem = tp.dur[this.tapeIdx] || 0; this.tapeLevel = tp.lvl[this.tapeIdx] || 0; this.tapePos = 0; for (let q = 0; q < this.tapeIdx; q++) this.tapePos += tp.dur[q]; }
+  motorOn() { return !!(this.ppiC & 0x10); }
+  tapeIn() { return this.tape && this.tapeIdx < this.tape.n ? this.tapeLevel : 0; }     // port B bit 7
+  tapeMove(t) {
+    const tp = this.tape; if (!tp || !this.motorOn()) return;
+    while (t > 0) {
+      if (this.tapeIdx >= tp.n) { this.tapePlay = false; this.tapeLevel = 0; return; }        // the end of the tape
+      if (this.tapeRem > t) { this.tapeRem -= t; this.tapePos += t; return; }
+      t -= this.tapeRem; this.tapePos += this.tapeRem; this.tapeIdx++;
+      if (this.tapeIdx < tp.n) { this.tapeRem = tp.dur[this.tapeIdx]; this.tapeLevel = tp.lvl[this.tapeIdx]; }
+      if (tp.stops.has(this.tapeIdx)) { this.tapePlay = false; return; }                    // a "stop the tape" block
+    }
+  }
+  // ---- recording: REC and PLAY down. The cassette output (port C bit 5) is recorded while the motor is on, as the
+  // times between its edges; the tape does not move while the motor is off.
+  recStart() { this.tapePlay = false; this.rec = { pulses: [], clock: 0, last: 0, level: (this.ppiC >> 5) & 1 }; }
+  recEdge() {
+    const r = this.rec; if (!r || !this.motorOn()) return;
+    const l = (this.ppiC >> 5) & 1; if (l === r.level) return;
+    r.level = l; r.pulses.push(r.clock - r.last); r.last = r.clock;
+  }
+  recStop() { const r = this.rec; this.rec = null; if (!r) return null; if (r.clock > r.last) r.pulses.push(r.clock - r.last); return CPCTape.fromPulses(r.pulses); }
+  tapeBlock() { const tp = this.tape; if (!tp) return -1; let k = -1; for (let q = 0; q < tp.blocks.length && tp.blocks[q].seg <= this.tapeIdx; q++) k = q; return k; }
+  // ---- sound ----
+  soundClock() { return !(this.gaDead() || (this.gf && 'CCLK' in this.gv)); }     // does CCLK reach the sound chip?
+  envLevel() {      // 0-15 from the envelope shape (register 13: continue, attack, alternate, hold) and position
+    const sh = this.psg[13], cyc = this.envPos >> 4, i = this.envPos & 15, up0 = !!(sh & 4), alt = !!(sh & 2);
+    if (cyc >= 1) { if (!(sh & 8)) return 0; if (sh & 1) return up0 !== alt ? 15 : 0; }
+    const up = alt && (cyc & 1) ? !up0 : up0;
+    return up ? i : 15 - i;
+  }
+  // one sample of each channel's level (0-1), into the left and right buffers
+  audioSample() {
+    const g = this.psg, mix = g[7], ticks = this.soundClock() ? CPC.PSG_TICK_HZ / this.audioRate : 0;
+    const np = ((g[6] & 31) || 1) * 2; this.noiseCnt += ticks;
+    while (this.noiseCnt >= np) { this.noiseCnt -= np; const b = (this.lfsr ^ (this.lfsr >> 3)) & 1; this.lfsr = (this.lfsr >> 1) | (b << 16); }
+    const ep = ((g[11] | g[12] << 8) || 1) * 2; this.envCnt += ticks;
+    while (this.envCnt >= ep) { this.envCnt -= ep; if (++this.envPos >= 64) this.envPos -= 32; }
+    const noise = this.lfsr & 1, lv = [0, 0, 0];
+    for (let ch = 0; ch < 3; ch++) {
+      const p = (g[ch * 2] | (g[ch * 2 + 1] & 15) << 8) || 1;
+      this.toneCnt[ch] += ticks;
+      if (this.toneCnt[ch] >= p) { const n = Math.floor(this.toneCnt[ch] / p); this.toneCnt[ch] -= n * p; if (n & 1) this.toneOut[ch] ^= 1; }
+      const on = (this.toneOut[ch] | ((mix >> ch) & 1)) & (noise | ((mix >> (ch + 3)) & 1));
+      if (on) { const v = g[8 + ch]; lv[ch] = CPC_PSG_VOL[v & 16 ? this.envLevel() : v & 15]; }
+    }
+    const i = this.aw++ & 32767; this.abufL[i] = (lv[0] + lv[1] / 2) / 1.5; this.abufR[i] = (lv[2] + lv[1] / 2) / 1.5;
+  }
+  // a tone period as Hz, and the nearest note
+  static toneHz(p) { return p ? 62500 / p : 0; }
+  static note(p) { if (!p) return ''; const n = Math.round(12 * Math.log2(62500 / p / 440)) + 57; return n < 0 || n > 119 ? '' : ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][n % 12] + Math.floor(n / 12); }
   intOut() { const zi = this.z80.lv.INT; if (zi !== undefined) return zi === 0; const f = this.gv.INT; return f === undefined ? this.intReq : f === 0; }   // what the Z80 sees on its INT pin
   syncInt() { this.cpu.intLine = this.intOut(); }
   step() { this.syncInt(); return this.afterStep(this.cpu.step()); }
@@ -1931,7 +2107,6 @@ class CPCMachine {
   }
 }
 if (typeof module !== 'undefined') module.exports = { CPCMachine, CPCChip, CPC, CPC_NETS, CPC_GA_PINS, CPC_CRTC_PINS, CPC_Z80_PINS, cpcCrc32 };
-
 </script>
 <script>
 (() => {
@@ -2261,7 +2436,7 @@ function frame(now) {
   // full speed
   const t0 = performance.now();
   let last = null, stall = null;
-  const budget = runRate === 'real' ? dt * CPC.CPU_HZ / 1000 : Infinity;
+  const budget = runRate === 'real' && !cpTurbo() ? dt * CPC.CPU_HZ / 1000 : Infinity;
   let spent = 0;
   while (performance.now() - t0 < 12 && spent < budget) {
     for (let k = 0; k < 400 && spent < budget; k++) {
@@ -2287,7 +2462,7 @@ function frame(now) {
     if (stall) break;
   }
   if (last) finishFast(last, last.pc);
-  if (stall) stalledMsg(stall); else setStatus(runRate === 'real' ? 'Running in real time (4 MHz)' : 'Running at full speed', false, true);
+  if (stall) stalledMsg(stall); else setStatus(cpTurbo() ? 'Loading from tape at full speed' : runRate === 'real' ? 'Running in real time (4 MHz)' : 'Running at full speed', false, true);
   render();
   requestAnimationFrame(frame);
 }
@@ -3019,7 +3194,7 @@ function masterReset() {
   for (const k of Object.keys(pins)) pins[k] = 1;
   cpu.nmiPending = false;
   cpc.rom.fill(0xFF); for (const a of [cpc.ram, cpc.keys, mem]) a.fill(0);
-  cpc.hasLo = cpc.hasHi = false; cpc.fb.fill(20);
+  cpc.hasLo = cpc.hasHi = false; cpc.fb.fill(20); cpc.rec = null; cpc.ejectTape(); cpTapeBytes = null; cpTapeShow();
   try { localStorage.removeItem(CP_ROM_KEYS.lo); localStorage.removeItem(CP_ROM_KEYS.hi); } catch (e) {}
   cpHeld.clear(); cpLatched.clear(); cpQueue.length = 0; cpWant.clear(); cpShow(); $('cpMsg').className = 'msg'; $('cpMsg').textContent = '';
   resetCPU();
@@ -3062,6 +3237,11 @@ function drawCp() {
   $('cpScrInfo').textContent = `mode ${cpc.vmode} · ${[20, 40, 80][cpc.vmode] || 20} columns · line ${cpc.line} · frame ${cpc.frames}`;
 }
 let cpSig = '';
+// one sound channel: its tone (Hz and note) or off, whether noise is mixed in, and its volume
+function cpTone(ch) {
+  const g = cpc.psg, p = g[ch * 2] | (g[ch * 2 + 1] & 15) << 8, on = !(g[7] & (1 << ch)), nz = !(g[7] & (8 << ch)), v = g[8 + ch];
+  return `${'ABC'[ch]} <b>${on ? (p ? Math.round(CPCMachine.toneHz(p)) + ' Hz ' + CPCMachine.note(p) : 'period 0') : 'tone off'}</b>${nz ? ' + noise' : ''} · volume <b>${v & 16 ? 'envelope' : v & 15}</b>`;
+}
 function renderCpState() {
   const keys = []; CPC.KEYS.forEach((row, r) => row.forEach((k, i) => { if (cpc.keys[r] & (1 << i)) keys.push(k); }));
   const g = cpc.gaMode, R = cpc.crtc, c = cpc.ppiC, none = '<span class="none">nothing fitted (reads FFh)</span>';
@@ -3072,7 +3252,8 @@ function renderCpState() {
     <div class="blk"><div class="hd">READY (the Z80's WAIT)</div><div class="kv">Clock <b>${cpc.t.toLocaleString('en-AU')}</b> · wait states added <b>${cpc.waits.toLocaleString('en-AU')}</b>${cpc.t ? ' (' + (100 * cpc.waits / cpc.t).toFixed(1) + '%)' : ''}<br>${cpc.held() ? '<b>Z80 held: ' + esc(cpc.held()) + '</b>' : cpc.rdy === 1 ? '<b>No wait states (READY or the Z80\'s WAIT pin is high): RAM accesses out of step</b>' : 'READY is high one clock in four; each cycle waits for it'}</div></div>
     <div class="blk"><div class="hd">6845 IC108 · ports BCxxh–BFxxh</div><div class="kv">R0–R7 <b>${[...R.subarray(0, 8)].map(h2).join(' ')}</b><br>R8–R15 <b>${[...R.subarray(8, 16)].map(h2).join(' ')}</b><br>Character <b>${cpc.hcc}</b> of ${R[0] + 1} · row <b>${cpc.vcc}</b> line <b>${cpc.vlc}</b> · scan line <b>${cpc.line}</b> of ${cpc.frameLines()}<br>Display address <b>${h4((cpc.maRow + cpc.hcc) & 0x3FFF)}h</b> · DISPEN <b>${cpc.de ? 'high' : 'low'}</b> · HSYNC <b>${cpc.hs ? 'high' : 'low'}</b> · VSYNC <b>${cpc.vsync ? 'high' : 'low'}</b><br>Screen memory at <b>${h4((R[12] & 0x30) << 10)}h</b> · frame <b>${cpc.frames}</b></div></div>
     <div class="blk"><div class="hd">Monitor</div><div class="kv">Beam <b>${cpc.mx}</b> characters after HSYNC, <b>${cpc.my}</b> lines after VSYNC · picture <b>${cpc.pictures}</b><br>Colour out <b>${CPC.COLOUR_NAMES[cpc.rgb]}</b></div></div>
-    <div class="blk"><div class="hd">8255 IC107 · ports F4xxh–F7xxh</div><div class="kv">Port A <b>${h2(cpc.ppiA)}h</b> · port C <b>${h2(c)}h</b>: keyboard row <b>${c & 15}</b> · cassette motor <b>${c & 0x10 ? 'on' : 'off'}</b> · sound chip <b>${['idle', 'read', 'write', 'address'][c >> 6]}</b> (register ${cpc.psgSel})<br>Keys down <b>${keys.join(' ') || 'none'}</b></div></div>`;
+    <div class="blk"><div class="hd">Sound chip AY-3-8912 · through the 8255</div><div class="kv">${[0, 1, 2].map(cpTone).join('<br>')}<br>Noise period <b>${cpc.psg[6] & 31}</b> · envelope period <b>${cpc.psg[11] | cpc.psg[12] << 8}</b> shape <b>${cpc.psg[13] & 15}</b> · selected register <b>${cpc.psgSel}</b>${cpc.soundClock() ? '' : '<br><b>No CCLK: the sound chip stands still</b>'}</div></div>
+    <div class="blk"><div class="hd">8255 IC107 · ports F4xxh–F7xxh</div><div class="kv">Port A <b>${h2(cpc.ppiA)}h</b> · port C <b>${h2(c)}h</b>: keyboard row <b>${c & 15}</b> · cassette motor <b>${c & 0x10 ? 'on' : 'off'}</b> · cassette in <b>${cpc.tapeIn() ? 'high' : 'low'}</b> · sound chip bus <b>${['idle', 'read', 'write', 'address'][c >> 6]}</b><br>Keys down <b>${keys.join(' ') || 'none'}</b></div></div>`;
   if (html !== cpSig) { cpSig = html; $('cpState').innerHTML = html; }
 }
 // ---------- the gate array and the 6845 beside the CPU: live pins, and faults on the pins that have a ring ----------
@@ -3145,7 +3326,7 @@ function cpSideRender() {
     if (S.capSig !== sig) { S.capSig = sig; S.cap.innerHTML = `<b>${esc(c.id)} · ${esc(c.part)}</b><br>${esc(c.what)}` + (fl.length ? `<br><span class="mcfaults mono">${esc(fl.join(' · '))}</span>` : ''); }
   }
 }
-function renderCp() { drawCp(); renderCpState(); if (mcReady) cpSideRender(); }
+function renderCp() { drawCp(); renderCpState(); cpTapeRender(); if (mcReady) cpSideRender(); }
 // keyboard: the PC keyboard by key position, and the on-screen CPC 464 keyboard
 // each key: [matrix name, legend, shifted legend, width]
 const CP_LAYOUT = [
@@ -3346,6 +3527,86 @@ const MM = {
   },
   markers() { const cs = getComputedStyle(document.documentElement); return [[cpu.sp, cs.getPropertyValue('--sel').trim() || '#2a6fb0'], [cpu.pc, '#e0322d']]; }
 };
+// ---------- cassette ----------
+// A CDT file is turned into the signal it holds (see CPCTape in src/cpc.js). PLAY is a key on the cassette deck:
+// the tape moves while it is down and the 8255 has the motor on. A "stop the tape" block releases it.
+let cpTapeName = '';
+let cpTapeBytes = null;
+function cpTurbo() { return $('cpTapeFast').checked && (cpc.tapePlay || !!cpc.rec) && cpc.motorOn(); }
+const cpTime = c => { const s = Math.floor(c / CPC.CPU_HZ); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+function cpTapeShow() {
+  const tp = cpc.tape, has = !!tp;
+  for (const id of ['cpTapePlay', 'cpTapeRew', 'cpTapeBlk']) $(id).disabled = !has || !!cpc.rec;
+  $('cpTapeSave').disabled = !has || !cpTapeBytes || !!cpc.rec; $('cpTapeRec').textContent = cpc.rec ? '■ Stop recording' : '● Record'; $('cpTapeRec').classList.toggle('armed', !!cpc.rec);
+  const sel = $('cpTapeBlk'); sel.innerHTML = '';
+  if (!has) { sel.add(new Option('no tape')); $('cpTapeInfo').textContent = cpc.rec ? '● REC' : ''; cpTapeSig = ''; return; }
+  let c = 0, q = 0;
+  tp.blocks.forEach((b, i) => { for (; q < b.seg; q++) c += tp.dur[q]; sel.add(new Option(`${i + 1}. ${b.desc} (${cpTime(c)})`, i)); });
+  cpTapeRender();
+}
+let cpTapeSig = '';
+function cpTapeRender() {
+  if (cpc.rec) { const txt = `● REC · ${cpTime(cpc.rec.clock)} recorded · ${cpc.rec.pulses.length.toLocaleString()} pulses · motor ${cpc.motorOn() ? 'on' : 'off'}${cpc.motorOn() ? '' : ' (waiting for the computer: type SAVE "name" and press a key)'}`; if (txt !== cpTapeSig) { cpTapeSig = txt; $('cpTapeInfo').textContent = txt; } return; }
+  const tp = cpc.tape; if (!tp) return;
+  const k = cpc.tapeBlock(), playing = cpc.tapePlay, motor = cpc.motorOn();
+  const end = cpc.tapeIdx >= tp.n;
+  const txt = `${cpTapeName} · ${end ? 'end of tape' : k >= 0 ? 'block ' + (k + 1) + ' of ' + tp.blocks.length + ': ' + tp.blocks[k].desc : 'leader'} · ${cpTime(cpc.tapePos)} of ${cpTime(tp.total)} · ${playing ? 'PLAY down' : 'stopped'} · motor ${motor ? 'on' : 'off'}${playing && !motor ? ' (waiting for the computer)' : ''}`;
+  if (txt !== cpTapeSig) { cpTapeSig = txt; $('cpTapeInfo').textContent = txt; $('cpTapePlay').textContent = playing ? '■ Stop' : '▶ Play'; if (k >= 0 && document.activeElement !== $('cpTapeBlk')) $('cpTapeBlk').value = k; }
+}
+$('cpTapeIns').onclick = () => $('cpTapeFile').click();
+$('cpTapeFile').onchange = async () => {
+  const f = $('cpTapeFile').files[0]; $('cpTapeFile').value = ''; if (!f) return;
+  try {
+    if (cpc.rec) cpc.recStop();
+    const bytes = new Uint8Array(await f.arrayBuffer()); const tp = cpc.insertTape(bytes); cpTapeName = f.name; cpTapeBytes = bytes;
+    $('cpMsg').className = 'msg ok';
+    $('cpMsg').textContent = `Tape inserted: ${f.name}, ${tp.blocks.length} blocks, ${cpTime(tp.total)} long. Type RUN"" and press RETURN, then press Play here and any key on the CPC.` + (tp.notes.length ? ' Notes on the tape: ' + tp.notes.join('; ') : '');
+  } catch (e) { $('cpMsg').className = 'msg err'; $('cpMsg').textContent = 'Could not read the tape: ' + e.message; }
+  cpTapeShow();
+};
+$('cpTapePlay').onclick = () => { if (!cpc.tape || cpc.rec) return; cpc.tapePlay = !cpc.tapePlay && cpc.tapeIdx < cpc.tape.n; cpTapeRender(); cscr.focus(); };
+$('cpTapeRec').onclick = () => {
+  if (!cpc.rec) { cpc.recStart(); $('cpMsg').className = 'msg ok'; $('cpMsg').textContent = 'Recording: type SAVE "name" and press RETURN, then any key on the CPC. Press Stop recording when it says Ready.'; cpTapeShow(); cscr.focus(); return; }
+  const bytes = cpc.recStop();
+  if (!bytes) { $('cpMsg').className = 'msg err'; $('cpMsg').textContent = 'Nothing was recorded: the computer did not write to the tape.'; cpTapeShow(); return; }
+  const tp = cpc.insertTape(bytes); cpTapeBytes = bytes; cpTapeName = `recording-${cpStamp()}.cdt`;
+  $('cpMsg').className = 'msg ok'; $('cpMsg').textContent = `Recorded ${cpTime(tp.total)} of tape (${bytes.length.toLocaleString()} bytes as a CDT file). It is now the tape in the deck, rewound: LOAD it back, or press Save tape to keep it.`;
+  cpTapeShow();
+};
+$('cpTapeSave').onclick = () => { if (!cpTapeBytes) return; const name = /\.(cdt|tzx)$/i.test(cpTapeName) ? cpTapeName : cpTapeName + '.cdt'; cpSaved(cpDownload(name, cpTapeBytes.slice(), 'application/octet-stream'), f => `Tape saved as ${f}: ${cpTapeBytes.length.toLocaleString()} bytes.`); };
+$('cpTapeRew').onclick = () => { if (!cpc.tape) return; cpc.tapePlay = false; cpc.tapeSeek(0); cpTapeRender(); };
+$('cpTapeBlk').onchange = () => { const tp = cpc.tape, b = tp && tp.blocks[+$('cpTapeBlk').value]; if (!b) return; cpc.tapeSeek(b.seg); cpTapeRender(); };
+
+// ---------- sound ----------
+// The machine model fills two ring buffers (left, right) with samples as emulated time passes; a script processor
+// plays them. Sound is only played in real time, and browsers only allow it to start from a click or a key press.
+let cpAudio = null, cpAr = 0, cpLastL = 0, cpLastR = 0, cpHpL = 0, cpHpR = 0;
+function cpSoundMode() { return $('cpSound').value; }
+function cpAudioStart() {
+  if (cpSoundMode() === 'off') return;
+  if (cpAudio) { if (cpAudio.state === 'suspended') cpAudio.resume().catch(() => {}); return; }
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    cpAudio = new AC(); const node = cpAudio.createScriptProcessor(1024, 0, 2);
+    node.onaudioprocess = e => {
+      const L = e.outputBuffer.getChannelData(0), R = e.outputBuffer.getChannelData(1), mode = cpSoundMode();
+      const live = running && runRate === 'real' && !cpTurbo() && mode !== 'off', rate = cpc.audioRate;
+      if (cpc.aw - cpAr > rate * 0.2 || cpc.aw < cpAr) cpAr = Math.max(0, cpc.aw - Math.round(rate * 0.06));      // fell behind: skip ahead
+      for (let i = 0; i < L.length; i++) {
+        if (live && cpAr < cpc.aw) { const j = cpAr++ & 32767; cpLastL = cpc.abufL[j]; cpLastR = cpc.abufR[j]; }
+        else if (!live) { cpLastL = cpLastR = 0; cpAr = cpc.aw; }
+        let l = cpLastL, r = cpLastR; if (mode !== 'stereo') l = r = (l + r) / 2;      // the speaker: all three channels
+        cpHpL += (l - cpHpL) * 0.002; cpHpR += (r - cpHpR) * 0.002;                           // remove the DC level
+        L[i] = Math.max(-1, Math.min(1, (l - cpHpL) * 2)); R[i] = Math.max(-1, Math.min(1, (r - cpHpR) * 2));
+      }
+    };
+    node.connect(cpAudio.destination); cpc.audioRate = cpAudio.sampleRate; cpAr = cpc.aw;
+  } catch (e) { cpAudio = null; }
+}
+for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, cpAudioStart, { passive: true });
+$('cpSound').onchange = () => { try { localStorage.setItem('cpc.sound', cpSoundMode()); } catch (e) {} if (cpSoundMode() !== 'off') cpAudioStart(); else if (cpAudio) cpAudio.suspend().catch(() => {}); };
+try { const v = localStorage.getItem('cpc.sound'); if (v === 'off' || v === 'stereo' || v === 'speaker') $('cpSound').value = v; } catch (e) {}
+
 // ---------- file downloads ----------
 // Files leave through the claude.ai viewer's save prompt when this page runs there (it accepts .txt and .zip, so
 // binary files go inside a .zip); anywhere else, through an ordinary browser download.
@@ -3584,3 +3845,4 @@ setMode(savedMode === 'hex' ? 'hex' : 'asm');
   else { resetCPU(); cpNoRom(); render(); } }
 })();
 </script>
+</html>
