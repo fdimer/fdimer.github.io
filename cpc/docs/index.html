@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Amstrad CPC 464 documentation</title>
+  <meta name="description" content="User guide and hardware reference for the Amstrad CPC 464 emulator built on Z80 Bench.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; Amstrad CPC 464</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LIST</p>
+      <h1>Amstrad CPC 464 documentation</h1>
+      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it. The emulator is work in progress: sound and the cassette are still to come.</p>
+    </header>
+
+    <a class="button" href="../app/">Open the emulator</a>
+
+    <nav class="toc" aria-label="Contents" style="margin-top:24px">
+      <b>Contents</b>
+      <ol>
+        <li><a href="#guide">User guide</a>
+          <ol>
+            <li><a href="#start">Quick start</a></li>
+            <li><a href="#screen">The screen</a></li>
+            <li><a href="#machine">The picture and the keyboard</a></li>
+            <li><a href="#toolbar">Running and stepping</a></li>
+            <li><a href="#chips">Processor, gate array and 6845</a></li>
+            <li><a href="#memchips">Memory chips</a></li>
+            <li><a href="#faults">Fault simulation</a></li>
+            <li><a href="#hwpanel">CPC hardware panel</a></li>
+            <li><a href="#bitmap">Memory bitmap</a></li>
+            <li><a href="#tools">The debugging tools</a></li>
+          </ol>
+        </li>
+        <li><a href="#hardware">Hardware reference</a>
+          <ol>
+            <li><a href="#hw-overview">The machine</a></li>
+            <li><a href="#hw-wait">READY and the wait states</a></li>
+            <li><a href="#hw-mem">Memory</a></li>
+            <li><a href="#hw-io">I/O ports</a></li>
+            <li><a href="#hw-ga">Gate array</a></li>
+            <li><a href="#hw-video">Video</a></li>
+            <li><a href="#hw-int">Interrupts</a></li>
+            <li><a href="#hw-ppi">8255 and keyboard</a></li>
+            <li><a href="#hw-chips">Chips</a></li>
+            <li><a href="#hw-limits">What is not emulated yet</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+
+    <h2 id="guide">User guide</h2>
+    <p>The emulator is <a href="../../z80-bench/">Z80 Bench</a> with an Amstrad CPC 464 built around the CPU from the machine's circuit diagram. Everything Z80 Bench does still works here; this guide covers what the machine adds, and points to the <a href="../../z80-bench/docs/">Z80 Bench documentation</a> for the shared debugging tools.</p>
+
+    <h3 id="start">Quick start</h3>
+    <ol>
+      <li>Press <b>Load ROM…</b> and choose your own two 16 KB ROM images, the firmware (<code>OS_464</code>, CRC <code>815752DF</code>) and Locomotive BASIC 1.0 (CRC <code>7D9A3BAC</code>), together or one at a time; one 32 KB image of both also works. The ROMs are copyrighted and are not included. Your browser keeps them, so you only load them once.</li>
+      <li>The machine switches on and runs in real time, and BASIC says <b>Ready</b>.</li>
+      <li>Click the picture and type, or click the keys drawn under it.</li>
+    </ol>
+
+    <h3 id="screen">The screen</h3>
+    <figure class="fig">
+      <a href="img/overview.png"><img src="img/overview.png" width="720" alt="The whole emulator page with its thirteen areas numbered"></a>
+      <figcaption>The whole page, stopped at a breakpoint in the firmware's interrupt code. Select the picture to see it full size. The ROM's contents are hidden in the pictures on this page.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
+      <li><b>Screen:</b> the picture, the ROM loader, the gate array choice and the keyboard.</li>
+      <li><b>Processor, gate array and 6845:</b> the three chips that run the machine, with live pins and fault menus.</li>
+      <li><b>Memory chips:</b> the ROM and the eight RAM chips, with live pins and fault menus.</li>
+      <li><b>Program:</b> the assembler and hex loader.</li>
+      <li><b>I/O ports</b></li>
+      <li><b>Disassembly</b></li>
+      <li><b>Memory:</b> the 64K the CPU sees now, with the ROM where a ROM half is switched on.</li>
+      <li><b>Memory bitmap:</b> the ROM and the RAM as a picture, tinted by use.</li>
+      <li><b>Registers</b></li>
+      <li><b>Debug:</b> breakpoints, stops and faults.</li>
+      <li><b>Bus timing</b></li>
+      <li><b>CPC hardware:</b> the memory map, the gate array, READY, the 6845, the monitor and the 8255.</li>
+    </ol>
+
+    <h3 id="machine">The picture and the keyboard</h3>
+    <figure class="fig wide">
+      <a href="img/screen.png"><img src="img/screen.png" width="900" alt="The Screen panel showing BASIC after running a short program, with its controls numbered"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Picture:</b> the whole of what a monitor would show, border included, built clock by clock as the CPU runs. Click it to give it the keyboard. While the machine is paused, a white line and mark show where the beam is.</li>
+      <li><b>Picture details:</b> the screen mode and its number of columns, the 6845's scan line, and the frame count.</li>
+      <li><b>Load ROM…:</b> takes the firmware and BASIC. The message under the buttons gives each image's CRC and names the ROMs it recognises. With the firmware but no BASIC the machine starts and then stops in the empty half.</li>
+      <li><b>Power on / restart:</b> clears the RAM, resets the machine and runs it in real time.</li>
+      <li><b>Dump RAM (.bin):</b> saves all 64K of RAM, <code>0000h</code>–<code>FFFFh</code>, as a raw file.</li>
+      <li><b>Gate array:</b> the chip fitted at IC116, a 40010 or a 40007. The two behave alike here; their pins are arranged differently, which matters for the fault menus.</li>
+      <li><b>Keyboard:</b> the CPC 464 layout. SHIFT and CTRL stay down for the next key.</li>
+    </ol>
+    <p>Characters you type come out as typed: the page presses the CPC key, with or without SHIFT, that gives that character, whatever your own keyboard layout. A few keys go by position:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Your key</th><th>CPC key</th></tr>
+      <tr><td><kbd>Enter</kbd></td><td>RETURN</td></tr>
+      <tr><td><kbd>Backspace</kbd></td><td>DEL</td></tr>
+      <tr><td><kbd>Delete</kbd></td><td>CLR</td></tr>
+      <tr><td><kbd>Alt</kbd></td><td>COPY</td></tr>
+      <tr><td>Numeric keypad <kbd>0</kbd>–<kbd>9</kbd>, <kbd>.</kbd></td><td>The function keys f0–f9 and f.</td></tr>
+      <tr><td>Numeric keypad <kbd>Enter</kbd></td><td>The small ENTER key</td></tr>
+      <tr><td>Arrow keys, <kbd>Tab</kbd>, <kbd>Esc</kbd>, <kbd>Caps Lock</kbd>, <kbd>Ctrl</kbd></td><td>The same keys</td></tr>
+    </table></div>
+
+    <h3 id="toolbar">Running and stepping</h3>
+    <figure class="fig">
+      <img src="img/toolbar.png" width="720" alt="The toolbar with its controls numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Reset CPU</b></li>
+      <li><b>Master reset:</b> also forgets the ROMs (load them again to switch on) and clears the RAM, breakpoints, stops and faults. It asks for a second click.</li>
+      <li><b>Clock 1 T-state</b> (<kbd>C</kbd>)</li>
+      <li><b>Step instruction</b> (<kbd>S</kbd>)</li>
+      <li><b>Run / Pause</b> (<kbd>R</kbd>). The keyboard shortcuts work when the picture does not have the keyboard.</li>
+      <li><b>Speed:</b> <b>Real time (4 MHz)</b> runs at the machine's own speed. <b>Full speed</b> runs as fast as your computer allows. The slow clock rates let you watch the pins change.</li>
+      <li><b>Status:</b> what the machine is doing, or what halted it.</li>
+    </ol>
+
+    <h3 id="chips">Processor, gate array and 6845</h3>
+    <figure class="fig wide">
+      <a href="img/chips.png"><img src="img/chips.png" width="1080" alt="The Z80, the 40010 gate array and the 6845 with live pins, and the fault menu of the 6845's VSYNC pin open"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Z80A (IC111):</b> the processor. Clicking its CLK pin pulses one clock; right-click it for its fault menu.</li>
+      <li><b>Gate array (IC116):</b> drawn with the pin arrangement chosen on the Screen panel. Its CPU ADDR, CAS ADDR and 244EN pins are shown only.</li>
+      <li><b>6845 (IC108):</b> the video controller. Its MA10, MA11, RA3, RA4 and CURSOR pins go nowhere that matters on this board and are shown only.</li>
+      <li><b>Fault menu:</b> click any ringed pin. It names the line the pin is on and the other pins that share it; see <a href="#faults">Fault simulation</a>.</li>
+      <li><b>Legend:</b> high, low and floating levels; a ringed pin takes a fault.</li>
+      <li><b>Bus readout:</b> the machine cycle and T-state, and what is on the address and data buses.</li>
+    </ol>
+    <p>All pins follow the machine clock by clock, wait states included. The 6845's outputs change once a character, every four clocks, and the gate array's R, G and B pins show the colour being sent at each clock.</p>
+
+    <h3 id="memchips">Memory chips</h3>
+    <figure class="fig wide">
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with the output of RAM chip IC120 disconnected and the fault menu of its A1 pin open"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>ROM:</b> IC103, the 32K ROM holding the firmware in its lower half and BASIC in its upper half.</li>
+      <li><b>RAM:</b> IC117–IC124, eight 4164 dynamic RAMs, one for each data bit. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
+      <li><b>Pinout:</b> click a tile to see that chip's pins, which follow the CPU's bus cycles on every clock. The display's own reads of the RAM, which share every microsecond with the CPU, are not shown on the pins.</li>
+      <li><b>Fault menu:</b> click a pin.</li>
+      <li><b>Faults on this chip</b></li>
+      <li><b>Clear this chip's faults</b> (its pins, and the lines its pins are on) and <b>Clear all memory faults</b></li>
+    </ol>
+
+    <h3 id="faults">Fault simulation</h3>
+    <p>Every chip on the two chip panels takes faults, of two kinds:</p>
+    <ul class="features">
+      <li><b>A line held high or low</b> is a short on the wire: every pin on that line, on every chip, sees the level and shows it.</li>
+      <li><b>A pin disconnected from its line</b> (tick the box in the menu) is a broken trace or a lifted pin: only that chip is affected. A disconnected input floats high, or can be given a level of its own. A disconnected output no longer drives its line, which then floats high for the pins that listen to it. A disconnected pin ignores a fault on its line.</li>
+    </ul>
+    <p>Because the two kinds are kept apart, a broken trace to the gate array's VSYNC pin leaves the 8255 still seeing VSYNC, while a VSYNC line held low reaches both. A pin on a line of its own has the plain choices <b>Disconnected</b>, <b>High</b> and <b>Low</b>. Lines that reach devices not drawn as chips still act on them: an address or data line held at a level is seen by the whole machine. Faults are listed in the Debug panel and cleared there, on the chip panels, or by Master reset.</p>
+    <figure class="fig">
+      <img src="img/fault.png" width="640" alt="The CPC picture covered in thin vertical cyan lines after RAM chip IC120's output was disconnected">
+      <figcaption>The picture with IC120's data output disconnected, as set in the Memory chips screenshot above. The gate array's D0 pin now floats high for every byte it reads, and in mode 1 bit 0 is the upper bit of the fourth dot of each byte: that dot changes from pen 0 to pen 2 (bright cyan) on the background, and from pen 1 to pen 3 (bright red) in the letters.</figcaption>
+    </figure>
+    <p>Some faults the model handles in particular ways:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Fault</th><th>Effect</th></tr>
+      <tr><td>Gate array CK16 (the 16 MHz oscillator)</td><td>The whole machine stops, and the picture goes dark</td></tr>
+      <tr><td>Gate array PHI, or the Z80's CLK</td><td>The Z80 is held; the picture goes on</td></tr>
+      <tr><td>READY low</td><td>The Z80 waits for ever; the picture goes on</td></tr>
+      <tr><td>READY high</td><td>No wait states. ROM reads still work, but a RAM access out of step with the gate array's RAM cycle reads what the RAM last put out, and a write is lost. This is an approximation of the board</td></tr>
+      <tr><td>Gate array CCLK, or the 6845's CLK</td><td>The 6845's counters stand still: no sync, so no interrupts</td></tr>
+      <tr><td>RESET line low</td><td>The Z80, the gate array, the 6845 and the 8255 all stay in reset while the clocks run. A chip whose own RESET pin is disconnected or held high is not reset</td></tr>
+      <tr><td>6845 HSYNC or VSYNC</td><td>The monitor runs free at its own line or frame rate, so the picture tears or rolls, and the interrupts change with HSYNC</td></tr>
+      <tr><td>6845 MA0–MA13 or RA0–RA2</td><td>The picture is read from the wrong addresses</td></tr>
+      <tr><td>Gate array R, G or B disconnected</td><td>That colour goes dark</td></tr>
+      <tr><td>Gate array ROMEN or RAMRD</td><td>The ROM and the RAM latch can both drive the bus (the CPU reads the AND of the two) or neither (it reads <code>FFh</code>)</td></tr>
+      <tr><td>RAS or CAS</td><td>The RAM never answers</td></tr>
+      <tr><td>MWE (RAM write enable) low</td><td>Every RAM access becomes a write</td></tr>
+      <tr><td>MWE high</td><td>Writes to the RAM are lost</td></tr>
+      <tr><td>Gate array IORQ held low</td><td>Memory cycles at <code>4000h</code>–<code>7FFFh</code> look like writes to the gate array</td></tr>
+      <tr><td>Gate array M1 held low</td><td>Every I/O cycle looks like an interrupt acknowledge</td></tr>
+      <tr><td>Z80 address or data pin</td><td>Acts on everything the processor reads and writes</td></tr>
+      <tr><td>Z80 RESET or BUSREQ low</td><td>The processor is held</td></tr>
+    </table></div>
+
+    <h3 id="hwpanel">CPC hardware panel</h3>
+    <figure class="fig">
+      <img src="img/hardware.png" width="308" alt="The CPC hardware panel with its six blocks numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Memory now:</b> what the CPU reads in each part of memory: ROM or RAM, or nothing if a ROM half is not loaded.</li>
+      <li><b>Gate array:</b> the mode and ROM register, the screen mode (and the mode still showing until the next HSYNC), the two ROM switches, the interrupt counter, the state of INT and the interrupts taken, and the colours of the border and pens 0–3.</li>
+      <li><b>READY:</b> the clocks run and the wait states added, as a count and a share; or why the Z80 is held, if a fault holds it.</li>
+      <li><b>6845:</b> registers R0–R15, the character, row, line and scan line being drawn, the display address, DISPEN, HSYNC and VSYNC, and where the screen memory is.</li>
+      <li><b>Monitor:</b> where the beam is, counted from the last HSYNC and VSYNC, the pictures drawn, and the colour being sent.</li>
+      <li><b>8255:</b> ports A and C, the keyboard row selected, the cassette motor, the sound chip bus state and register, and the keys held down.</li>
+    </ol>
+
+    <h3 id="bitmap">Memory bitmap</h3>
+    <figure class="fig">
+      <img src="img/bitmap.png" width="378" alt="The Memory bitmap panel scrolled to the screen memory at C000h">
+    </figure>
+    <ol class="keyed">
+      <li><b>Bands:</b> the ROM's two halves, then the 64K of RAM, one pixel per bit and 8K per band; scroll the box to see them all. Here the RAM at <code>C000h</code>, under the BASIC ROM, holds the picture: each character shows as a short column of bits. The red mark is the program counter and the blue mark the stack pointer, shown on the bands the CPU sees at that moment.</li>
+      <li><b>Tints:</b> in RAM, the screen memory (wherever the 6845's start address puts it) and the firmware's area at <code>B100h</code>–<code>BFFFh</code>, which holds its variables, jump blocks and stack.</li>
+      <li><b>Readout:</b> point at the bitmap to read a byte; click to show it in the Memory panel.</li>
+    </ol>
+
+    <h3 id="tools">The debugging tools</h3>
+    <p>The remaining panels are Z80 Bench's own and work the same way here. In the Memory panel a byte you edit goes to the RAM, also where a ROM half lies over it.</p>
+    <ul class="features">
+      <li><a href="../../z80-bench/docs/#pinout">Pinout</a>: as described there, except that the input pins open the fault menu here instead of toggling</li>
+      <li><a href="../../z80-bench/docs/#program">Loading a program</a>: the sample program loads into RAM at <code>8000h</code> and draws a bar across the top of the screen. From BASIC, load it without <b>Reset CPU after loading</b> and type <code>MEMORY &amp;7FFF:CALL &amp;8000</code></li>
+      <li><a href="../../z80-bench/docs/#dis">Disassembly and breakpoints</a></li>
+      <li><a href="../../z80-bench/docs/#memory">Memory</a></li>
+      <li><a href="../../z80-bench/docs/#regs">Registers and register stops</a></li>
+      <li><a href="../../z80-bench/docs/#debug">Debug pane</a>: memory, pin and bus stops, and the faults</li>
+      <li><a href="../../z80-bench/docs/#timing">Bus timing</a>: shows the wait states the gate array adds</li>
+    </ul>
+
+    <h2 id="hardware">Hardware reference</h2>
+    <p>The model follows the CPC 464 circuit diagram, with the 40010's pin list from Amstrad's hardware notes.</p>
+
+    <h3 id="hw-overview">The machine</h3>
+    <p>A CPC 464 is a Z80A whose every bus cycle is paced by one custom chip, the gate array.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Part</th><th>Details</th></tr>
+      <tr><td>CPU</td><td>Z80A at 4 MHz, held in wait states so that instructions take whole microseconds</td></tr>
+      <tr><td>Gate array</td><td>40007, 40008 or 40010, with a 16 MHz crystal: the clocks, the RAM's timing, the ROM switching, the interrupts and the dots of the picture</td></tr>
+      <tr><td>Video controller</td><td>6845: the display address and the sync timing</td></tr>
+      <tr><td>PPI</td><td>8255: keyboard row, the sound chip's bus, cassette motor, and a port of status bits</td></tr>
+      <tr><td>Sound chip</td><td>AY-3-8912: here only its registers, and its I/O port, which reads the keyboard</td></tr>
+      <tr><td>ROM</td><td>32K: firmware and Locomotive BASIC 1.0</td></tr>
+      <tr><td>RAM</td><td>64K, shared by the CPU and the display</td></tr>
+    </table></div>
+
+    <h3 id="hw-wait">READY and the wait states</h3>
+    <p>The gate array's READY output goes to the Z80's WAIT pin and is high for one clock in four. Every memory, I/O and interrupt-acknowledge cycle is stretched until its WAIT sample falls on that clock, so the CPU and the display take turns at the RAM without getting in each other's way. Instructions therefore take a whole number of microseconds:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Instruction</th><th>Z80 clocks</th><th>On the CPC</th></tr>
+      <tr><td class="mono">LD A,n</td><td>7</td><td>8</td></tr>
+      <tr><td class="mono">PUSH rr</td><td>11</td><td>16</td></tr>
+    </table></div>
+    <p>The CPC hardware panel counts the wait states added; while BASIC runs they are typically around 15% of all clocks.</p>
+
+    <h3 id="hw-mem">Memory</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Address</th><th>Reads</th></tr>
+      <tr><td class="mono">0000h–3FFFh</td><td>Firmware ROM (lower half of IC103), or the RAM when the lower ROM is switched off</td></tr>
+      <tr><td class="mono">4000h–BFFFh</td><td>RAM</td></tr>
+      <tr><td class="mono">C000h–FFFFh</td><td>BASIC ROM (upper half of IC103), or the RAM when the upper ROM is switched off</td></tr>
+    </table></div>
+    <p>Writes always go to the RAM, also under the ROM. The screen memory normally sits at <code>C000h</code>, under BASIC, where the CPU writes it freely and the gate array reads it for the picture. The ROM chip's fifteen address pins are the CPU's A0–A14, so A14 picks the half. Its chip enable is the gate array's ROMEN.</p>
+
+    <h3 id="hw-io">I/O ports</h3>
+    <p>Devices are picked by single address lines, so the port numbers are 16 bits and a device answers to a whole range. Programs use the high byte.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Port</th><th>Selected by</th><th>Device</th></tr>
+      <tr><td class="mono">7Fxxh</td><td>A15 low, A14 high</td><td>Gate array (write only)</td></tr>
+      <tr><td class="mono">BCxxh</td><td>A14 low; A9, A8 = 00</td><td>6845: select a register</td></tr>
+      <tr><td class="mono">BDxxh</td><td>A9, A8 = 01</td><td>6845: write the register</td></tr>
+      <tr><td class="mono">BFxxh</td><td>A9, A8 = 11</td><td>6845: read the register (only R12–R17 read back)</td></tr>
+      <tr><td class="mono">DFxxh</td><td>A13 low</td><td>Upper ROM number. With no expansion ROMs, every number gives BASIC</td></tr>
+      <tr><td class="mono">EFxxh</td><td>A12 low</td><td>Printer latch</td></tr>
+      <tr><td class="mono">F4xxh</td><td>A11 low; A9, A8 = 00</td><td>8255 port A: the sound chip's data</td></tr>
+      <tr><td class="mono">F5xxh</td><td>A9, A8 = 01</td><td>8255 port B (read): status bits</td></tr>
+      <tr><td class="mono">F6xxh</td><td>A9, A8 = 10</td><td>8255 port C: keyboard row, cassette motor, sound chip bus</td></tr>
+      <tr><td class="mono">F7xxh</td><td>A9, A8 = 11</td><td>8255 control</td></tr>
+      <tr><td class="mono">F8xxh–FBxxh</td><td>A10 low</td><td>Expansion bus (nothing fitted)</td></tr>
+    </table></div>
+
+    <h3 id="hw-ga">Gate array</h3>
+    <p>A byte written to port <code>7Fxxh</code> does one of three things, chosen by its top two bits:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Bits 7–6</th><th>Action</th></tr>
+      <tr><td class="mono">00</td><td>Select a pen: bits 3–0 give pens 0–15, or bit 4 set selects the border</td></tr>
+      <tr><td class="mono">01</td><td>Set the selected pen's colour: bits 4–0, one of 32 colour numbers (27 different colours, as red, green and blue each have three levels)</td></tr>
+      <tr><td class="mono">10</td><td>Bits 1–0 screen mode; bit 2 set switches the lower ROM off; bit 3 set switches the upper ROM off; bit 4 set clears the interrupt counter</td></tr>
+      <tr><td class="mono">11</td><td>RAM banking, on the 128K machines only; ignored on a 464</td></tr>
+    </table></div>
+    <p>The gate array also makes the clocks: from its 16 MHz input (CK16) it gives the Z80 PHI at 4 MHz and the 6845 and the sound chip CCLK at 1 MHz. It drives the RAM's RAS, CAS and write enable, and the address selectors' CPU ADDR and CAS ADDR.</p>
+
+    <h3 id="hw-video">Video</h3>
+    <p>The 6845 counts characters of one microsecond (four CPU clocks), character rows and scan lines, and gives the display address MA0–MA13, the row line RA0–RA2, DISPEN, HSYNC and VSYNC. For every character the gate array reads two bytes of RAM, at the address made of MA13–MA12, RA2–RA0, MA9–MA0 and which of the two bytes, and turns them into dots in the pen colours of the screen mode. Outside DISPEN it sends the border colour, and black during the sync pulses.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Mode</th><th>Text</th><th>Pixels</th><th>Colours</th></tr>
+      <tr><td class="mono">0</td><td>20 columns</td><td>160 × 200</td><td>16</td></tr>
+      <tr><td class="mono">1</td><td>40 columns</td><td>320 × 200</td><td>4</td></tr>
+      <tr><td class="mono">2</td><td>80 columns</td><td>640 × 200</td><td>2</td></tr>
+    </table></div>
+    <p>A new screen mode takes effect at the end of the next HSYNC, so a program can change mode part way down the screen. The firmware sets the 6845 for 64 characters a line and 312 lines a picture, 50 pictures a second. The emulator draws the picture the way a monitor would: a new line at each HSYNC and a new picture at each VSYNC. Without the sync pulses the monitor runs free, a little slower than the machine, so the picture tears or rolls.</p>
+
+    <h3 id="hw-int">Interrupts</h3>
+    <ul class="features">
+      <li><b>Every 52 lines:</b> the gate array counts HSYNC pulses and asks for an interrupt at 52, which is 300 times a second.</li>
+      <li><b>In step with the picture:</b> two HSYNCs after VSYNC starts, the counter is cleared, with an interrupt if it was below 32, so the interrupts keep the same place on the screen.</li>
+      <li><b>Acknowledge:</b> the gate array sees IORQ and M1 both low, and clears bit 5 of the counter so that the next interrupt is not too soon.</li>
+      <li>The Z80 runs in interrupt mode 1. The firmware's handler starts at <code>0038h</code> in ROM and continues in RAM at <code>B939h</code>.</li>
+    </ul>
+
+    <h3 id="hw-ppi">8255 and keyboard</h3>
+    <p>Port C bits 3–0 select a keyboard row, decoded to ten rows. The row is read through the sound chip's own I/O port, register 14: port C bits 7–6 drive the sound chip's bus (address, write or read) and port A carries the data. A pressed key reads low. Port C bit 4 turns the cassette motor on.</p>
+    <p>Port B reads status bits:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Bit</th><th>Meaning</th></tr>
+      <tr><td class="mono">0</td><td>VSYNC from the 6845</td></tr>
+      <tr><td class="mono">3–1</td><td>Maker links: 111 is Amstrad</td></tr>
+      <tr><td class="mono">4</td><td>50 Hz link</td></tr>
+      <tr><td class="mono">5</td><td>Expansion (high: nothing fitted)</td></tr>
+      <tr><td class="mono">6</td><td>Printer busy (high: no printer)</td></tr>
+      <tr><td class="mono">7</td><td>Cassette data in</td></tr>
+    </table></div>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Row</th><th>Bit 0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr>
+      <tr><td class="mono">0</td><td>&uarr;</td><td>&rarr;</td><td>&darr;</td><td>f9</td><td>f6</td><td>f3</td><td>ENTER</td><td>f.</td></tr>
+      <tr><td class="mono">1</td><td>&larr;</td><td>COPY</td><td>f7</td><td>f8</td><td>f5</td><td>f1</td><td>f2</td><td>f0</td></tr>
+      <tr><td class="mono">2</td><td>CLR</td><td>[</td><td>RETURN</td><td>]</td><td>f4</td><td>SHIFT</td><td>\</td><td>CTRL</td></tr>
+      <tr><td class="mono">3</td><td>^</td><td>-</td><td>@</td><td>P</td><td>;</td><td>:</td><td>/</td><td>.</td></tr>
+      <tr><td class="mono">4</td><td>0</td><td>9</td><td>O</td><td>I</td><td>L</td><td>K</td><td>M</td><td>,</td></tr>
+      <tr><td class="mono">5</td><td>8</td><td>7</td><td>U</td><td>Y</td><td>H</td><td>J</td><td>N</td><td>SPACE</td></tr>
+      <tr><td class="mono">6</td><td>6</td><td>5</td><td>R</td><td>T</td><td>G</td><td>F</td><td>B</td><td>V</td></tr>
+      <tr><td class="mono">7</td><td>4</td><td>3</td><td>E</td><td>W</td><td>S</td><td>D</td><td>C</td><td>X</td></tr>
+      <tr><td class="mono">8</td><td>1</td><td>2</td><td>ESC</td><td>Q</td><td>TAB</td><td>A</td><td>CAPS LOCK</td><td>Z</td></tr>
+      <tr><td class="mono">9</td><td>Joy up</td><td>Joy down</td><td>Joy left</td><td>Joy right</td><td>Fire 2</td><td>Fire 1</td><td>Fire 3</td><td>DEL</td></tr>
+    </table></div>
+
+    <h3 id="hw-chips">Chips</h3>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Position</th><th>Chip</th><th>Use</th></tr>
+      <tr><td class="mono">IC111</td><td>Z80A</td><td>Processor</td></tr>
+      <tr><td class="mono">IC116</td><td>40007, 40008 or 40010</td><td>Gate array</td></tr>
+      <tr><td class="mono">IC108</td><td>HD6845</td><td>Video controller. CS is A14, RS is A8, R/W is A9, E comes from IORQ, CLK is CCLK</td></tr>
+      <tr><td class="mono">IC103</td><td>23256 (32K ROM)</td><td>Firmware and BASIC</td></tr>
+      <tr><td class="mono">IC117–IC124</td><td>4164</td><td>RAM, one chip for each data bit: IC120 D0, IC119 D1, IC118 D2, IC117 D3, IC121 D4, IC122 D5, IC123 D6, IC124 D7</td></tr>
+      <tr><td class="mono">IC109, IC104, IC113, IC105</td><td>74LS153</td><td>Address selectors for the RAM (not drawn as chips)</td></tr>
+      <tr><td class="mono">IC114</td><td>74LS373</td><td>Latches the RAM's data and drives the CPU's data bus while RAMRD is low (not drawn)</td></tr>
+      <tr><td class="mono">IC115</td><td>74LS244</td><td>CPU data bus to the gate array's data pins (not drawn)</td></tr>
+      <tr><td class="mono">IC107</td><td>8255</td><td>PPI (not drawn yet)</td></tr>
+    </table></div>
+    <p>Each RAM address pin gets a bit of the CPU's address for the row, then another for the column, or the matching bit of the display address when the gate array reads the screen:</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>RAM pin</th><th>A0</th><th>A1</th><th>A2</th><th>A3</th><th>A4</th><th>A5</th><th>A6</th><th>A7</th></tr>
+      <tr><td>Row</td><td>A2</td><td>A1</td><td>A4</td><td>A3</td><td>A6</td><td>A5</td><td>A8</td><td>A7</td></tr>
+      <tr><td>Column</td><td>A9</td><td>A0</td><td>A11</td><td>A10</td><td>A13</td><td>A12</td><td>A15</td><td>A14</td></tr>
+    </table></div>
+    <p>These follow the circuit diagram. They have not been checked against a real board.</p>
+
+    <h3 id="hw-limits">What is not emulated yet</h3>
+    <ul class="features">
+      <li><b>Sound:</b> the sound chip's registers are kept, but it makes no sound.</li>
+      <li><b>Cassette:</b> no tape loading or saving.</li>
+      <li><b>The 8255, the sound chip and the address selectors as live chips:</b> they work, but are not drawn with pins and faults.</li>
+      <li><b>Printer, joysticks and expansion ROMs or disc drives</b></li>
+    </ul>
+
+    <footer><a href="../">&larr; Back to Amstrad CPC 464</a> · <a href="../../emulators/">Emulators</a> · <a href="../../">All projects</a></footer>
+  </main>
+</body>
+</html>
