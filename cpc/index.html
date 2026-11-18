@@ -16,7 +16,7 @@
     <header class="site" style="margin-top:20px">
       <p class="prompt">&gt; RUN</p>
       <h1>Amstrad CPC 464</h1>
-      <p class="lead">An emulator of Amstrad's 1984 home computer, built on <a href="../z80-bench/">Z80 Bench</a> and modelled from the CPC 464 circuit diagram. A CPC is a Z80 whose every bus cycle is paced by one custom chip, the gate array, which also makes the picture together with a 6845. The emulator runs the real firmware and Locomotive BASIC, and shows what each chip is doing on every clock. It is work in progress: sound and the cassette are still to come.</p>
+      <p class="lead">An emulator of Amstrad's 1984 home computer, built on <a href="../z80-bench/">Z80 Bench</a> and modelled from the CPC 464 circuit diagram. A CPC is a Z80 whose every bus cycle is paced by one custom chip, the gate array, which also makes the picture together with a 6845. The emulator runs the real firmware and Locomotive BASIC, and shows what each chip is doing on every clock.</p>
     </header>
 
     <a class="button" href="app/">Open the emulator</a>
@@ -35,15 +35,13 @@
       <li><b>Clock and reset faults:</b> take away the 16 MHz clock and the whole machine stops; take away the Z80's clock, or hold READY low, and the processor stands still while the picture goes on; take away the 6845's clock and the sync and the interrupts go; hold the RESET line low and every chip on it stays in reset</li>
       <li><b>More live chips:</b> the four 74LS153 RAM address selectors, the 8255 and the sound chip have live pins and fault menus, wired as on the circuit diagram. A selector fault can scramble the CPU's memory or only the picture; an 8255 or sound chip fault reaches the keyboard, the cassette or the sound</li>
       <li><b>Sound:</b> the AY-3-8912's three tone channels, noise and envelope, played in real time through the built-in speaker or as from the stereo socket. It runs on the gate array's 1 MHz clock, so a fault that stops that clock stops the sound</li>
-      <li><b>Cassette:</b> insert a CDT tape file and press Play. The tape is played as a real signal into the cassette input, so the firmware's loader and the custom loaders of games such as Speedlock work. Instant loading puts anything the firmware loads straight into memory; fast loading, rewind and a list of the blocks on the tape. Record what <code>SAVE</code> writes, load it back, and save it as a CDT file</li>
+      <li><b>Cassette:</b> insert a CDT tape file, or a WAV recording of a real cassette, and press Play. The tape is played as a real signal into the cassette input, so the firmware's loader and the custom loaders of games such as Speedlock work. Instant loading puts anything the firmware loads straight into memory; fast loading, rewind and a list of the blocks on the tape. Record what <code>SAVE</code> writes, load it back, and save it as a CDT file, or as a WAV file to play into a real CPC</li>
       <li><b>Keyboard:</b> type on your keyboard (characters are translated to the CPC key that gives them) or click the on-screen CPC keyboard</li>
       <li><b>Memory bitmap:</b> every bit of the ROM and the RAM as a pixel, with the screen memory and the firmware's area tinted</li>
       <li><b>Debugging:</b> Z80 Bench's tools, including bus timing, disassembler, breakpoints and stepping, plus a panel showing the memory map, the gate array, the 6845's counters, the monitor's beam and the 8255</li>
       <li><b>Real time:</b> 4 MHz, or full speed</li>
     </ul>
 
-    <h2>Coming next</h2>
-    <p>Tapes from WAV recordings, and the other emulators getting the same chip faults.</p>
 
     <h2>Source</h2>
     <a class="button secondary" href="https://github.com/fdimer/z80-bench/tree/cpc">View on GitHub (cpc branch)</a>

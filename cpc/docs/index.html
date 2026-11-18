@@ -16,7 +16,7 @@
     <header class="site" style="margin-top:20px">
       <p class="prompt">&gt; LIST</p>
       <h1>Amstrad CPC 464 documentation</h1>
-      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it. The emulator is work in progress: tapes are read from CDT files only, not from WAV recordings.</p>
+      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it.</p>
     </header>
 
     <a class="button" href="../app/">Open the emulator</a>
@@ -102,11 +102,11 @@
       <li><b>Dump RAM (.bin):</b> saves all 64K of RAM, <code>0000h</code>–<code>FFFFh</code>, as a raw file. Beside it, <b>RAM listing (.txt)</b> saves the registers, the state of the gate array, the 6845, the 8255 and the sound chip, any faults, and the RAM as a hex dump.</li>
       <li><b>Gate array:</b> the chip fitted at IC116, a 40010 or a 40007. The two behave alike here; their pins are arranged differently, which matters for the fault menus.</li>
       <li><b>Sound:</b> through the built-in speaker, as from the stereo socket, or off; see <a href="#sound">Sound</a>.</li>
-      <li><b>Insert tape (.cdt)…:</b> puts a CDT or TZX tape file in the deck.</li>
+      <li><b>Insert tape (.cdt, .wav)…:</b> puts a CDT or TZX tape file, or a WAV recording of a cassette, in the deck.</li>
       <li><b>Play</b> (<b>Stop</b> while it is down): the cassette's PLAY key.</li>
       <li><b>Rewind:</b> back to the start of the tape.</li>
       <li><b>Record</b> (<b>Stop recording</b> while recording): REC and PLAY on a blank tape.</li>
-      <li><b>Save tape (.cdt):</b> saves the tape in the deck as a file, such as a recording you made.</li>
+      <li><b>Save tape (.cdt):</b> saves the tape in the deck as a file, such as a recording you made. Beside it, <b>Save .wav</b> saves the tape's sound, to play into a real CPC.</li>
       <li><b>Block:</b> the blocks on the tape, with where each starts; pick one to wind the tape there.</li>
       <li><b>Instant loading:</b> records the firmware reads come straight from the tape file, with no waiting; see <a href="#tape">The cassette</a>.</li>
       <li><b>Fast loading:</b> runs at full speed while the tape moves, and back to real time when the motor stops.</li>
@@ -130,10 +130,10 @@
     <p>A fault that stops CCLK (no 16 MHz clock, or the gate array's CCLK pin or line held or disconnected) stops the sound chip too, so the sound stops.</p>
 
     <h3 id="tape">The cassette</h3>
-    <p>The deck plays CDT files, the tape format used for CPC tapes (the TZX format of the Spectrum, with the same blocks). The file is turned into the signal it holds, and the computer reads that signal from the cassette input bit by bit, as it would from a real tape. So both the firmware's own loader and the custom loaders of games, such as Speedlock, work.</p>
+    <p>The deck plays CDT files, the tape format used for CPC tapes (the TZX format of the Spectrum, with the same blocks), and WAV recordings of real cassettes (see <a href="#wav">below</a>). The file is turned into the signal it holds, and the computer reads that signal from the cassette input bit by bit, as it would from a real tape. So both the firmware's own loader and the custom loaders of games, such as Speedlock, work.</p>
     <p><b>To load a program:</b></p>
     <ol>
-      <li>Press <b>Insert tape (.cdt)…</b> and choose the file.</li>
+      <li>Press <b>Insert tape (.cdt, .wav)…</b> and choose the file.</li>
       <li>Type <code>RUN""</code> (or <code>LOAD""</code>) and press RETURN. The CPC says <b>Press PLAY then any key:</b>.</li>
       <li>Press <b>Play</b> under the picture, then any key on the CPC.</li>
     </ol>
@@ -146,6 +146,8 @@
       <li>When it says <b>Ready</b>, press <b>Stop recording</b>.</li>
     </ol>
     <p>What the computer wrote while the motor was on becomes a new tape in the deck, rewound, so you can <code>LOAD</code> it back straight away; <b>Save tape (.cdt)</b> keeps it as a file you can load later or in another emulator. A recording is kept as the pulses it holds, not decoded, so anything a program writes to tape is kept as it was written.</p>
+    <p id="wav"><b>WAV recordings.</b> A cassette recorded into a computer as a WAV file can go in the deck too. The recording is turned into the pulses it carries and then into a CDT file, which the deck plays as it plays any other; <b>Save tape (.cdt)</b> keeps that file. Any firmware records in it are found, so instant loading works for them, and the message says how many were found; a game's own loader reads the signal as usual. The WAV file can be 8, 16, 24 or 32-bit, or floating point, at any sample rate, mono or stereo (the channels are mixed). 44.1 kHz or more is best for the faster custom loaders. Record at a good level, without the recorder's automatic level control if it can be switched off.</p>
+    <p><b>Save .wav</b> does the opposite: it saves the tape in the deck, whatever it came from, as its sound (44.1 kHz, 8-bit mono). Play it from a computer or phone into a real CPC's cassette input (on a CPC 464, whose deck is built in, through a cassette adapter in the deck) at full volume, and type <code>RUN""</code> on the CPC first.</p>
 
     <h3 id="toolbar">Running and stepping</h3>
     <figure class="fig">
@@ -383,6 +385,7 @@
       <li><b>Reading:</b> port B bit 7 is the signal from the tape. Loaders time the gaps between its edges with counting loops, which is why the wait states have to be right for a tape to load.</li>
     </ul>
     <p>A CDT file describes the signal as blocks: leaders, sync pulses and data bits with their lengths, plain pulses, and pauses, all timed in 3.5 MHz T-states; the emulator scales them to the CPC's 4 MHz clock. A pause starts with 1 ms at the opposite level, which ends the last pulse, then stays low. A recording is written as blocks of pulses (TZX block 13h), with a pause block (20h) for each gap longer than about 19 ms.</p>
+    <p>A WAV file is turned into pulses like this: the channels are mixed; any DC drift is removed by taking away the signal's average over 3 ms; the level then flips only when the signal swings past a threshold that follows its loudness (a quarter of the recent peak), and never below a floor set from the file itself: twice the hiss (the peak level of its quietest 5 ms stretches), so hiss in the gaps between files is ignored; each edge is timed at the zero crossing just before the flip, between samples; and the time between edges, in CPC clocks, becomes a pulse. The pulses are written as a recording is. Which way up the recording is doesn't matter, as the loaders time the gaps between edges.</p>
     <p>The firmware stores a file as records. Each record is a leader, a 0 sync bit, a sync byte (2Ch for the 64-byte header that names the file, 16h for data), then the data in 256-byte segments, each followed by its CRC (CCITT, polynomial 1021h, starting from FFFFh, inverted, high byte first), then a short trailer. The firmware reads every record with one routine, CAS READ (jump block <code>BCA1h</code>: HL the address, DE the length, A the sync byte; it returns carry set, or carry clear with A = 2 for a CRC error). Instant loading catches the Z80 as it is about to run that routine in the lower ROM, finds the next record on the tape with that sync byte, checks each segment's CRC, writes the bytes to RAM, winds the tape past the record and returns as the routine would. Records held as plain pulses, as in a recording, are decoded from the pulse lengths first, and used only if every CRC checks.</p>
 
     <h3 id="hw-ppi">8255 and keyboard</h3>
@@ -434,9 +437,8 @@
     </table></div>
     <p>The display's address reaches the same pins through inputs 2 (column) and 3 (row): the 6845's MA1, MA0, MA3, MA2, MA5, MA4, MA7 and MA6 for the rows of RAM pins A0–A7, and MA8, CCLK, RA0, MA9, RA2, RA1, MA13 and MA12 for the columns. These follow the circuit diagram. They have not been checked against a real board.</p>
 
-    <h3 id="hw-limits">What is not emulated yet</h3>
+    <h3 id="hw-limits">What is not emulated</h3>
     <ul class="features">
-      <li><b>Cassette:</b> tapes as WAV sound files; only CDT and TZX files are read.</li>
       <li><b>Printer, joysticks and expansion ROMs or disc drives</b></li>
     </ul>
 
