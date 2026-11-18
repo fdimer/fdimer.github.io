@@ -16,7 +16,7 @@
     <header class="site" style="margin-top:20px">
       <p class="prompt">&gt; LIST</p>
       <h1>Amstrad CPC 464 documentation</h1>
-      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it. The emulator is work in progress: the 8255, the sound chip and the address selectors are not yet drawn as chips.</p>
+      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it. The emulator is work in progress: tapes are read from CDT files only, not from WAV recordings.</p>
     </header>
 
     <a class="button" href="../app/">Open the emulator</a>
@@ -33,7 +33,7 @@
             <li><a href="#tape">The cassette</a></li>
             <li><a href="#toolbar">Running and stepping</a></li>
             <li><a href="#chips">Processor, gate array and 6845</a></li>
-            <li><a href="#memchips">Memory chips</a></li>
+            <li><a href="#memchips">Memory and I/O chips</a></li>
             <li><a href="#faults">Fault simulation</a></li>
             <li><a href="#hwpanel">CPC hardware panel</a></li>
             <li><a href="#bitmap">Memory bitmap</a></li>
@@ -78,7 +78,7 @@
       <li><b>Toolbar:</b> reset, clock, step and run controls.</li>
       <li><b>Screen:</b> the picture, the ROM loader, the gate array choice and the keyboard.</li>
       <li><b>Processor, gate array and 6845:</b> the three chips that run the machine, with live pins and fault menus.</li>
-      <li><b>Memory chips:</b> the ROM and the eight RAM chips, with live pins and fault menus.</li>
+      <li><b>Memory and I/O chips:</b> the ROM, the eight RAM chips, the four RAM address selectors, the 8255 and the sound chip, with live pins and fault menus.</li>
       <li><b>Program:</b> the assembler and hex loader.</li>
       <li><b>I/O ports</b></li>
       <li><b>Disassembly</b></li>
@@ -175,18 +175,24 @@
     </ol>
     <p>All pins follow the machine clock by clock, wait states included. The 6845's outputs change once a character, every four clocks, and the gate array's R, G and B pins show the colour being sent at each clock.</p>
 
-    <h3 id="memchips">Memory chips</h3>
+    <h3 id="memchips">Memory and I/O chips</h3>
     <figure class="fig wide">
-      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with the output of RAM chip IC120 disconnected and the fault menu of its A1 pin open"></a>
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory and I/O chips panel with the output of RAM chip IC120 disconnected and the fault menu of its A1 pin open"></a>
     </figure>
     <ol class="keyed">
       <li><b>ROM:</b> IC103, the 32K ROM holding the firmware in its lower half and BASIC in its upper half.</li>
       <li><b>RAM:</b> IC117–IC124, eight 4164 dynamic RAMs, one for each data bit. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
+      <li><b>RAM address selectors:</b> IC109, IC104, IC113 and IC105, four 74LS153s. Each RAM address pin comes from one half of one of them; see <a href="#hw-chips">Chips</a>.</li>
+      <li><b>I/O:</b> the 8255 (IC107) and the AY-3-8912 sound chip (IC102).</li>
       <li><b>Pinout:</b> click a tile to see that chip's pins, which follow the CPU's bus cycles on every clock. The display's own reads of the RAM, which share every microsecond with the CPU, are not shown on the pins.</li>
       <li><b>Fault menu:</b> click a pin.</li>
       <li><b>Faults on this chip</b></li>
-      <li><b>Clear this chip's faults</b> (its pins, and the lines its pins are on) and <b>Clear all memory faults</b></li>
+      <li><b>Clear this chip's faults</b> (its pins, and the lines its pins are on) and <b>Clear all faults</b></li>
     </ol>
+    <figure class="fig">
+      <img src="img/iochip.png" width="480" alt="The 8255's live pinout with the fault menu of its PB0 pin open, showing it shares the VSYNC line with the 6845 and the gate array">
+      <figcaption>The 8255 with the menu of PB0 open: PB0 is on the VSYNC line with the 6845 and the gate array, so you can hold the whole line or cut this pin alone.</figcaption>
+    </figure>
 
     <h3 id="faults">Fault simulation</h3>
     <p>Every chip on the two chip panels takes faults, of two kinds:</p>
@@ -199,6 +205,10 @@
       <img src="img/fault.png" width="640" alt="The CPC picture covered in thin vertical cyan lines after RAM chip IC120's output was disconnected">
       <figcaption>The picture with IC120's data output disconnected, as set in the Memory chips screenshot above. The gate array's D0 pin now floats high for every byte it reads, and in mode 1 bit 0 is the upper bit of the fourth dot of each byte: that dot changes from pen 0 to pen 2 (bright cyan) on the background, and from pen 1 to pen 3 (bright red) in the letters.</figcaption>
     </figure>
+    <figure class="fig">
+      <img src="img/selfault.png" width="640" alt="The CPC picture with every character's top half replaced by its bottom half, after a selector input was held high">
+      <figcaption>A selector fault: IC104's input 2C2, which carries the 6845's RA2 to RAM address pin A4, cut from its line and held high. Every scan line of a character is read from the lower four, so each character's top half repeats its bottom half. The CPU's own path through the same selector is untouched, so BASIC carries on as normal.</figcaption>
+    </figure>
     <p>Some faults the model handles in particular ways:</p>
     <div class="tablewrap"><table class="ref">
       <tr><th>Fault</th><th>Effect</th></tr>
@@ -207,12 +217,26 @@
       <tr><td>READY low</td><td>The Z80 waits for ever; the picture goes on</td></tr>
       <tr><td>READY high</td><td>No wait states. ROM reads still work, but a RAM access out of step with the gate array's RAM cycle reads what the RAM last put out, and a write is lost. This is an approximation of the board</td></tr>
       <tr><td>Gate array CCLK, or the 6845's CLK</td><td>The 6845's counters stand still: no sync, so no interrupts</td></tr>
-      <tr><td>RESET line low</td><td>The Z80, the gate array, the 6845 and the 8255 all stay in reset while the clocks run. A chip whose own RESET pin is disconnected or held high is not reset</td></tr>
+      <tr><td>RESET line low</td><td>The Z80, the gate array, the 6845 and the sound chip all stay in reset while the clocks run. A chip whose own RESET pin is disconnected or held high is not reset. The 8255's RESET is a separate, active-high line from the same reset circuit: a reset resets it, but holding the RESET line does not hold it</td></tr>
       <tr><td>6845 HSYNC or VSYNC</td><td>The monitor runs free at its own line or frame rate, so the picture tears or rolls, and the interrupts change with HSYNC</td></tr>
       <tr><td>6845 MA0–MA13 or RA0–RA2</td><td>The picture is read from the wrong addresses</td></tr>
       <tr><td>Gate array R, G or B disconnected</td><td>That colour goes dark</td></tr>
       <tr><td>Gate array ROMEN or RAMRD</td><td>The ROM and the RAM latch can both drive the bus (the CPU reads the AND of the two) or neither (it reads <code>FFh</code>)</td></tr>
       <tr><td>RAS or CAS</td><td>The RAM never answers</td></tr>
+      <tr><td>A selector input (1C0–1C3, 2C0–2C3)</td><td>That address bit is fixed for that path only: inputs 0 and 1 are the CPU's column and row bits, inputs 2 and 3 the display's. A CPU input held fixes a bit of the CPU's RAM addresses, so two areas of memory become one; a display input held changes the picture only</td></tr>
+      <tr><td>A selector's B (the gate array's CPU line) or A (CAS ADDR)</td><td>The selector takes the wrong inputs: with B high the CPU's accesses go to the display address, with B low the display shows the CPU's last address; with A high the column bits repeat the row bits, with A low the other way round. On the line the four selectors share, on one pin only that selector's two RAM address bits</td></tr>
+      <tr><td>A selector's 1G or 2G high</td><td>That half's output goes low: one RAM address pin is always 0</td></tr>
+      <tr><td>A selector output (1Y, 2Y)</td><td>Reaches the eight RAM chips' address pin, as a fault on that RAM address line</td></tr>
+      <tr><td>8255 port pins</td><td>What the pin drives or reads is wrong: PC0–PC3 the keyboard row, PC4 the cassette motor, PC5 the tape output, PC6 and PC7 the sound chip's BC1 and BDIR, port A the sound chip's data; PB0 VSYNC, PB1–PB4 the links, PB5 EXP, PB6 BUSY, PB7 the tape input</td></tr>
+      <tr><td>8255 CS, A1 or A0</td><td>Never selected, selected for every port, or the wrong port</td></tr>
+      <tr><td>8255 RD or WR</td><td>High: it never answers reads, or never takes writes. Low: it answers every read while selected (A11 low), memory reads too, so the CPU reads the AND; or takes every write while selected, memory writes too</td></tr>
+      <tr><td>8255 RESET held high or disconnected</td><td>Held in reset: its ports are inputs and the lines float high, so the cassette motor runs and the sound chip's bus control reads "latch address"</td></tr>
+      <tr><td>Sound chip DA0–DA7</td><td>Register numbers and values arrive with that bit fixed, and what it reads back (the keyboard) too</td></tr>
+      <tr><td>Sound chip BDIR, BC1 or BC2</td><td>The wrong bus action: nothing, a write, a read or an address latch</td></tr>
+      <tr><td>Sound chip A8 low</td><td>Not selected: it takes nothing, and the keyboard reads as no keys pressed</td></tr>
+      <tr><td>Sound chip CLOCK or RESET</td><td>No clock: it stands still and is silent. RESET held low: its registers are cleared and it stays silent</td></tr>
+      <tr><td>Sound chip IO0–IO7</td><td>That keyboard column reads as always pressed (low) or never (high)</td></tr>
+      <tr><td>Sound chip A, B or C</td><td>That channel is silent</td></tr>
       <tr><td>MWE (RAM write enable) low</td><td>Every RAM access becomes a write</td></tr>
       <tr><td>MWE high</td><td>Writes to the RAM are lost</td></tr>
       <tr><td>Gate array IORQ held low</td><td>Memory cycles at <code>4000h</code>–<code>7FFFh</code> look like writes to the gate array</td></tr>
@@ -395,10 +419,12 @@
       <tr><td class="mono">IC108</td><td>HD6845</td><td>Video controller. CS is A14, RS is A8, R/W is A9, E comes from IORQ, CLK is CCLK</td></tr>
       <tr><td class="mono">IC103</td><td>23256 (32K ROM)</td><td>Firmware and BASIC</td></tr>
       <tr><td class="mono">IC117–IC124</td><td>4164</td><td>RAM, one chip for each data bit: IC120 D0, IC119 D1, IC118 D2, IC117 D3, IC121 D4, IC122 D5, IC123 D6, IC124 D7</td></tr>
-      <tr><td class="mono">IC109, IC104, IC113, IC105</td><td>74LS153</td><td>Address selectors for the RAM (not drawn as chips)</td></tr>
+      <tr><td class="mono">IC109, IC104, IC113, IC105</td><td>74LS153</td><td>RAM address selectors. B is the gate array's CPU line, A its CAS ADDR, 1G and 2G tied to ground. Inputs 0 and 1 take the CPU's column and row bits, 2 and 3 the 6845's display address (and CCLK, at IC105, for the byte's half)</td></tr>
       <tr><td class="mono">IC114</td><td>74LS373</td><td>Latches the RAM's data and drives the CPU's data bus while RAMRD is low (not drawn)</td></tr>
       <tr><td class="mono">IC115</td><td>74LS244</td><td>CPU data bus to the gate array's data pins (not drawn)</td></tr>
-      <tr><td class="mono">IC107</td><td>8255</td><td>PPI (not drawn yet)</td></tr>
+      <tr><td class="mono">IC107</td><td>M5L8255AP</td><td>PPI. CS is A11, A1 is A9, A0 is A8; RESET (active high) from the reset circuit</td></tr>
+      <tr><td class="mono">IC102</td><td>AY-3-8912</td><td>Sound chip. Its bus from the 8255; BC2 and A8 tied high; CLOCK is CCLK; IO0–IO7 read the keyboard's columns</td></tr>
+      <tr><td class="mono">IC101</td><td>74LS145</td><td>Decodes the keyboard row from PC0–PC3 (not drawn)</td></tr>
     </table></div>
     <p>Each RAM address pin gets a bit of the CPU's address for the row, then another for the column, or the matching bit of the display address when the gate array reads the screen:</p>
     <div class="tablewrap"><table class="ref">
@@ -406,12 +432,11 @@
       <tr><td>Row</td><td>A2</td><td>A1</td><td>A4</td><td>A3</td><td>A6</td><td>A5</td><td>A8</td><td>A7</td></tr>
       <tr><td>Column</td><td>A9</td><td>A0</td><td>A11</td><td>A10</td><td>A13</td><td>A12</td><td>A15</td><td>A14</td></tr>
     </table></div>
-    <p>These follow the circuit diagram. They have not been checked against a real board.</p>
+    <p>The display's address reaches the same pins through inputs 2 (column) and 3 (row): the 6845's MA1, MA0, MA3, MA2, MA5, MA4, MA7 and MA6 for the rows of RAM pins A0–A7, and MA8, CCLK, RA0, MA9, RA2, RA1, MA13 and MA12 for the columns. These follow the circuit diagram. They have not been checked against a real board.</p>
 
     <h3 id="hw-limits">What is not emulated yet</h3>
     <ul class="features">
       <li><b>Cassette:</b> tapes as WAV sound files; only CDT and TZX files are read.</li>
-      <li><b>The 8255, the sound chip and the address selectors as live chips:</b> they work, but are not drawn with pins and faults.</li>
       <li><b>Printer, joysticks and expansion ROMs or disc drives</b></li>
     </ul>
 

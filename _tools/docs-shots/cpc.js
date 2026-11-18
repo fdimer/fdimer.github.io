@@ -45,8 +45,8 @@ await S.snap(p,out+'bitmap.png',await S.clip(p,['#pMemMap']));
 // memory chips: IC120 (data bit 0) with its output disconnected, and the A1 pin menu open
 await p.click('#mcTiles button:has-text("IC120")');await p.waitForTimeout(200);
 await p.click('#mcChip g.pin[data-pin="DOUT"]');await p.waitForTimeout(200);await p.check('.mcpop input[type=checkbox]');await p.waitForTimeout(200);
-await p.keyboard.press('Escape');await p.click('#mcChip g.pin[data-pin="A1"]');await p.waitForTimeout(200);await p.evaluate(()=>{const e=document.querySelector('.mcpop');const t=document.querySelector('#mcTiles').getBoundingClientRect(),f=e.parentElement.getBoundingClientRect();e.style.left=(t.left-f.left+40)+'px';e.style.top=(t.bottom-f.top+14)+'px';});await p.waitForTimeout(100);
-chk(await S.mark(p,[['text:#mcTiles button|IC103',1,'l',-4,0],['text:#mcTiles button|IC120',2,'l',-4,0],['#mcChip',3,'tr',-30,10],['.mcpop',4,'tr',6,0],['#mcFaults',5,'t',110,12],['#mcClear',6,'l',-16,0]]));
+await p.keyboard.press('Escape');await p.click('#mcChip g.pin[data-pin="A1"]');await p.waitForTimeout(200);await p.evaluate(()=>{const e=document.querySelector('.mcpop');const t=[...document.querySelectorAll('#mcTiles .mctile')].find(x=>/IC105/.test(x.textContent)).getBoundingClientRect(),f=e.parentElement.getBoundingClientRect();e.style.left=(t.right-f.left+40)+'px';e.style.top=(t.top-f.top-14)+'px';});await p.waitForTimeout(100);
+chk(await S.mark(p,[['text:#mcTiles button|IC103',1,'l',-4,0],['text:#mcTiles button|IC120',2,'l',-4,0],['text:#mcTiles button|IC109',3,'l',-4,0],['text:#mcTiles button|IC107',4,'l',-4,0],['#mcChip',5,'tr',-30,10],['.mcpop',6,'tr',6,0],['#mcFaults',7,'t',110,12],['#mcClear',8,'l',-16,0]]));
 await S.snap(p,out+'memchips.png',await S.clip(p,['#mcTiles','#mcFig','#mcInfo'],18));
 await p.keyboard.press('Escape');await p.click('#pMemChips h2');
 // the picture with that fault: remove the breakpoint, run for a moment, stop
@@ -54,6 +54,17 @@ await p.evaluate(()=>document.querySelectorAll('.docmark,.doccover').forEach(e=>
 await p.click('#dbgList button.x');await p.click('#btnRun');await p.waitForTimeout(1500);await p.click('#btnRun');await p.waitForTimeout(400);
 console.log(await p.textContent('#status'));
 await p.locator('#cpScreen').screenshot({path:out+'fault.png'});
+// the 8255's pinout with the fault menu of PB0, which is on the VSYNC line
+await p.click('#mcClearAll');await p.click('#mcTiles button:has-text("IC107")');await p.waitForTimeout(200);
+await p.click('#mcChip g.pin[data-pin="PB0"]');await p.waitForTimeout(200);
+await S.snap(p,out+'iochip.png',await S.clip(p,['#mcFig','.mcpop'],14));
+await p.keyboard.press('Escape');await p.click('#pMemChips h2');
+// a selector fault: IC104's input from the 6845's RA2 cut and high, so each character's top half repeats its bottom half
+await p.click('#mcTiles button:has-text("IC104")');await p.waitForTimeout(200);
+await p.click('#mcChip g.pin[data-pin="2C2"]');await p.waitForTimeout(200);await p.check('.mcpop input[type=checkbox]');await p.waitForTimeout(150);
+await p.click('.mcpop button[data-a="1"]');await p.waitForTimeout(150);await p.keyboard.press('Escape');
+await p.click('#btnRun');await p.waitForTimeout(1500);await p.click('#btnRun');await p.waitForTimeout(400);
+await p.locator('#cpScreen').screenshot({path:out+'selfault.png'});
 await b.close();
 // toolbar at a narrower width
 {const {b,p}=await S.open(url,{width:940,height:800});await boot(p,false);
