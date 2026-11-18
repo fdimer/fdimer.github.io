@@ -1,5 +1,5 @@
 // Annotated screenshots for zx80/docs, taken on the ZX81. The ROM is not in the repo: pass your own 8K ZX81 image.
-// Run: ZX81_ROM=/path/to/zx81.rom node zx80.js && python3 compress.py ../../zx80/docs/img
+// Run: ZX81_ROM=/path/to/zx81.rom [ZX80_ROM=/path/to/zx80.rom] node zx80.js && python3 compress.py ../../zx80/docs/img
 const S=require('./shot.js');const root=require('path').resolve(__dirname,'../..');const out=root+'/zx80/docs/img/';require('fs').mkdirSync(out,{recursive:true});
 const rom=process.env.ZX81_ROM;if(!rom){console.error('set ZX81_ROM');process.exit(1)}
 const url='file://'+root+'/zx80/app/index.html';
@@ -45,6 +45,16 @@ await S.snap(p,out+'videologic.png',await S.clip(p,['#pMach']));
 chk(await S.mark(p,[['#mmBands',1,'tr',-30,30],['#mmLegend',2,'tl',-4,10],['#mmRead',3,'l',-4,0]]));
 await S.snap(p,out+'bitmap.png',await S.clip(p,['#pMemMap']));
 await b.close();
+// the ZX80's video and keyboard chips (needs ZX80_ROM, your own 4K ZX80 image): IC9 with a data line held high, and the line counter's menu
+if(process.env.ZX80_ROM){const {b,p}=await S.open(url,{width:1440,height:1000});
+await p.selectOption('#zxMachine','zx80');await p.waitForTimeout(300);await p.setInputFiles('#zxRomFile',process.env.ZX80_ROM);await p.waitForTimeout(4000);await p.click('#zxScreen');
+for(const k of ['1','2','3','4','5','6','7','8','9','0']){await p.keyboard.press(k,{delay:150});await p.waitForTimeout(250)}await p.waitForTimeout(1000);
+await p.locator('#zxScreen').screenshot({path:out+'zx80before.png'});
+await p.click('#mcTiles button:has-text("IC9")');await p.waitForTimeout(200);
+await p.click('#mcChip g.pin[data-pin="D3"]');await p.waitForTimeout(200);await p.check('.mcpop input[type=checkbox]');await p.waitForTimeout(200);await p.click('.mcpop button[data-a="1"]');await p.waitForTimeout(1500);await p.keyboard.press('Escape');await p.click('#pMemChips h2');
+await p.locator('#zxScreen').screenshot({path:out+'zx80fault.png'});
+chk(await S.mark(p,[['text:#mcTiles button|IC5',1,'l',-4,0],['text:#mcTiles button|IC9',2,'b',0,2],['#mcChip g.pin[data-pin="D3"] .nm',3,'l',-16,0],['#mcFaults',4,'r',-50,0]]));
+await S.snap(p,out+'zx80chips.png',await S.clip(p,['#mcTiles','#mcFig','#mcInfo'],18));await b.close()}
 // toolbar at a narrower width
 {const {b,p}=await S.open(url,{width:940,height:800});await p.selectOption('#zxMachine','zx81');await p.setInputFiles('#zxRomFile',rom);await p.waitForTimeout(3000);
 await S.mark(p,[['#btnReset',1,'b',0,6],['#btnMaster',2,'b',0,6],['#btnClock',3,'b',0,6],['#btnStep',4,'b',0,6],['#btnRun',5,'b',0,6],['#speed',6,'b',0,6],['#status',7,'r',16,0]]);

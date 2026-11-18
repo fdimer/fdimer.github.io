@@ -32,7 +32,8 @@
             <li><a href="#basic">Typing BASIC</a></li>
             <li><a href="#tape">Tape and RAM dumps</a></li>
             <li><a href="#toolbar">Running and stepping</a></li>
-            <li><a href="#memchips">Memory chips and fault simulation</a></li>
+            <li><a href="#memchips">Memory and I/O chips, and fault simulation</a></li>
+            <li><a href="#zx80chips">The ZX80's video and keyboard chips</a></li>
             <li><a href="#videologic">Video logic panel</a></li>
             <li><a href="#bitmap">Memory bitmap</a></li>
             <li><a href="#tools">The debugging tools</a></li>
@@ -163,15 +164,15 @@
     </table></div>
     <p>Faults are listed in the Debug pane and stay until cleared there, in the Memory chips panel, or by Master reset.</p>
 
-    <h3 id="memchips">Memory chips and fault simulation</h3>
+    <h3 id="memchips">Memory and I/O chips, and fault simulation</h3>
     <figure class="fig wide">
-      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory chips panel with a pin disconnected on one of the 2114 RAM chips and a pin's fault menu open"></a>
+      <a href="img/memchips.png"><img src="img/memchips.png" width="1080" alt="The Memory and I/O chips panel with a pin disconnected on one of the 2114 RAM chips and a pin's fault menu open"></a>
     </figure>
     <ol class="keyed">
       <li><b>ROM:</b> IC2, the 4K 2332 of the ZX80 or the 8K 2364.</li>
       <li><b>RAM:</b> the two 2114s of the built-in 1K, four data bits each. With 2K chosen, the single 4016 in position IC4 appears instead. With a RAM pack fitted, its 4116 dynamic RAMs appear here instead, one for each data bit in each 16K. A tile's dot lights while its chip is being accessed, and a tile with a fault turns red.</li>
       <li><b>Pinout:</b> click a tile to see that chip's pins, which follow the bus on every clock.</li>
-      <li><b>Fault menu:</b> on the ZX81 the ROM and the built-in RAM share their lines with the ULA, so the menu works as on <a href="#ula">the Processor and ULA panel</a>: hold the whole line, or disconnect this pin. On the ZX80 and on a RAM pack's chips, each pin is a line of its own: <b>Disconnected</b>, <b>High</b> or <b>Low</b>.</li>
+      <li><b>Fault menu:</b> on the ZX81 the ROM and the built-in RAM share their lines with the ULA, so the menu works as on <a href="#ula">the Processor and ULA panel</a>: hold the whole line, or disconnect this pin. On the ZX80 the lines follow its circuit diagram (see <a href="#zx80chips">below</a>). On a RAM pack's chips each pin is a line of its own: <b>Disconnected</b>, <b>High</b> or <b>Low</b>.</li>
       <li><b>Faults on this chip</b></li>
       <li><b>Clear this chip's faults</b> and <b>Clear all faults</b></li>
     </ol>
@@ -184,7 +185,55 @@
       <tr><td>Write enable</td><td>Stuck high or disconnected</td><td>Writes are lost</td></tr>
       <tr><td>Write enable</td><td>Stuck low</td><td>Every access becomes a write</td></tr>
     </table></div>
-    <p>Faults are listed in the Debug pane and cleared there, here, or by Master reset. Two things are assumed, not measured: that the first 2114 holds data bits 0–3, and that the RAM pack is wired in the usual way. The 2K chip's wiring was measured on a real board: its chip enable and output enable pins (18 and 20) are joined to the RAM select, so both go low together, and its write enable (pin 21) is the Z80's WR line.</p>
+    <p>Faults are listed in the Debug pane and cleared there, here, or by Master reset. On the ZX80 the two 2114s hold the data bits as its circuit diagram draws them: IC3 has D7, D1, D0 and D2 on I/O1–I/O4, and IC4 has D4, D3, D5 and D6. Two things are assumed, not measured: that the ZX81's first 2114 holds data bits 0–3, and that the RAM pack is wired in the usual way. The 2K chip's wiring was measured on a real board: its chip enable and output enable pins (18 and 20) are joined to the RAM select, so both go low together, and its write enable (pin 21) is the Z80's WR line.</p>
+
+    <h3 id="zx80chips">The ZX80's video and keyboard chips</h3>
+    <figure class="fig wide">
+      <a href="img/zx80chips.png"><img src="img/zx80chips.png" width="1080" alt="The Memory and I/O chips panel on the ZX80, with the video and keyboard chips and a data pin of the shift register IC9 held high"></a>
+    </figure>
+    <p>On the ZX80 the panel adds seven of the chips that make its picture and read its keyboard, from the redrawn ZX80 circuit diagram:</p>
+    <ol class="keyed">
+      <li><b>Video and keyboard chips:</b> IC5, IC6–IC8, IC9, IC10 and IC21 (described below).</li>
+      <li><b>IC9</b>, the shift register, selected.</li>
+      <li><b>A pin with a fault:</b> here IC9's D3, cut off from the data line D3~ and held high.</li>
+      <li><b>Faults on this chip</b></li>
+    </ol>
+    <figure class="fig">
+      <img src="img/zx80before.png" width="414" alt="The ZX80 screen with 1234567890 typed">
+      <img src="img/zx80fault.png" width="414" alt="The same screen with IC9's D3 held high: every character has an extra column of dots">
+      <figcaption>Before, and with IC9's D3 held high: every character now has its fifth dot lit on every line.</figcaption>
+    </figure>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Chip</th><th>Type</th><th>What it does</th></tr>
+      <tr><td class="mono">IC5</td><td>74LS373</td><td>Latches the character code from the memory side of the data lines (D0~–D7~). Its OE is grounded</td></tr>
+      <tr><td class="mono">IC6, IC7, IC8</td><td>74LS157</td><td>Address multiplexers. S is RFSH: outside a refresh cycle they pass the Z80's A0–A8, A14 and A15 to the ROM and RAM as A0~–A8~, A14~ and A15~; in a refresh cycle they pass the line counter (A0~–A2~) and the latched code (A3~–A8~), so the ROM gives the character's row. E is grounded</td></tr>
+      <tr><td class="mono">IC9</td><td>74LS165</td><td>Loads that byte from the data lines and shifts it out as the eight dots. SER and CKINH are grounded</td></tr>
+      <tr><td class="mono">IC10</td><td>74LS365</td><td>Puts the keyboard's five lines and the tape input on the data lines when KBD is low (a port read with A0 low)</td></tr>
+      <tr><td class="mono">IC21</td><td>74LS93</td><td>Counts the character's lines, clocked by the sync and cleared by vertical sync. CP0 and Q0 are not used</td></tr>
+    </table></div>
+    <p>The pin numbers are from the diagram. Which multiplexer input and which buffer output carries which bit follows what the circuit does, because not every bus line on the redrawn diagram can be traced. The glue gates, the flip-flops and the clock circuit are part of the model and have no pins here.</p>
+    <div class="tablewrap"><table class="ref">
+      <tr><th>Pin</th><th>Effect of a fault</th></tr>
+      <tr><td>Multiplexer output (Y)</td><td>That address bit is fixed for every access to the ROM and RAM, and for the picture</td></tr>
+      <tr><td>Multiplexer CPU input (I1)</td><td>Only the processor's accesses use the wrong address</td></tr>
+      <tr><td>Multiplexer refresh input (I0)</td><td>Only the picture changes: a line counter bit or a character code bit is fixed</td></tr>
+      <tr><td>Multiplexer S</td><td>High: the ROM gets the refresh address instead of the character's row, so the picture is garbage. Low: every processor access goes to the video address, and the machine crashes</td></tr>
+      <tr><td>Multiplexer E</td><td>High: its four outputs are held low</td></tr>
+      <tr><td>Latch D or Q</td><td>One bit of every character code is fixed; Q7 is the inverse-video bit</td></tr>
+      <tr><td>Latch LE</td><td>Low: the latch keeps the last code, so every character is the same. High: the latch is transparent and the ROM byte comes back round as the code</td></tr>
+      <tr><td>Latch OE</td><td>High or disconnected: its outputs float high</td></tr>
+      <tr><td>Shift register D0–D7</td><td>One dot of every character's row is fixed</td></tr>
+      <tr><td>Shift register QH</td><td>The character cells are solid or blank</td></tr>
+      <tr><td>Shift register S/L</td><td>High: never loaded, so the characters are blank. Low: it keeps loading and repeats the first dot</td></tr>
+      <tr><td>Shift register CK, CKINH high</td><td>Not clocked: the first dot is repeated across the character</td></tr>
+      <tr><td>Line counter Q1–Q3</td><td>That bit of the character's row is fixed</td></tr>
+      <tr><td>Line counter CP1</td><td>The counter stops, so every line of a character shows its top row</td></tr>
+      <tr><td>Line counter MR1, MR2</td><td>Both high: held at row 0. One low: vertical sync no longer clears it</td></tr>
+      <tr><td>Keyboard buffer I or Y</td><td>That bit of every keyboard read is fixed (a low key bit reads as a key held down)</td></tr>
+      <tr><td>Keyboard buffer OE1, OE2</td><td>One high or disconnected: no key and no tape signal can be read. Both low: the keyboard drives the data lines on every read, so a key down corrupts what the processor reads</td></tr>
+      <tr><td>/QH, SER, CP0, Q0</td><td>No effect in the emulation</td></tr>
+    </table></div>
+    <p>A line held high or low acts on every pin on it: A0~–A8~ reach the ROM and the 2114s, D0~–D7~ also reach the ROM, the 2114s, the latch, the shift register and the keyboard buffer, so holding one of those lines upsets the processor as well as the picture.</p>
 
     <h3 id="videologic">Video logic panel</h3>
     <figure class="fig">
@@ -314,6 +363,7 @@
       <tr><td class="mono">IC3, IC4 (ZX80)<br>IC4a, IC4b (ZX81)</td><td>2114 (1K × 4 bits)</td><td>Built-in 1K of RAM, four data bits in each chip</td></tr>
       <tr><td class="mono">IC4 (Timex Sinclair 1000)</td><td>NEC µPD4016 (2K × 8 bits, 6116 type)</td><td>Built-in 2K of RAM in one chip, fitted in place of the two 2114s</td></tr>
       <tr><td>RAM pack</td><td>4116 (16K × 1 bit)</td><td>Eight chips, one for each data bit, in each 16K</td></tr>
+      <tr><td class="mono">IC5–IC10, IC21 (ZX80)</td><td>74LS373, 74LS157, 74LS165, 74LS365, 74LS93</td><td>The ZX80's video and keyboard chips: see <a href="#zx80chips">above</a></td></tr>
     </table></div>
     <p>The ROM, the 2114s and the RAM pack follow the published schematics. The 2K chip was read from a real Timex Sinclair 1000, which is a Sinclair ZX81 issue 3 board built for the American market: a 2364 ROM in IC2, a Z80A in IC3, a Ferranti ULA 2C210E in IC1 and the µPD4016 in IC4, with the two 2114 positions left empty. On that board, pins 18 and 20 of IC4 are joined and reach the ULA's RAM select (pin 12) through 680&nbsp;Ω, pin 21 goes to the Z80's WR and pin 19 to A10, as Sinclair's circuit diagram shows for a 2K chip with link L2 fitted.</p>
 
