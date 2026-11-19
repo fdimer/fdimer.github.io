@@ -67,7 +67,7 @@
       <li>Press <b>Load ROM folder…</b> and choose the folder that holds your Apple II Plus ROM images: the six 2K system ROMs (341-0011 to 341-0015 and 341-0020) and the 2K text ROM (341-0036), or one 12K file of D000h–FFFFh. The ROMs are not included. They are recognised by their contents, whatever the files are called, and your browser keeps them for next time.</li>
       <li>The Apple switches on, beeps and shows <code>APPLE ][</code> and the <code>]</code> prompt of Applesoft BASIC.</li>
       <li>Click the picture and type, for example <code>PRINT 6*7</code> and Enter. Or paste a program into the box under the screen and press <b>Type it</b>.</li>
-      <li>For disks, tick <b>Disk II (slot 6)</b>, load the card's boot PROM (see <a href="#disk">Using the Disk II</a>), insert a disk image and type <code>PR#6</code>.</li>
+      <li>For disks, put the card's boot PROM in the ROM folder too (see <a href="#disk">Using the Disk II</a>), tick <b>Disk II (slot 6)</b> and insert a disk image: the Apple boots it, as a real one with the card does at power on.</li>
     </ol>
 
     <h3 id="page">The page</h3>
@@ -97,7 +97,7 @@
     </figure>
     <ol class="keyed">
       <li><b>The picture:</b> 280 × 192 as the Apple draws it, here LORES with the four lines of text of MIXED mode. Click it to give it the keyboard. The line above the screen shows the mode, the page, the line being drawn and the frame count.</li>
-      <li><b>Load ROM folder…:</b> as in the <a href="#start">quick start</a>. A browser that cannot pick a folder offers <b>Load ROM files…</b> instead: select all the files. A 256-byte file that is the Disk II's boot PROM is taken too.</li>
+      <li><b>Load ROM folder…:</b> as in the <a href="#start">quick start</a>. A browser that cannot pick a folder offers <b>Load ROM files…</b> instead: select all the files. A 256-byte file that is the Disk II's boot PROM is taken too, also when it holds the chip as it is wired on the card (<a href="#disk">below</a>).</li>
       <li><b>Power on / restart:</b> switches the Apple off and on: RAM is cleared and the Autostart ROM starts from cold.</li>
       <li><b>CTRL-RESET:</b> pulls the RESET line low, as CTRL and RESET together do on the keyboard. The program restarts through the reset vector; memory and the soft switches are kept.</li>
       <li><b>RAM:</b> 16K, 32K or 48K: one, two or three rows of 4116s. Changing it switches the Apple off and on.</li>
@@ -143,8 +143,8 @@
 
     <h3 id="disk">Using the Disk II</h3>
     <ul class="features">
-      <li><b>The boot PROM:</b> the card's 256-byte boot PROM (P5, 341-0027, the 16-sector one) is Apple's code and is not included. Put your copy in the ROM folder and load the folder again, or click the <b>P5</b> socket and choose the file.</li>
-      <li><b>Booting:</b> tick <b>Disk II (slot 6)</b>, insert a disk in drive 1, and type <code>PR#6</code> in BASIC (or <code>C600G</code> in the Monitor). DOS 3.3 disks load DOS and run their greeting program; ProDOS disks boot the same way.</li>
+      <li><b>The boot PROM:</b> the card's 256-byte boot PROM (P5, 341-0027, the 16-sector one) is Apple's code and is not included. Put your copy in the ROM folder and load the folder again, or click the <b>P5</b> socket and choose the file. Some copies hold the chip as it is wired on the card, with address lines A5 and A7 swapped and data bits 4–7 in reverse order; the emulator recognises these and puts the bytes back in the order the 6502 reads them (the result is the standard 341-0027, CRC CE7144F6).</li>
+      <li><b>Booting:</b> with the card fitted, the Autostart ROM looks for a disk controller at power on and boots drive 1, as on the real machine. With no disk in the drive it waits there with the motor running: insert a disk and it boots, or press <b>CTRL-RESET</b> for BASIC. To boot again later, type <code>PR#6</code> in BASIC (or <code>C600G</code> in the Monitor). DOS 3.3 disks load DOS and run their greeting program; ProDOS disks boot the same way.</li>
       <li><b>Keeping what you wrote:</b> programs that write to the disk (SAVE, INIT, file copies) change the disk image in memory; <b>Save image</b> gives it to you as a file.</li>
       <li><b>Copy-protected disks</b> may not boot: see <a href="#hw-disk">Disk II</a>.</li>
     </ul>
@@ -297,7 +297,8 @@
       <li><b>The drive:</b> a phase turned on pulls the head half a track towards it, so stepping the phases in turn moves the head. The motor runs on for about a second after it is switched off.</li>
       <li><b>The disk:</b> each of its 35 tracks is held as a ring of nibbles, made from the image as DOS 3.3 formats a disk: gaps of FFh sync bytes, then for each of the 16 sectors an address field (D5 AA 96, the volume, track, sector and checksum in 4-and-4 code, DE AA EB) and a data field (D5 AA AD, the 256 bytes in 6-and-2 code with their checksum, DE AA EB). <code>.nib</code> images are taken as they are.</li>
       <li><b>Reading and writing:</b> the disk turns under the head at its real rate, one nibble every 32 cycles. A read returns the nibble under the head once, with bit 7 set, as the card's logic state sequencer leaves it in the data register; a second read before the next nibble arrives sees bit 7 clear. Writing puts each nibble after the last, from where the head was when writing began. <b>Save image</b> decodes the tracks back into sectors.</li>
-      <li><b>Not modelled:</b> the logic state sequencer (the P6 PROM) bit by bit. DOS 3.3, ProDOS and the boot PROM work; copy protections that count bits, use half tracks or time the gaps between nibbles may not.</li>
+      <li><b>Checked:</b> the real boot PROM boots a test disk, as a <code>.dsk</code> and as a <code>.po</code>, at power on and with <code>C600G</code>: it steps the head to track 0, finds the sectors and loads them in DOS 3.3's sector order.</li>
+      <li><b>Not modelled:</b> the logic state sequencer (the P6 PROM) bit by bit, so its PROM is not needed. The boot PROM and the DOS 3.3 format work; copy protections that count bits, use half tracks or time the gaps between nibbles may not.</li>
     </ul>
 
     <h3 id="hw-chips">Memory chips</h3>
