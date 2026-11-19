@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spectrum ULA Test Bench documentation</title>
+  <meta name="description" content="User guide and hardware reference for the Spectrum ULA Test Bench: a ZX Spectrum 48K run from the gate-level logic of its Ferranti 6C001E-7 ULA. Non-commercial use only.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; Spectrum ULA Test Bench</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">&gt; LIST</p>
+      <h1>Spectrum ULA Test Bench documentation</h1>
+      <p class="lead">How to use the test bench, and how the ULA inside it is put together. The numbers in each list match the numbered markers on the screenshot above it.</p>
+    </header>
+
+    <a class="button" href="../app/">Open the test bench</a>
+
+    <nav class="toc" aria-label="Contents" style="margin-top:24px">
+      <b>Contents</b>
+      <ol>
+        <li><a href="#guide">User guide</a>
+          <ol>
+            <li><a href="#start">Quick start</a></li>
+            <li><a href="#page">The page</a></li>
+            <li><a href="#machine">The machine and the keyboard</a></li>
+            <li><a href="#instruments">The meters and the picture check</a></li>
+            <li><a href="#report">Reporting what you find</a></li>
+          </ol>
+        </li>
+        <li><a href="#hardware">Hardware reference</a>
+          <ol>
+            <li><a href="#hw-what">What is being tested</a></li>
+            <li><a href="#hw-loop">The closed loop</a></li>
+            <li><a href="#hw-sim">The simulation and its delays</a></li>
+            <li><a href="#hw-frame">Lines, frames and the picture</a></li>
+            <li><a href="#hw-checked">How far it is checked</a></li>
+            <li><a href="#hw-open">What is still open</a></li>
+            <li><a href="#hw-limits">What is not modelled</a></li>
+            <li><a href="#terms">Sources and terms of use</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+
+    <h2 id="guide">User guide</h2>
+    <p>The test bench is a ZX Spectrum 48K in which nothing of the ULA is modelled: a Z80 core runs the real ROM, and every bus cycle goes onto the pins of the Ferranti 6C001E-7's logic, as transcribed from Ferranti's own drawing. When the Z80 is held, what it reads from the lower RAM, when it is interrupted and every dot of the picture come back from those pins. Every gate is simulated with its own delay, so the machine runs at only a few per cent of a real Spectrum's speed. It is made for checking the ULA. For simply using a Spectrum, the <a href="../../spectrum/">ZX Spectrum emulator</a> runs at full speed and has the debugging tools.</p>
+
+    <h3 id="start">Quick start</h3>
+    <ol>
+      <li>Press <b>Load ROM…</b> and choose your own 16 KB Spectrum 48K ROM image. The ROM is Sinclair's and is not included. Your browser keeps it, so you only load it once.</li>
+      <li>The machine starts at once, at the copyright message: the ROM's start-up is run by the emulator and handed over to the gate-level machine, because at this speed the ROM's own memory test would take many minutes.</li>
+      <li>Click the picture and type. Hold each key until it appears on the screen, about a second, and leave a few seconds before pressing the same key again.</li>
+      <li>To run a program, press <b>Load snapshot…</b> and choose a <code>.sna</code> or <code>.z80</code> file.</li>
+      <li>If the machine does anything a real Spectrum would not, press <b>Write report</b> and send the report with a description of what you saw.</li>
+    </ol>
+
+    <h3 id="page">The page</h3>
+    <figure class="fig">
+      <a href="img/overview.png"><img src="img/overview.png" width="720" alt="The whole test bench page with its three areas numbered"></a>
+      <figcaption>The whole page after a one-line BASIC program has run. Select the picture to see it full size.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>The machine:</b> the ROM and snapshot buttons, the start choice, the TV picture and the keyboard.</li>
+      <li><b>The instruments:</b> the meters, the picture check and the report.</li>
+      <li><b>What is checked elsewhere, sources, terms of use and what is not modelled</b>, with the design version the page was built from.</li>
+    </ol>
+
+    <h3 id="machine">The machine and the keyboard</h3>
+    <figure class="fig">
+      <a href="img/machine.png"><img src="img/machine.png" width="620" alt="The machine panel: buttons, the start choice, a Spectrum picture showing ula and 0 OK, 10:1, and the keyboard, with eight markers"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Load ROM…:</b> takes a 16,384-byte Spectrum 48K ROM image; a file of any other size is refused. The message shows its CRC32. The ROM is saved in your browser and loaded again the next time you open the page.</li>
+      <li><b>Load snapshot (.sna, .z80)…:</b> reads the snapshot with the ZX Spectrum emulator's own loader, then hands its memory and registers to the gate-level machine. Load the ROM first.</li>
+      <li><b>Run / Pause:</b> runs the machine as fast as the browser can simulate it. Paused, the meters and the picture show where it stopped.</li>
+      <li><b>Reset:</b> starts the machine again, from the start chosen beside <b>Start</b>; a loaded snapshot is dropped.</li>
+      <li><b>Start:</b> <b>From a started machine</b> lets the emulator run 2.5 seconds of the ROM's start-up and hands over its memory and registers, so the gate-level machine begins at the copyright message. <b>From power-on</b> starts the gate-level machine itself from reset, memory test and all, which takes a few seconds of Spectrum time and so many minutes here. Changing it restarts the machine.</li>
+      <li><b>Message:</b> what the page has just done, or why it refused a file.</li>
+      <li><b>Picture:</b> 352 × 288 dots of the frame made from the ULA's colour lines (GREEN', RED', BLUE' and the bright line N.HL), with 48 dots or lines of border round the 256 × 192 picture. Because a frame takes the best part of a minute to finish, the frame being drawn is laid over the last whole one, so you can see it build. The black stripes at the left are explained under <a href="#hw-open">What is still open</a>. Click the picture to give it the keyboard.</li>
+      <li><b>Keyboard:</b> the 40 keys in the Spectrum's four rows. On screen, CAPS and SYMB (SYMBOL SHIFT) latch for the next key, and a key stays down for 0.4 s after you let go, so the ROM sees it. On your own keyboard, letters, digits, space and <kbd>Enter</kbd> are the Spectrum keys, <kbd>Shift</kbd> is CAPS SHIFT, <kbd>Ctrl</kbd> or <kbd>Alt</kbd> is SYMBOL SHIFT, <kbd>Backspace</kbd> is DELETE (CAPS SHIFT + 0) and the arrow keys are CAPS SHIFT + 5 to 8. The ROM reads the keyboard once a frame, and ignores a key pressed again within five frames of its release, so at this speed hold each key for about a second and wait a few seconds before repeating one.</li>
+    </ol>
+
+    <h3 id="instruments">The meters and the picture check</h3>
+    <figure class="fig">
+      <a href="img/instruments.png"><img src="img/instruments.png" width="520" alt="The instruments panel: meters, a picture check showing matches, and a written report, with ten markers"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Speed:</b> how fast the machine is running, as a share of a real Spectrum, or <b>paused</b>. Under it, <b>Spectrum time run</b>: the time the machine has run since it started, in Spectrum seconds.</li>
+      <li><b>Frames:</b> the vertical syncs seen on the ULA's sync line.</li>
+      <li><b>Lines between vertical syncs:</b> the line syncs counted from the end of one vertical sync to the start of the next. A frame is 312 lines, of which the vertical sync takes 4, so this reads 308.</li>
+      <li><b>Interrupts taken:</b> the interrupts the Z80 took from the ULA's INT pin, one a frame while interrupts are enabled.</li>
+      <li><b>T-states held:</b> the T-states the Z80 waited because the ULA stopped its clock while it read the screen (contention).</li>
+      <li><b>Gate events:</b> how many times a gate or cell output has been worked out since the start. Under it, the <b>Program counter</b>: where the Z80 is in the ROM or the program.</li>
+      <li><b>Picture check:</b> each finished frame is compared, dot by dot, with what the bitmap and attributes in the lower RAM say the 256 × 192 picture should be. Cells with the flash bit are left out, since the ULA's flash counter starts wherever it starts. Green <b>matches</b> means every dot agrees; red gives the number of dots that differ. A frame during which the screen changed (typing, scrolling, CLS) can differ, because the RAM is read after the frame ends; the line beside it counts how many frames had differences. It says <b>no picture</b> when there is no frame yet.</li>
+      <li><b>Write report:</b> writes a summary of the run into the box (see <a href="#report">Reporting what you find</a>).</li>
+      <li><b>Copy:</b> copies the report. If your browser does not allow it, the report is selected so you can copy it yourself.</li>
+      <li><b>Report:</b> the text to paste into an issue or an email.</li>
+    </ol>
+
+    <h3 id="report">Reporting what you find</h3>
+    <p>The report gives what is needed to repeat the run: the design version the page was built from, the logic that ran, the ROM's CRC32, how the machine started (and the snapshot's name), the Spectrum time run, the frame, line, interrupt and held T-state counts, the program counter, the picture check's results and your browser. Add what a real Spectrum does differently.</p>
+    <p>Issues and reports go to the <a href="https://github.com/fdimer/z80-bench/tree/spectrum-ULA/ula6c">spectrum-ULA branch of fdimer/z80-bench</a>.</p>
+
+    <h2 id="hardware">Hardware reference</h2>
+
+    <h3 id="hw-what">What is being tested</h3>
+    <p>The Spectrum's ULA is a Ferranti uncommitted logic array: a sea of identical bipolar gates connected by a final metal layer to make Sinclair's design. In a Spectrum it makes the clocks, reads the screen from the lower 16K of RAM (the 4116 chips) and turns it into the TV picture, stops the Z80's clock when both want that RAM (contention), makes the interrupt, selects the ROM, and is port FE: the keyboard, the border, the speaker and the tape. The chip modelled here is the 6C001E-7 (mark 7) of issue 3 and later Spectrum 48K boards, from Ferranti's drawing LD6790/ULA6C001/1 revision 3 of 10 October 1983, in the copy marked "MK7" in red pen.</p>
+    <p>The drawing was transcribed into a netlist of 385 cells (gates, flip-flops, counters, latches, pin cells, and the oscillator, tape and colour-encoder cells), one line each with its square on the drawing's grid, so every entry can be checked against the original. The scan was traced by program and then checked by hand, gate by gate wherever the simulation disagreed. The repository's README lists the hand corrections, among them one place where the netlist departs from the drawing on purpose: the A2 row address is taken from the next counter stage, because the drawing's line would put half the screen reads at the wrong address.</p>
+
+    <h3 id="hw-loop">The closed loop</h3>
+    <p>In an ordinary emulator the ULA is code that behaves like the chip. Here the ULA is only logic, and the rest of the Spectrum is wired to its pins as on Timex's issue 6A circuit diagram:</p>
+    <ul class="features">
+      <li><b>The Z80</b> makes its bus cycles edge by edge of the clock the ULA puts out (pin 32, inverted by transistor TR3), with the data sheet's shape and fixed delays. When the ULA holds the clock, the Z80 simply waits.</li>
+      <li><b>I/O requests:</b> transistor TR6, an emitter follower from the Z80's A0, holds the ULA's IORQ input high while A0 is high, so the ULA sees I/O requests for even ports only.</li>
+      <li><b>The lower RAM</b> (4000h–7FFFh) is read and written only through the ULA's RAS, CAS and DRAM WE pins and its address pins: the row is taken as RAS falls, the column as CAS falls, the data appears 100 ns later, and a write happens while WE and CAS are both low. After CAS rises the data lines keep the last byte for 150 ns; that is the floating bus.</li>
+      <li><b>The data lines</b> reach the ULA through the board's 470 Ω resistors, and A0–A6 through 330 Ω: when the ULA drives its own address onto the RAM, its drive wins.</li>
+      <li><b>The ROM</b> answers while the ULA's ROM CS is low. The upper 32K of RAM is on the Z80's side and is not modelled chip by chip.</li>
+      <li><b>The keyboard</b> joins the half-row whose address line is low to KB0–KB4, read by the ULA during a port FE read.</li>
+      <li><b>The interrupt</b> is the ULA's INT pin, which the Z80 looks at on the last clock rise of each instruction.</li>
+      <li><b>The picture</b> is the colour lines that go into the ULA's colour encoder, read every dot, with N.SYNC for the syncs.</li>
+    </ul>
+
+    <h3 id="hw-sim">The simulation and its delays</h3>
+    <p>The netlist is simulated event by event: when an input of a gate changes, its output is worked out and changes after the gate's delay. Several outputs joined on one net form a wired OR, as on the chip, and the pin cells resolve against the board (an open-collector pull-down wins; otherwise the chip's drive beats the board's). The page uses a compiled engine with the same rules as the repository's reference simulator and the same results.</p>
+    <p>The archive has no gate delays for the 6C000 series, so nominal values are used: 1.4 ns a NOR, 1.7 ns an inverter, 5 ns a flip-flop and 4 ns an input or output buffer. With these the RAS and CAS lines have no glitches. The inverter is slightly slower than the NOR for one reason: where the contention window ends on the same oscillator edge that would start the CPU clock's next half, the clock gate sees a pulse one gate wide, and if it passes, it runs round the clock-stop latch for ever.</p>
+
+    <h3 id="hw-frame">Lines, frames and the picture</h3>
+    <ul class="features">
+      <li><b>Clocks:</b> a 14 MHz oscillator; the dot clock is half that, and the Z80's 3.5 MHz clock a quarter, when it is not held.</li>
+      <li><b>Lines and frames:</b> 448 dots (224 T-states) a line, 312 lines a frame, 19.968 ms. The interrupt is low for 32 T-states once a frame.</li>
+      <li><b>Screen reads:</b> for every 8 dots of picture the ULA makes two RAS cycles of two CAS each (bitmap, attribute, bitmap, attribute for two cells), as on Ferranti's hand-drawn timing sheet.</li>
+      <li><b>Contention:</b> a memory cycle to 4000h–7FFFh that starts during the picture is held 6, 5, 4, 3, 2, 1, 0 or 0 T-states, from T-state 14,335 of the frame.</li>
+      <li><b>Where the picture sits:</b> in the bench's frame, counted from the end of each line sync and each vertical sync, the 256 × 192 picture starts at dot 85 of line 60.</li>
+    </ul>
+
+    <h3 id="hw-checked">How far it is checked</h3>
+    <ul class="features">
+      <li><b>Against the emulator and Fuse:</b> the repository's testbench runs a test program on the <a href="../../spectrum/">ZX Spectrum emulator</a> and replays every bus cycle on the gate-level ULA. Every clock hold agrees with the emulator, which agrees with Fuse's figures, for memory and for I/O (even ports, odd ports and a contended high byte). Every read of an odd port returns what Fuse returns (the floating bus). Port FE, ROM select, every CPU read of the lower RAM and every screen read agree, and the colour lines match the emulator's picture in every dot of the 256 × 192 area.</li>
+      <li><b>Closed loop:</b> with the ULA in charge, the ROM runs, keys typed on the bench reach BASIC, a BASIC program typed in runs, and the picture check gives every dot right on a still screen.</li>
+      <li><b>Not yet:</b> no real hardware. Nothing has been compared with a working 6C001E-7's signals. That is what this bench is for.</li>
+    </ul>
+
+    <h3 id="hw-open">What is still open</h3>
+    <ul class="features">
+      <li><b>The left edge of the border:</b> at the start of each line, after the line sync, the colour lines carry 8 dots of black, then the border colour and black in turn for 16 dots each, twice, and the border from dot 72. The emulator shows border over the whole 48 dots left of the picture. Whether the real chip does the same, or a gate is still wrong in the transcription, is not known.</li>
+      <li><b>Where INT falls:</b> with the clock holds lined up with Fuse's, INT falls 2.44 T-states before T-state 0 of the frame. An instruction starting at T-state −1 to 30 then takes the interrupt, one T-state earlier than Fuse's 0 to 31: relative to the interrupt, this ULA holds the CPU one T-state later, like the "late timing" 48Ks some real machines are. It could also be the nominal delays or the exact edge the Z80 samples INT on; a measurement on a real chip would settle it.</li>
+    </ul>
+
+    <h3 id="hw-limits">What is not modelled</h3>
+    <ul class="features">
+      <li><b>The tape and the speaker:</b> nothing reads EAR from a tape, and the speaker is not played.</li>
+      <li><b>The colour encoder's analogue side:</b> the picture is the logic lines that go into it, not the composite signal.</li>
+      <li><b>The upper RAM and the ROM chips:</b> they are on the Z80's side and are plain memory.</li>
+      <li><b>The analogue side of the pins:</b> levels and loading are not simulated; each pin is a logic value.</li>
+      <li><b>Real gate delays:</b> the delays are nominal, and the Z80's timing follows the data sheet's shape with fixed delays.</li>
+    </ul>
+
+    <h3 id="terms">Sources and terms of use</h3>
+    <p>Ferranti logic diagram LD6790/ULA6C001/1 revision 3 (10 October 1983, the copy marked in red for mark 7, checked against the unmarked copy), the cell drawings 6C001/2, /3 and /4, and the hand-drawn "Typical System Timing", from the Ferranti archive catalogued in 2026 by Happy Little Diodes (<a href="https://youtu.be/jiW3P1rJRMc">watch the video about the archive</a>); and Timex's issue 6A circuit diagram for the board. The netlist, the simulator and how they were checked are in the <a href="https://github.com/fdimer/z80-bench/tree/spectrum-ULA/ula6c">spectrum-ULA branch of fdimer/z80-bench</a>.</p>
+    <p>The archive's documents are for preserving material of historical interest and for non-commercial, educational and archival research only. Commercial use of them or their contents, including in connection with the manufacture, marketing or sale of goods, is prohibited by Sky UK Limited. The netlist, the test bench and this documentation are made from those contents and carry the same terms: <b>strictly not for commercial use of any kind</b>. The code is under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The Spectrum ROM is not part of this project.</p>
+
+    <footer><a href="../">&larr; Back to Spectrum ULA Test Bench</a> · <a href="../../emulators/">Emulators</a> · <a href="../../">All projects</a></footer>
+  </main>
+</body>
+</html>
