@@ -254,7 +254,7 @@
     </table></div>
     <ul class="features">
       <li><b>EAR:</b> MIC, the speaker and the tape input share the ULA's MIC/EAR pin, and bit 6 reads that pin against a threshold. On issue 3 and later boards (the 4A/4B included) bit 6 reads 1 when the tape signal is high or bit 4 was last written as 1; bit 3 alone does not lift it.</li>
-      <li><b>The floating bus:</b> nothing answers an odd port, and the data bus holds what the ULA is reading for the picture at that moment: from T-state 14,338 of the frame, in each 8 T-states of a picture line, a bitmap byte, its attribute, the next bitmap byte and its attribute, then 4 T-states of nothing (FFh). Outside the picture an odd port reads FFh.</li>
+      <li><b>The floating bus:</b> nothing answers an odd port, and the data bus holds what the ULA is reading for the picture at that moment: from T-state 14,338 of the frame, in each 8 T-states of a picture line, a bitmap byte, its attribute, the next bitmap byte and its attribute, then 4 T-states of nothing (FFh). The byte is taken 3 T-states into the I/O cycle, after any holds, as in Fuse. Outside the picture an odd port reads FFh.</li>
     </ul>
 
     <h3 id="hw-video">Video</h3>
