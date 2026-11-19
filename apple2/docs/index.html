@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apple II Plus documentation</title>
+  <meta name="description" content="User guide and hardware reference for the Apple II Plus emulator built on 6502 Bench.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../">&larr; Apple II Plus</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">]LIST</p>
+      <h1>Apple II Plus documentation</h1>
+      <p class="lead">How to use the emulator, and how the machine it models is put together. The numbers in each list match the numbered markers on the screenshot above it.</p>
+    </header>
+
+    <a class="button" href="../app/">Open the emulator</a>
+
+    <nav class="toc" aria-label="Contents" style="margin-top:24px">
+      <b>Contents</b>
+      <ol>
+        <li><a href="#guide">User guide</a>
+          <ol>
+            <li><a href="#start">Quick start</a></li>
+            <li><a href="#page">The page</a></li>
+            <li><a href="#screen">The screen and its controls</a></li>
+            <li><a href="#cards">Cards, drives, cassette, ROMs and keyboard</a></li>
+            <li><a href="#tape">Using the cassette</a></li>
+            <li><a href="#disk">Using the Disk II</a></li>
+            <li><a href="#toolbar">Running and stepping</a></li>
+            <li><a href="#memchips">Memory chips and fault simulation</a></li>
+            <li><a href="#hwpanel">Apple II hardware panel</a></li>
+            <li><a href="#bitmap">Memory bitmap</a></li>
+            <li><a href="#tools">The debugging tools</a></li>
+          </ol>
+        </li>
+        <li><a href="#hardware">Hardware reference</a>
+          <ol>
+            <li><a href="#hw-overview">The machine</a></li>
+            <li><a href="#hw-mem">Memory map</a></li>
+            <li><a href="#hw-io">I/O and soft switches</a></li>
+            <li><a href="#hw-timing">Timing and the video scanner</a></li>
+            <li><a href="#hw-video">Video generation</a></li>
+            <li><a href="#hw-float">The floating bus</a></li>
+            <li><a href="#hw-kbd">Keyboard and game I/O</a></li>
+            <li><a href="#hw-tape">Cassette</a></li>
+            <li><a href="#hw-lc">Language card</a></li>
+            <li><a href="#hw-disk">Disk II</a></li>
+            <li><a href="#hw-chips">Memory chips</a></li>
+            <li><a href="#hw-limits">What is not emulated</a></li>
+            <li><a href="#hw-sources">Sources</a></li>
+          </ol>
+        </li>
+      </ol>
+    </nav>
+
+    <h2 id="guide">User guide</h2>
+    <p>The emulator is <a href="../../6502-bench/">6502 Bench</a> with an Apple II Plus built around the CPU. Everything 6502 Bench does still works here; this guide covers what the machine adds, and points to the <a href="../../6502-bench/docs/">6502 Bench documentation</a> for the shared debugging tools.</p>
+
+    <h3 id="start">Quick start</h3>
+    <ol>
+      <li>Press <b>Load ROM folder…</b> and choose the folder that holds your Apple II Plus ROM images: the six 2K system ROMs (341-0011 to 341-0015 and 341-0020) and the 2K text ROM (341-0036), or one 12K file of D000h–FFFFh. The ROMs are not included. They are recognised by their contents, whatever the files are called, and your browser keeps them for next time.</li>
+      <li>The Apple switches on, beeps and shows <code>APPLE ][</code> and the <code>]</code> prompt of Applesoft BASIC.</li>
+      <li>Click the picture and type, for example <code>PRINT 6*7</code> and Enter. Or paste a program into the box under the screen and press <b>Type it</b>.</li>
+      <li>For disks, tick <b>Disk II (slot 6)</b>, load the card's boot PROM (see <a href="#disk">Using the Disk II</a>), insert a disk image and type <code>PR#6</code>.</li>
+    </ol>
+
+    <h3 id="page">The page</h3>
+    <figure class="fig wide">
+      <a href="img/overview.png"><img src="img/overview.png" width="900" alt="The whole page with its panels numbered"></a>
+      <figcaption>The whole page, running a LORES program. Select the picture to see it full size. The ROM bands of the memory bitmap are covered: the ROMs are Apple's.</figcaption>
+    </figure>
+    <ol class="keyed">
+      <li><b>Toolbar:</b> reset, stepping and speed (<a href="#toolbar">Running and stepping</a>).</li>
+      <li><b>Screen:</b> the picture, its controls, the cards, the cassette, the ROM sockets and the keyboard.</li>
+      <li><b>Memory chips:</b> every memory chip, with live pins and faults.</li>
+      <li><b>Pinout:</b> the 6502's 40 pins.</li>
+      <li><b>Program:</b> assembly or hex to load into memory.</li>
+      <li><b>I/O registers:</b> the last value written to each address in C000h–C0FFh, and a log of the accesses (the keyboard's own reads at C000h–C00Fh are left out, because a program waiting for a key reads it thousands of times a second).</li>
+      <li><b>Disassembly</b> and breakpoints.</li>
+      <li><b>Memory:</b> the hex view.</li>
+      <li><b>Memory bitmap</b> (<a href="#bitmap">below</a>).</li>
+      <li><b>Registers</b> and register stops.</li>
+      <li><b>Debug:</b> breakpoints, stops and faults.</li>
+      <li><b>Bus timing:</b> each cycle of the current instruction.</li>
+      <li><b>Apple II hardware</b> (<a href="#hwpanel">below</a>).</li>
+    </ol>
+
+    <h3 id="screen">The screen and its controls</h3>
+    <figure class="fig wide">
+      <a href="img/screen.png"><img src="img/screen.png" width="720" alt="The screen showing the sixteen LORES colours with a line of text below, and the controls under it, numbered"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>The picture:</b> 280 × 192 as the Apple draws it, here LORES with the four lines of text of MIXED mode. Click it to give it the keyboard. The line above the screen shows the mode, the page, the line being drawn and the frame count.</li>
+      <li><b>Load ROM folder…:</b> as in the <a href="#start">quick start</a>. A browser that cannot pick a folder offers <b>Load ROM files…</b> instead: select all the files. A 256-byte file that is the Disk II's boot PROM is taken too.</li>
+      <li><b>Power on / restart:</b> switches the Apple off and on: RAM is cleared and the Autostart ROM starts from cold.</li>
+      <li><b>CTRL-RESET:</b> pulls the RESET line low, as CTRL and RESET together do on the keyboard. The program restarts through the reset vector; memory and the soft switches are kept.</li>
+      <li><b>RAM:</b> 16K, 32K or 48K: one, two or three rows of 4116s. Changing it switches the Apple off and on.</li>
+      <li><b>Monitor:</b> <b>Colour</b> shows the colours the Apple makes from the dot pattern; <b>Black and white</b>, <b>Green</b> and <b>Amber</b> show the dots alone, as a monochrome monitor does.</li>
+      <li><b>Sound:</b> the speaker. It starts once you click or type on the page, as browsers ask.</li>
+      <li><b>PDL 0</b> and <b>PDL 1:</b> the two paddles, as 150K potentiometers. The Applesoft function <code>PDL(0)</code> reads about 0 to 255 across the slider.</li>
+      <li><b>PB0</b>, <b>PB1</b> and <b>PB2:</b> the push buttons (on a paddle pair, PB0 and PB1 are the paddles' buttons). <code>PEEK(49249)</code> is 128 or more while PB0 is down.</li>
+      <li><b>Text to type:</b> a BASIC program, Monitor commands, anything you would type.</li>
+      <li><b>Type it:</b> types the text into the keyboard, one key at a time, each as soon as the program has read the last, so nothing is lost. Lower case letters go in as capitals, as the II Plus keyboard sends them.</li>
+      <li><b>Load binary file…:</b> puts a file into RAM at the address in the box beside it (hexadecimal). Start it from BASIC with <code>CALL</code> and the address in decimal (<code>CALL 768</code> for 0300h), or from the Monitor with the address and <code>G</code>.</li>
+      <li><b>Listing (.txt):</b> saves a text file with the registers, the soft switches, Applesoft's pointers, the BASIC program as text, the text screen and a hex dump of RAM.</li>
+    </ol>
+
+    <h3 id="cards">Cards, drives, cassette, ROMs and keyboard</h3>
+    <figure class="fig wide">
+      <a href="img/cards.png"><img src="img/cards.png" width="720" alt="The scanning and card choices, the two drives, the cassette deck, the ROM sockets and the keyboard, numbered"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Scanning:</b> <b>60 Hz (USA)</b>, or <b>50 Hz (Eurapple)</b>: the European Apple's 312 lines a frame (<a href="#hw-timing">Timing</a>). Changing it, or a card, switches the Apple off and on, as fitting a card would.</li>
+      <li><b>Language card (slot 0):</b> 16K of RAM over the ROMs (<a href="#hw-lc">Language card</a>).</li>
+      <li><b>Disk II (slot 6):</b> the disk controller card and its two drives.</li>
+      <li><b>IN USE light:</b> lit while that drive is selected and its motor runs.</li>
+      <li><b>Insert disk…:</b> a disk image: <code>.dsk</code> or <code>.do</code> (DOS 3.3 sector order), <code>.po</code> (ProDOS order) or <code>.nib</code> (raw tracks). <b>Eject</b> takes it out; if the disk has been written to, it asks first.</li>
+      <li><b>Save image:</b> writes the disk as an image file, with what programs wrote to it, in the order it came in (<code>.po</code> stays ProDOS order). <b>Write-protect</b> beside it is the notch on the disk: a protected disk cannot be written.</li>
+      <li>What is in the drive, the track the head is on, and whether it has been written to.</li>
+      <li><b>Load tape…:</b> a recording of an Apple tape: a WAV file, or any audio file your browser can decode. It goes into the deck ready to play.</li>
+      <li><b>Tape from binary…:</b> makes a tape in the Monitor's format from a file, to be read with the Monitor's <code>R</code> command; the address it loads at is the one in the box beside <b>Load binary file…</b>.</li>
+      <li><b>Play / Stop:</b> plays the tape into the cassette input.</li>
+      <li><b>Record / Stop recording:</b> records the cassette output while you SAVE or use the Monitor's <code>W</code>. Stopping saves it as a WAV file and puts the recording in the deck, so it can be played straight back.</li>
+      <li>The deck: what is in it, and how far it has played.</li>
+      <li><b>ROM sockets:</b> what sits in each socket of the board, and the Disk II card's boot PROM (P5). A socket shows <b>standard</b> when it holds the Apple II Plus ROM, <b>your ROM</b> when you have fitted one of your own, and <b>missing</b> when it is empty. Click a socket to fit a ROM file of your own there: a 2K image (a 2316B or a 2716 EPROM), or 256 bytes for P5; a shorter file is repeated to fill the socket. <b>remove</b> takes it out again.</li>
+      <li><b>Keyboard:</b> the II Plus keyboard (<a href="#hw-kbd">Keyboard</a>). CTRL and SHIFT stay down for the next key; RESET resets the machine only after CTRL, as the keyboard's switch is normally set; while REPT is down, holding a key repeats it ten times a second.</li>
+    </ol>
+    <p>Typing on your own keyboard: letters, digits and symbols go in by character (upper case only), Enter is RETURN, Backspace and the left arrow are ←, the right arrow is →, Esc is ESC, and Ctrl with a letter gives the control code (Ctrl-C, Ctrl-G and so on). A held key does not repeat unless REPT is down, as on the real keyboard.</p>
+
+    <h3 id="tape">Using the cassette</h3>
+    <ul class="features">
+      <li><b>Loading a BASIC program from a recording:</b> press <b>Load tape…</b> and choose the recording, type <code>LOAD</code> and Enter, then press <b>Play</b>. Applesoft beeps when it has read the header and again at the end; type <code>LIST</code> or <code>RUN</code>.</li>
+      <li><b>Loading machine code:</b> enter the Monitor with <code>CALL -151</code>, type the address range and <code>R</code> (for example <code>0300.03FFR</code>) and Enter, then press <b>Play</b>. With <b>Tape from binary…</b> the message gives the range to type.</li>
+      <li><b>Saving:</b> press <b>Record</b>, type <code>SAVE</code> (or the range and <code>W</code> in the Monitor) and Enter, and press <b>Stop recording</b> when the prompt comes back.</li>
+      <li>A tape starts with ten seconds of header tone, so loading takes as long as on the real machine; choose <b>Full speed</b> to make it quicker.</li>
+    </ul>
+
+    <h3 id="disk">Using the Disk II</h3>
+    <ul class="features">
+      <li><b>The boot PROM:</b> the card's 256-byte boot PROM (P5, 341-0027, the 16-sector one) is Apple's code and is not included. Put your copy in the ROM folder and load the folder again, or click the <b>P5</b> socket and choose the file.</li>
+      <li><b>Booting:</b> tick <b>Disk II (slot 6)</b>, insert a disk in drive 1, and type <code>PR#6</code> in BASIC (or <code>C600G</code> in the Monitor). DOS 3.3 disks load DOS and run their greeting program; ProDOS disks boot the same way.</li>
+      <li><b>Keeping what you wrote:</b> programs that write to the disk (SAVE, INIT, file copies) change the disk image in memory; <b>Save image</b> gives it to you as a file.</li>
+      <li><b>Copy-protected disks</b> may not boot: see <a href="#hw-disk">Disk II</a>.</li>
+    </ul>
+
+    <h3 id="toolbar">Running and stepping</h3>
+    <figure class="fig">
+      <img src="img/toolbar.png" width="720" alt="The toolbar with its controls numbered">
+    </figure>
+    <ol class="keyed">
+      <li><b>Reset CPU:</b> the RESET line, as <b>CTRL-RESET</b>.</li>
+      <li><b>Master reset:</b> also forgets the ROMs (load them again to switch on) and clears memory, breakpoints, stops and faults. It asks for a second click.</li>
+      <li><b>Clock 1 cycle</b> (<kbd>C</kbd>): one clock, which is one bus cycle.</li>
+      <li><b>Step instruction</b> (<kbd>S</kbd>)</li>
+      <li><b>Run / Pause</b> (<kbd>R</kbd>). The keyboard shortcuts work when the picture does not have the keyboard. While paused or stepping, the picture shows the lines drawn so far in the current frame over the last whole frame, so you can see where the scanner is.</li>
+      <li><b>Speed:</b> <b>Real time (1.02 MHz)</b> runs at the Apple's own speed. <b>Full speed</b> runs as fast as your computer allows. The slow clock rates let you watch the pins change.</li>
+      <li><b>Status:</b> what the machine is doing, or what halted it.</li>
+    </ol>
+
+    <h3 id="memchips">Memory chips and fault simulation</h3>
+    <figure class="fig wide">
+      <a href="img/memchips.png"><img src="img/memchips.png" width="900" alt="The memory chip tiles with C3 selected, a fault on its DOUT pin and the menu of its A1 pin open, numbered"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>RAM row C</b> (0000h–3FFFh): eight 4116s, one per data bit; the chip in column 10 holds bit 7 and the one in column 3 bit 0.</li>
+      <li><b>RAM row D</b> (4000h–7FFFh), shown with 32K or more.</li>
+      <li><b>RAM row E</b> (8000h–BFFFh), shown with 48K.</li>
+      <li><b>The ROMs</b> D0–F8, each 2K. A dot lights while a chip is being accessed.</li>
+      <li><b>The text ROM</b> at A5: it is read by the video generator, not by the 6502.</li>
+      <li><b>The selected chip</b> with its pins, which follow the bus on every clock. The 4116s show the 6502's access (the column address, as CAS falls last).</li>
+      <li><b>A pin's menu:</b> a pin on a line shared with other chips gets a tick box. Without it, the buttons hold the whole line high or low, and every pin on that line, on every chip, sees the level; with it (<b>Disconnected from the line</b>), the fault is on this chip's pin alone.</li>
+      <li><b>The faults</b> set on this chip. Here C3's data output is disconnected and floats high, so bit 0 of every byte in row C reads 1: the text on the screen changes (spaces become <code>!</code>) because the video reads the same chip.</li>
+      <li><b>Clear this chip's faults</b> and <b>Clear all faults</b>. Faults are also listed in the Debug pane and stay until cleared there, here, or by Master reset.</li>
+    </ol>
+    <p>What a fault does: an address pin fault makes the chip use the wrong cell; a data pin fault changes that bit on reads and writes; a fault on RAS or CAS takes a RAM out of circuit (its bit reads 1); a ROM's chip select held high switches it off, and INHIBIT' (CS2) held low switches all six off, which stops the Apple. The 6502's own pins take faults from the Pinout panel; on the Apple each of them is on a line of its own, because the processor reaches the system bus through buffers (<a href="#hw-chips">Memory chips</a>).</p>
+
+    <h3 id="hwpanel">Apple II hardware panel</h3>
+    <figure class="fig">
+      <a href="img/hardware.png"><img src="img/hardware.png" width="320" alt="The Apple II hardware panel, numbered"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>Soft switches:</b> GRAPHICS or TEXT, MIX, PAGE 1 or 2, LORES or HIRES, and the four annunciators.</li>
+      <li><b>Keyboard:</b> the code in the encoder's latch, the strobe flip-flop, what C000h reads, and how many keys are waiting from <b>Type it</b>.</li>
+      <li><b>Speaker, cassette and game I/O:</b> the speaker flip-flop and how often it has been toggled, the cassette output and input, the paddles (their setting and the timer's pulse) and the push buttons.</li>
+      <li><b>Video scanner:</b> where the scanner is in the frame (cycle, line, the long cycle), its horizontal and vertical counts in binary, whether it is in the picture or blanking, the address it is reading and the byte it drives out: the floating bus.</li>
+      <li><b>Language card</b> (when fitted): whether reads go to its RAM or the ROMs, the D000h bank, and whether writes are enabled.</li>
+      <li><b>Disk II</b> (when fitted): the drive selected, the motor (which runs on for a second after it is switched off), the stepper phases, the head's track, Q6 and Q7 and the mode they select, the data register, the boot PROM, and how many nibbles have been written.</li>
+      <li><b>Machine:</b> the scanning, the RAM, the ROMs fitted and the frame count.</li>
+    </ol>
+
+    <h3 id="bitmap">Memory bitmap</h3>
+    <figure class="fig">
+      <a href="img/bitmap.png"><img src="img/bitmap.png" width="380" alt="The memory bitmap with the first RAM bands and the legend, numbered"></a>
+    </figure>
+    <ol class="keyed">
+      <li><b>The bands:</b> every bit of memory as a pixel, a byte to a row of eight and a 256-byte page to a column: RAM in 8K bands, each ROM that is fitted, the Disk II boot PROM, the language card's RAM and the text ROM (every character is 8 bytes, so its shapes are visible). Here the text page and the LORES picture are in the first band.</li>
+      <li><b>The legend:</b> the tints show what each part of RAM is used for: zero page, stack, the input buffer and vectors, the text and HIRES pages, and, from Applesoft's own pointers, the BASIC program, its variables and arrays, and its strings.</li>
+      <li><b>Reading a byte:</b> point at the bitmap to read the byte under the pointer; click to show it in Memory.</li>
+    </ol>
+
+    <h3 id="tools">The debugging tools</h3>
+    <p>The remaining panels are 6502 Bench's own and work the same way here.</p>
+    <ul class="features">
+      <li><a href="../../6502-bench/docs/#pinout">Pinout</a>: as described there, except that the input pins open the fault menu here instead of toggling</li>
+      <li><a href="../../6502-bench/docs/#program">Loading a program</a>: the sample program loads at <code>0300h</code>, the usual home for short machine-code routines; start it from BASIC with <code>CALL 768</code></li>
+      <li><a href="../../6502-bench/docs/#dis">Disassembly and breakpoints</a></li>
+      <li><a href="../../6502-bench/docs/#memory">Memory</a></li>
+      <li><a href="../../6502-bench/docs/#regs">Registers and register stops</a></li>
+      <li><a href="../../6502-bench/docs/#debug">Debug pane</a>: memory, pin and bus stops</li>
+      <li><a href="../../6502-bench/docs/#timing">Bus timing</a>: including the dummy cycles, which matter on the Apple: a dummy read of C030h toggles the speaker, and one of C0E0h–C0EFh moves the disk</li>
+    </ul>
+
+    <h2 id="hardware">Hardware reference</h2>
+    <p>What the emulator models, and how. It follows the RFI revision of the main board (Apple 820-0044), the last of the II Plus boards, which takes only 16K RAM chips.</p>
+
+    <h3 id="hw-overview">The machine</h3>
+    <p>The Apple II has no interface chips. A 6502 (H7/8) runs at 1.02 MHz from a 14.31818 MHz crystal, and a few dozen TTL chips do the rest: they divide the clock, scan the video, multiplex the RAM between the processor and the video, decode the I/O addresses into strobes, and hold the soft switches. The 6502 reaches the system bus through 8T97 address buffers (H3–H5) and 8T28 data transceivers (H10, H11), so the cards in the slots see the same bus as the main board.</p>
+
+    <h3 id="hw-mem">Memory map</h3>
+    <table class="spec">
+      <tr><th>Addresses</th><th>What</th></tr>
+      <tr><td>0000h–3FFFh</td><td>RAM row C (always fitted). Text/LORES page 1 is 0400h–07FFh, page 2 0800h–0BFFh; HIRES page 1 is 2000h–3FFFh</td></tr>
+      <tr><td>4000h–7FFFh</td><td>RAM row D (32K and 48K). HIRES page 2 is 4000h–5FFFh</td></tr>
+      <tr><td>8000h–BFFFh</td><td>RAM row E (48K)</td></tr>
+      <tr><td>C000h–C07Fh</td><td>I/O strobes and soft switches (<a href="#hw-io">below</a>)</td></tr>
+      <tr><td>C080h–C0FFh</td><td>Device selects of slots 0–7, 16 addresses each: the language card at C080h–C08Fh, the Disk II at C0E0h–C0EFh</td></tr>
+      <tr><td>C100h–C7FFh</td><td>I/O selects of slots 1–7, 256 bytes each: the Disk II's boot PROM at C600h–C6FFh</td></tr>
+      <tr><td>C800h–CFFFh</td><td>Expansion ROM space of the cards (none here)</td></tr>
+      <tr><td>D000h–F7FFh</td><td>Applesoft BASIC: ROMs D0, D8, E0, E8 and F0 (341-0011 to 341-0015)</td></tr>
+      <tr><td>F800h–FFFFh</td><td>The Autostart Monitor: ROM F8 (341-0020), with the reset vector at FFFCh</td></tr>
+    </table>
+    <p>An address in a missing RAM row, an empty socket, an empty slot or an I/O strobe reads the floating bus (<a href="#hw-float">below</a>).</p>
+
+    <h3 id="hw-io">I/O and soft switches</h3>
+    <p>The 74LS138 decoders at F12, F13, H12 and H2 turn C000h–C0FFh into strobes. Any access to an address acts, read or write, because R/W is not part of the decoding; so a write to C030h toggles the speaker too, and so does a dummy read the 6502 makes during an indexed instruction.</p>
+    <table class="spec">
+      <tr><th>Address</th><th>What it does</th></tr>
+      <tr><td>C000h–C00Fh</td><td>Reads the keyboard: the 7-bit code, with the strobe flip-flop on bit 7</td></tr>
+      <tr><td>C010h–C01Fh</td><td>Clears the keyboard strobe</td></tr>
+      <tr><td>C020h–C02Fh</td><td>Toggles the cassette output</td></tr>
+      <tr><td>C030h–C03Fh</td><td>Toggles the speaker</td></tr>
+      <tr><td>C040h–C04Fh</td><td>C040 STROBE' on the game connector</td></tr>
+      <tr><td>C050h / C051h</td><td>GRAPHICS / TEXT</td></tr>
+      <tr><td>C052h / C053h</td><td>NOMIX / MIX (four lines of text under graphics)</td></tr>
+      <tr><td>C054h / C055h</td><td>PAGE 1 / PAGE 2</td></tr>
+      <tr><td>C056h / C057h</td><td>LORES / HIRES</td></tr>
+      <tr><td>C058h–C05Fh</td><td>Annunciators AN0–AN3 low (even) / high (odd)</td></tr>
+      <tr><td>C060h, C068h</td><td>Bit 7: the cassette input</td></tr>
+      <tr><td>C061h–C063h</td><td>Bit 7: push buttons PB0–PB2 (1 while pressed)</td></tr>
+      <tr><td>C064h–C067h</td><td>Bit 7: paddle timers 0–3 (1 while timing)</td></tr>
+      <tr><td>C070h–C07Fh</td><td>Starts the four paddle timers</td></tr>
+    </table>
+    <p>The eight soft switches are the 74LS259 addressable latch at F14. Reads of C060h–C067h drive bit 7 only; the other bits are the floating bus.</p>
+
+    <h3 id="hw-timing">Timing and the video scanner</h3>
+    <ul class="features">
+      <li><b>Clocks:</b> the 14.31818 MHz master clock gives the 7M dot clock, the 3.58 MHz colour reference and the processor clock. A normal cycle is 14 periods of the master clock; every 65th, the <b>long cycle</b>, is 16, which keeps the colour reference in step from line to line. A line is 65 cycles (912 periods), a frame 262 lines, 17,030 cycles: 59.92 frames a second, and an average of 1,020,484 cycles a second.</li>
+      <li><b>The scanner:</b> the horizontal counter counts 0000000, then 1000000 to 1111111 (65 states; the first is the long cycle), and the picture is shown from 1011000 on, for 40 states. The vertical counter counts 011111010 to 111111111 (262 states): lines 0–191 carry the picture, 192–261 are vertical blanking, with the sync on lines 224–227.</li>
+      <li><b>Its addresses:</b> A0–A2 are H0–H2; A3–A6 are the 4-bit sum of 1101, H5 H4 H3 and V4 V3 V4 V3 (the scanner's way of fitting 24 rows of 40 bytes into 1K); A7–A9 are V0–V2. In TEXT and LORES, A10 or A11 picks page 1 or 2 and A12 is horizontal blanking; in HIRES, A10–A12 are the line within the row (VA–VC), and A13 or A14 picks the page. MIXED switches to the text addresses for lines 160–191.</li>
+      <li><b>50 Hz (Eurapple):</b> with the Eurapple jumpers the vertical counter presets to 011001000 instead: 312 lines, 20,280 cycles a frame, 50.32 frames a second. The 50 extra lines all go to vertical blanking; the picture is the same 192 lines.</li>
+    </ul>
+
+    <h3 id="hw-video">Video generation</h3>
+    <p>The emulator generates the picture one cycle at a time: for each of the 40 cycles of a line that carry picture, it reads the byte at the scanner's address, with the soft switches as they are at that moment, and turns it into 14 dots of the 14 MHz clock. A program that switches modes or writes to the screen in the middle of a frame shows the change from the line where it happens.</p>
+    <ul class="features">
+      <li><b>TEXT:</b> the byte addresses the text ROM (a 2316B on the RFI board) with the line in the row; the ROM's bits 6–0 are seven dots, each two periods of 14 MHz. Bytes 00h–3Fh are inverse, 40h–7Fh flash (inverse half the time, from the flasher: about four changes a second), 80h–FFh are normal.</li>
+      <li><b>LORES:</b> each byte is two blocks of four lines, the low nibble on top; the nibble's pattern is repeated at 14 MHz, so dot <i>x</i> shows bit (<i>x</i> mod 4) of the colour number.</li>
+      <li><b>HIRES:</b> bits 0–6 are seven dots of two periods each, left to right; bit 7 delays the byte by one period of 14 MHz (half a dot), which is how the second pair of HIRES colours comes about.</li>
+      <li><b>Colour:</b> the Apple makes colour from the dot pattern itself: a monitor sees a pattern that repeats every four periods of 14 MHz as a colour, set by its phase against the colour burst. The emulator gives each dot the colour of the four dots around it, read in the colour reference's phase, which is a LORES colour number; so LORES shows its 16 colours, HIRES its green, violet, orange and blue with the fringes of the real thing, and text in MIXED mode has colour fringes too. In TEXT mode the burst is switched off (the colour killer), so the monitor shows white.</li>
+    </ul>
+
+    <h3 id="hw-float">The floating bus</h3>
+    <p>The RAM is read twice in every cycle: by the video scanner while φ0 is low, then by the 6502. When the 6502 reads an address that nothing answers, nothing drives the data bus in its half of the cycle, and the bus still holds the byte the scanner just read: the 6502 reads that. The emulator does the same, at every address that nothing answers, so a program can tell where the scanner is by reading it, as some games do to change the screen without flicker.</p>
+
+    <h3 id="hw-kbd">Keyboard and game I/O</h3>
+    <ul class="features">
+      <li><b>Keyboard:</b> the II Plus keyboard has its own encoder (an AY-5-3600), which latches a 7-bit code and sets the strobe flip-flop read on bit 7 of C000h. Letters are upper case with or without SHIFT, except that SHIFT-N, SHIFT-M and SHIFT-P give <code>^</code>, <code>]</code> and <code>@</code>; CTRL with a key whose code is 40h–5Fh gives that code less 40h. REPT held with a key repeats it ten times a second. RESET pulls the 6502's RESET line low; the keyboard has a switch that makes it need CTRL as well, and the emulator works as with that switch set.</li>
+      <li><b>Paddles:</b> each paddle is a 150K potentiometer on one timer of the 558 quad timer. An access to C070h–C07Fh starts all four; each reads 1 on bit 7 for (R + 100) × 0.022 microseconds, from 2 µs to about 3.3 ms, and the Monitor's PREAD counts how long.</li>
+      <li><b>Push buttons</b> PB0–PB2 and the <b>annunciators</b> AN0–AN3 are on the game connector.</li>
+    </ul>
+
+    <h3 id="hw-tape">Cassette</h3>
+    <p>The cassette output is a flip-flop toggled by C020h, the input a comparator read on bit 7 of C060h. The Monitor's tape format, as its <code>W</code> writes it and <code>R</code> reads it, timed in cycles of the 6502: a header of half cycles of 650 cycles (770 Hz; ten seconds of it), a sync bit (a half cycle of 200 then one of 250), then each byte from bit 7 down, a 0 bit as two half cycles of 250 cycles and a 1 bit as two of 500, and last a checksum: FFh exclusive-ored with every byte. Applesoft's <code>SAVE</code> writes two such records: the program's length, then the program. The emulator plays a recording into the input by turning it into the times at which the signal changes polarity, and records the output the same way. Checked: the Monitor's <code>W</code> read back with <code>R</code>, a tape made from bytes read with <code>R</code>, the same through a WAV file, and Applesoft's <code>SAVE</code> and <code>LOAD</code>.</p>
+
+    <h3 id="hw-lc">Language card</h3>
+    <p>Apple's 16K RAM card, in slot 0, puts RAM over the ROMs: two 4K banks at D000h–DFFFh and 8K at E000h–FFFFh. Its switches are C080h–C08Fh: bit 3 picks bank 1 (set) or bank 2; bits 0 and 1 both clear or both set read the RAM, otherwise the ROMs; two reads in a row of an odd address enable writing to the RAM, and an access to an even address disables it. While it reads its RAM, it pulls INHIBIT' low to switch the main board's ROMs off. After RESET it reads the ROMs and writes to bank 2. DOS 3.3 loads the other BASIC into it.</p>
+
+    <h3 id="hw-disk">Disk II</h3>
+    <ul class="features">
+      <li><b>The card</b> in slot 6 answers at C0E0h–C0EFh: C0E0h–C0E7h turn the four stepper phases off and on, C0E8h/C0E9h the motor, C0EAh/C0EBh select drive 1 or 2, C0ECh/C0EDh set Q6 and C0EEh/C0EFh Q7. With Q7 and Q6 low it reads the disk; Q6 high senses write protect; Q7 and Q6 high load the data register; Q7 high and Q6 low shift it onto the disk. Its boot PROM (P5) is at C600h–C6FFh.</li>
+      <li><b>The drive:</b> a phase turned on pulls the head half a track towards it, so stepping the phases in turn moves the head. The motor runs on for about a second after it is switched off.</li>
+      <li><b>The disk:</b> each of its 35 tracks is held as a ring of nibbles, made from the image as DOS 3.3 formats a disk: gaps of FFh sync bytes, then for each of the 16 sectors an address field (D5 AA 96, the volume, track, sector and checksum in 4-and-4 code, DE AA EB) and a data field (D5 AA AD, the 256 bytes in 6-and-2 code with their checksum, DE AA EB). <code>.nib</code> images are taken as they are.</li>
+      <li><b>Reading and writing:</b> the disk turns under the head at its real rate, one nibble every 32 cycles. A read returns the nibble under the head once, with bit 7 set, as the card's logic state sequencer leaves it in the data register; a second read before the next nibble arrives sees bit 7 clear. Writing puts each nibble after the last, from where the head was when writing began. <b>Save image</b> decodes the tracks back into sectors.</li>
+      <li><b>Not modelled:</b> the logic state sequencer (the P6 PROM) bit by bit. DOS 3.3, ProDOS and the boot PROM work; copy protections that count bits, use half tracks or time the gaps between nibbles may not.</li>
+    </ul>
+
+    <h3 id="hw-chips">Memory chips</h3>
+    <ul class="features">
+      <li><b>RAM:</b> 24 4116 dynamic RAMs (16K × 1) in rows C, D and E; in each row the chip in column <i>n</i> + 3 holds data bit <i>n</i>. The 74LS153 multiplexers put the 6502's address on the RAMs' seven address lines RA0–RA6, row then column, as A7/A10, A2/A4, A0/A5, A8/A11, A3/A9, A1/A6 and A12/A13. The video scanner reads the same chips, so a RAM fault shows in the picture.</li>
+      <li><b>ROMs:</b> six 2316B (2K) mask ROMs. Each has its own ROM ENABLE' from the 74LS138 at F12 on its CS1 pin; their CS2 pins share INHIBIT' from the slots, pulled up on the board.</li>
+      <li><b>The text ROM</b> at A5: a 2316B on the RFI board, addressed by the row within the character (VA–VC), the character code (DL0–DL5) and, on its A9 and A10, DL6 and DL7.</li>
+      <li><b>The 6502:</b> its pins take faults from the Pinout panel. Each is on a line of its own, since the buffers stand between it and the bus.</li>
+    </ul>
+
+    <h3 id="hw-limits">What is not emulated</h3>
+    <ul class="features">
+      <li><b>The Disk II's logic state sequencer</b> bit by bit (see above), and other cards: printers, serial cards, 80-column cards, clocks.</li>
+      <li><b>The mode switching delay:</b> on the board a switch between TEXT and graphics takes effect a little over a cycle later; here it takes effect at the cycle of the access.</li>
+      <li><b>The analogue video:</b> the colours are worked out from the dot pattern, not by decoding an NTSC signal; on a 50 Hz Apple they are shown as an NTSC monitor would show them.</li>
+      <li><b>Power-on contents of RAM:</b> RAM starts as zeros.</li>
+    </ul>
+
+    <h3 id="hw-sources">Sources</h3>
+    <ul class="features">
+      <li>Jim Sather, <i>Understanding the Apple II</i>, Quality Software, 1983: the timing, the video scanner and its addresses, the video generator, the address decoding, the RAM multiplexing and the game I/O.</li>
+      <li><i>Apple II Reference Manual</i>, Apple, 1979 (and the January 1978 edition): the memory map, the soft switches, the Monitor and the cassette.</li>
+      <li>Apple's addendum to the Apple II Reference Manual for the RFI main board, with its schematic.</li>
+      <li>Winston D. Gayler, <i>The Apple II Circuit Description</i>, Howard W. Sams, 1983.</li>
+    </ul>
+
+    <footer><a href="../">&larr; Back to Apple II Plus</a> · <a href="../../emulators/">Emulators</a> · <a href="../../">All projects</a></footer>
+  </main>
+</body>
+</html>

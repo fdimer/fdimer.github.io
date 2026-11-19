@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apple II Plus</title>
+  <meta name="description" content="An Apple II Plus emulator built on 6502 Bench from Jim Sather's Understanding the Apple II and the RFI main board schematic: the video generated cycle by cycle from the scanner's addresses, cassette, language card and Disk II. Runs in your browser with your own ROMs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="../emulators/">&larr; Emulators</a>
+
+    <header class="site" style="margin-top:20px">
+      <p class="prompt">]RUN</p>
+      <h1>Apple II Plus</h1>
+      <p class="lead">An emulator of the Apple II Plus with the RFI revision of the main board (820-0044), made with <a href="../6502-bench/">6502 Bench</a>. It follows Jim Sather's <i>Understanding the Apple II</i> (1983) and Apple's schematic of the board: the picture is generated cycle by cycle from the video scanner's own addresses, as the board does it, so mode switches in the middle of a frame and the "floating bus" behave as on a real Apple. It runs the real Applesoft and Autostart Monitor ROMs, and shows what the hardware is doing while it runs.</p>
+    </header>
+
+    <a class="button" href="app/">Open the emulator</a>
+    <a class="button secondary" href="docs/">Documentation</a>
+
+    <h2>Features</h2>
+    <ul class="features">
+      <li><b>The main board:</b> 16K, 32K or 48K of RAM in rows C, D and E, the six ROMs D0–F8, the keyboard, the speaker, the soft switches at C050h–C05Fh, two paddles, three push buttons and the four annunciators</li>
+      <li><b>Timing:</b> 65 cycles a line with the long cycle, 262 lines a frame (17,030 cycles), 1.02 MHz; or 312 lines at 50 Hz with the Eurapple jumpers</li>
+      <li><b>Video:</b> TEXT (normal, inverse and flashing), LORES, HIRES, MIXED and both pages, from the scanner's addresses one cycle at a time. A colour monitor shows the colours the way the Apple makes them, from the dot pattern (with HIRES colour fringes and coloured text in MIXED); or choose black and white, green or amber</li>
+      <li><b>The floating bus:</b> an address nothing answers reads the byte the video scanner is fetching, as on the real machine</li>
+      <li><b>The real ROMs:</b> point the emulator at the folder holding your own ROM images (they aren't included); it recognises them by their contents and your browser remembers them. A row of sockets shows what is fitted, and clicking a socket fits a ROM of your own there</li>
+      <li><b>Keyboard:</b> type on your keyboard, or click the on-screen II Plus keyboard with CTRL, SHIFT, REPT and CTRL-RESET; paste text to type BASIC programs and Monitor commands in</li>
+      <li><b>Cassette:</b> play recordings of Apple tapes (any audio file) into the cassette input, make a tape from a binary file for the Monitor's R, and record SAVE or W as a WAV file</li>
+      <li><b>Cards:</b> a 16K language card in slot 0, and a Disk II controller in slot 6 with two drives: .dsk, .do, .po and .nib images, writing, write protect, and saving the disk back as an image. Booting needs the card's boot PROM, which is your own file</li>
+      <li><b>Memory chips and faults:</b> the 24 4116 RAMs, the six ROMs and the text ROM, with their pins live. Click a pin to disconnect it or hold it high or low; a RAM fault shows in the picture too, because the video scanner reads the same chips</li>
+      <li><b>Debugging:</b> 6502 Bench's tools, including the pinout, bus timing, disassembler, breakpoints and stepping, plus a panel with the soft switches, the keyboard latch, the paddle timers, the video scanner's position and the cards' state, a memory bitmap tinted by the screen pages and Applesoft's use of memory, and a text listing with the BASIC program</li>
+    </ul>
+
+    <h2>Source</h2>
+    <a class="button secondary" href="https://github.com/fdimer/6502-bench/tree/apple2">View on GitHub (apple2 branch)</a>
+
+    <h2>Licence</h2>
+    <p>The emulator is free for anyone to use non-commercially under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0/">PolyForm Noncommercial License 1.0.0</a>. The Apple ROMs are not part of this project.</p>
+
+    <footer><a href="../emulators/">&larr; Back to emulators</a> · <a href="../">All projects</a></footer>
+  </main>
+</body>
+</html>
